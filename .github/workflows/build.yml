@@ -21,10 +21,8 @@ jobs:
 
       - name: Download Gradle Wrapper JAR
         run: |
-          curl -L "https://raw.githubusercontent.com/gradle/gradle/v8.4.0/gradle/wrapper/gradle-wrapper.jar" \
-            -o gradle/wrapper/gradle-wrapper.jar || \
-          wget -q "https://services.gradle.org/distributions/gradle-8.4-bin.zip" -O /tmp/gradle.zip && \
-          unzip -p /tmp/gradle.zip "gradle-8.4/lib/gradle-launcher-8.4.jar" > gradle/wrapper/gradle-wrapper.jar || true
+          wget -q https://services.gradle.org/distributions/gradle-8.4-bin.zip -O /tmp/gradle.zip
+          unzip -p /tmp/gradle.zip gradle-8.4/lib/gradle-launcher-8.4.jar > gradle/wrapper/gradle-wrapper.jar
 
       - name: Make gradlew executable
         run: chmod +x gradlew
@@ -32,7 +30,7 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace
 
-      - name: Build Release APK  
+      - name: Build Release APK
         run: ./gradlew assembleRelease --stacktrace
 
       - name: Upload Debug APK
