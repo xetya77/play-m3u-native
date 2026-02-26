@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Nama Playlist"
+        android:textColor="#374151"
+        android:textSize="12sp"
+        android:paddingBottom="4dp" />
+
+    <EditText
+        android:id="@+id/et_playlist_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Contoh: TV Indonesia"
+        android:inputType="text"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="URL Playlist M3U"
+        android:textColor="#374151"
+        android:textSize="12sp"
+        android:paddingBottom="4dp" />
+
+    <EditText
+        android:id="@+id/et_playlist_url"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="http://..."
+        android:inputType="textUri"
+        android:singleLine="true" />
+
+</LinearLayout>
