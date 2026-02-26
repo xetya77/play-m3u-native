@@ -19,10 +19,11 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Download Gradle Wrapper JAR
+      - name: Download real gradle-wrapper.jar
         run: |
-          wget -q https://services.gradle.org/distributions/gradle-8.4-bin.zip -O /tmp/gradle.zip
-          unzip -p /tmp/gradle.zip gradle-8.4/lib/gradle-launcher-8.4.jar > gradle/wrapper/gradle-wrapper.jar
+          curl -sL "https://github.com/gradle/gradle/raw/v8.4.0/gradle/wrapper/gradle-wrapper.jar" \
+            -o gradle/wrapper/gradle-wrapper.jar
+          ls -la gradle/wrapper/
 
       - name: Make gradlew executable
         run: chmod +x gradlew
