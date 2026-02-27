@@ -1,29 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Background -->
     <color name="bg_dark">#0a1628</color>
     <color name="bg_card">#112244</color>
     <color name="bg_card2">#162a50</color>
-    <color name="bg_item">#0d1e3d</color>
-
-    <!-- Accent -->
     <color name="accent">#c8851a</color>
     <color name="accent_hover">#e09820</color>
-    <color name="accent_light">#f0a830</color>
-
-    <!-- Text -->
     <color name="text_primary">#ffffff</color>
     <color name="text_muted">#8aaad4</color>
-    <color name="text_orange">#e09820</color>
-
-    <!-- Border -->
-    <color name="border">#1a2e50</color>
-    <color name="divider">#0d1e3d</color>
-
-    <!-- Player -->
     <color name="player_bg">#000000</color>
-    <color name="osd_bg">#cc000000</color>
-
-    <!-- Status -->
-    <color name="status_bar">#0a1628</color>
 </resources>

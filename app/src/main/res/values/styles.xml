@@ -1,18 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.IPTVPlayer" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:windowBackground">@color/bg_dark</item>
-        <item name="android:statusBarColor">@color/status_bar</item>
-        <item name="android:navigationBarColor">@color/bg_dark</item>
-        <item name="colorPrimary">@color/accent</item>
-        <item name="colorPrimaryDark">@color/bg_card2</item>
-        <item name="android:fontFamily">sans-serif</item>
-    </style>
-
-    <style name="Theme.IPTVPlayer.Player" parent="Theme.IPTVPlayer">
-        <item name="android:windowBackground">@color/player_bg</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
-        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowBackground">#0a1628</item>
+        <item name="android:statusBarColor">#0a1628</item>
+        <item name="android:navigationBarColor">#0a1628</item>
+        <item name="colorPrimary">#c8851a</item>
+        <item name="colorPrimaryDark">#162a50</item>
     </style>
 </resources>
