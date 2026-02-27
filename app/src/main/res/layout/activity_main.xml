@@ -3,42 +3,42 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/bg_dark">
+    android:background="#0a0e1a">
 
     <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="70dp"
+        android:layout_height="56dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingHorizontal="24dp"
-        android:background="@color/bg_card2">
+        android:paddingHorizontal="16dp"
+        android:background="#111827">
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="PLAY M3U."
-            android:textColor="@color/text_main"
-            android:textSize="20sp"
+            android:text="▶ IPTV Player"
+            android:textColor="#ffffff"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tv_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_muted"
+            android:textColor="#9ca3af"
             android:textSize="12sp"
-            android:paddingEnd="16dp" />
+            android:paddingEnd="12dp" />
 
         <TextView
             android:id="@+id/btn_refresh"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="🔄"
-            android:textColor="@color/text_main"
+            android:text="↻"
+            android:textColor="#60a5fa"
             android:textSize="20sp"
-            android:paddingHorizontal="12dp"
+            android:paddingHorizontal="8dp"
             android:focusable="true"
             android:clickable="true" />
 
@@ -47,10 +47,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="+ Playlist"
-            android:textColor="@color/accent"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:paddingHorizontal="12dp"
+            android:textColor="#60a5fa"
+            android:textSize="13sp"
+            android:paddingHorizontal="8dp"
             android:focusable="true"
             android:clickable="true" />
     </LinearLayout>
@@ -59,18 +58,30 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_playlists"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:paddingHorizontal="16dp"
-        android:background="@color/bg_card"
+        android:layout_height="40dp"
+        android:paddingHorizontal="8dp"
+        android:background="#1f2937"
         android:orientation="horizontal" />
+
+    <!-- Current playlist name -->
+    <TextView
+        android:id="@+id/tv_playlist_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#60a5fa"
+        android:textSize="11sp"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="4dp"
+        android:visibility="gone" />
 
     <!-- Group Filter -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_groups"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:paddingHorizontal="16dp"
-        android:background="@color/bg_dark"
+        android:layout_height="36dp"
+        android:paddingHorizontal="8dp"
+        android:background="#111827"
         android:orientation="horizontal" />
 
     <!-- Progress -->
@@ -79,7 +90,6 @@
         android:layout_width="match_parent"
         android:layout_height="2dp"
         style="?android:attr/progressBarStyleHorizontal"
-        android:progressTint="@color/accent"
         android:indeterminate="true"
         android:visibility="gone" />
 
@@ -96,8 +106,8 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:text="Belum ada playlist.\nTambahkan playlist M3U Anda untuk mulai menonton."
-        android:textColor="@color/text_muted"
+        android:text="Belum ada playlist.\nTambahkan playlist M3U kamu."
+        android:textColor="#6b7280"
         android:textSize="14sp"
         android:gravity="center"
         android:visibility="gone" />
