@@ -213,7 +213,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         });
 
         // Settings
-        btnSettingsExit.setOnClickListener(v -> finish());
+        btnSettingsExit.setOnClickListener(v -> confirmExit());
         btnStartWatch.setOnClickListener(v -> startWatching());
         btnGoPlaylists.setOnClickListener(v -> showPage("playlists"));
         btnAddPlaylistSettings.setOnClickListener(v -> showPage("source"));
@@ -278,14 +278,25 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         }
     }
 
+    private void confirmExit() {
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("Keluar Aplikasi")
+            .setMessage("Yakin ingin keluar?")
+            .setPositiveButton("Keluar", (d, w) -> finish())
+            .setNegativeButton("Batal", null)
+            .show();
+    }
+
     private void goBack() {
-        if (pageHistory.size() > 1) {
-            pageHistory.remove(pageHistory.size() - 1);
-            String prev = pageHistory.remove(pageHistory.size() - 1);
-            showPage(prev);
-        } else {
-            showPage("welcome");
+        // Jika sedang di settings atau welcome (root), tampilkan konfirmasi keluar
+        String current = pageHistory.isEmpty() ? "" : pageHistory.get(pageHistory.size() - 1);
+        if (current.equals("settings") || current.equals("welcome") || pageHistory.size() <= 1) {
+            confirmExit();
+            return;
         }
+        pageHistory.remove(pageHistory.size() - 1);
+        String prev = pageHistory.remove(pageHistory.size() - 1);
+        showPage(prev);
     }
 
     @Override

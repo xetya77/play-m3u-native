@@ -22,14 +22,20 @@ import androidx.annotation.OptIn;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
+import androidx.media3.datasource.DefaultHttpDataSource;
 import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.hls.HlsMediaSource;
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
+import androidx.media3.exoplayer.source.MediaSource;
 import androidx.media3.ui.PlayerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @OptIn(markerClass = UnstableApi.class)
 public class PlayerActivity extends Activity {
@@ -83,7 +89,6 @@ public class PlayerActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Fullscreen
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_FULLSCREEN |
@@ -96,7 +101,6 @@ public class PlayerActivity extends Activity {
 
         prefs = new PrefsManager(this);
 
-        // Get playlist data
         playlistIdx = getIntent().getIntExtra("playlist_index", 0);
         currentChannelIdx = getIntent().getIntExtra("channel_index", 0);
 
@@ -118,10 +122,7 @@ public class PlayerActivity extends Activity {
         setupGestures();
         setupListeners();
 
-        // Start playing first channel
         playChannel(currentChannelIdx, false);
-
-        // Show swipe hint briefly
         showSwipeHint();
     }
 
@@ -155,8 +156,6 @@ public class PlayerActivity extends Activity {
 
     private void setupPlayer() {
         player = new ExoPlayer.Builder(this).build();
-
-        // Hide default controls - we manage ourselves
         playerView.setUseController(false);
         playerView.setPlayer(player);
 
@@ -165,6 +164,7 @@ public class PlayerActivity extends Activity {
             public void onPlaybackStateChanged(int state) {
                 if (state == Player.STATE_BUFFERING) {
                     videoLoading.setVisibility(View.VISIBLE);
+                    tvLoadingMsg.setText("Memuat...");
                 } else if (state == Player.STATE_READY) {
                     videoLoading.setVisibility(View.GONE);
                 } else if (state == Player.STATE_ENDED) {
@@ -176,9 +176,27 @@ public class PlayerActivity extends Activity {
             @Override
             public void onPlayerError(androidx.media3.common.PlaybackException error) {
                 videoLoading.setVisibility(View.VISIBLE);
-                tvLoadingMsg.setText("Error: " + error.getMessage());
+                String msg = getErrorMessage(error);
+                tvLoadingMsg.setText(msg);
+                // Auto retry setelah 3 detik
+                handler.postDelayed(() -> {
+                    if (!isFinishing()) playChannel(currentChannelIdx, false);
+                }, 3000);
             }
         });
+    }
+
+    private String getErrorMessage(androidx.media3.common.PlaybackException error) {
+        int code = error.errorCode;
+        if (code == androidx.media3.common.PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED)
+            return "Tidak ada koneksi internet";
+        if (code == androidx.media3.common.PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT)
+            return "Koneksi timeout, coba lagi...";
+        if (code == androidx.media3.common.PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS)
+            return "Stream tidak tersedia (HTTP error)";
+        if (code == androidx.media3.common.PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED)
+            return "Format stream tidak didukung";
+        return "Gagal memutar stream";
     }
 
     private void setupChannelPanel() {
@@ -215,21 +233,16 @@ public class PlayerActivity extends Activity {
                 float dX = e2.getX() - e1.getX();
 
                 if (Math.abs(dX) > Math.abs(dY)) {
-                    // Horizontal swipe
                     if (dX < -SWIPE_THRESHOLD && Math.abs(vX) > SWIPE_VELOCITY_THRESHOLD) {
-                        // Swipe left → open channel list
                         openPanel();
                         return true;
                     }
                 } else {
-                    // Vertical swipe
                     if (Math.abs(dY) > SWIPE_THRESHOLD && Math.abs(vY) > SWIPE_VELOCITY_THRESHOLD) {
                         if (dY < 0) {
-                            // Swipe up = next channel
                             showSwipeFeedback(true);
                             playChannel(currentChannelIdx + 1, true);
                         } else {
-                            // Swipe down = previous channel
                             showSwipeFeedback(false);
                             playChannel(currentChannelIdx - 1, true);
                         }
@@ -252,13 +265,11 @@ public class PlayerActivity extends Activity {
     }
 
     private void setupListeners() {
-        // Tap anywhere on player to toggle OSD
         playerView.setOnTouchListener((v, event) -> {
             gestureDetector.onTouchEvent(event);
             return true;
         });
 
-        // Backdrop closes panel
         chListBackdrop.setOnClickListener(v -> hidePanel());
         chListBackdrop.setOnTouchListener((v, event) -> {
             if (event.getAction() == MotionEvent.ACTION_DOWN) hidePanel();
@@ -271,7 +282,6 @@ public class PlayerActivity extends Activity {
     private void playChannel(int idx, boolean withFlash) {
         if (channels.isEmpty()) return;
 
-        // Wrap around
         if (idx < 0) idx = channels.size() - 1;
         if (idx >= channels.size()) idx = 0;
 
@@ -280,32 +290,53 @@ public class PlayerActivity extends Activity {
 
         Channel ch = channels.get(idx);
 
-        if (withFlash) {
-            blackFlash();
-        }
+        if (withFlash) blackFlash();
 
-        // Show loading
         videoLoading.setVisibility(View.VISIBLE);
         tvLoadingMsg.setText("Memuat...");
 
-        // Update OSD
         updateChInfo(ch, idx);
 
-        // Play
         try {
             player.stop();
+
+            // Build DataSource dengan user-agent dan referrer dari playlist
+            String ua = (ch.userAgent != null && !ch.userAgent.isEmpty())
+                    ? ch.userAgent
+                    : "Mozilla/5.0 (Linux; Android 10; TV) AppleWebKit/537.36 Chrome/96.0 Safari/537.36";
+
+            DefaultHttpDataSource.Factory dsFactory = new DefaultHttpDataSource.Factory()
+                    .setUserAgent(ua)
+                    .setConnectTimeoutMs(15000)
+                    .setReadTimeoutMs(20000)
+                    .setAllowCrossProtocolRedirects(true);
+
+            // Set referrer/origin jika ada
+            if (ch.referrer != null && !ch.referrer.isEmpty()) {
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Referer", ch.referrer);
+                headers.put("Origin", ch.referrer.replaceAll("/$", ""));
+                dsFactory.setDefaultRequestProperties(headers);
+            }
+
             MediaItem media = MediaItem.fromUri(ch.url);
-            player.setMediaItem(media);
+            MediaSource mediaSource;
+
+            String urlLower = ch.url.toLowerCase();
+            if (urlLower.contains(".m3u8") || urlLower.contains("/hls/") || urlLower.contains("m3u8")) {
+                mediaSource = new HlsMediaSource.Factory(dsFactory).createMediaSource(media);
+            } else {
+                mediaSource = new DefaultMediaSourceFactory(dsFactory).createMediaSource(media);
+            }
+
+            player.setMediaSource(mediaSource);
             player.prepare();
             player.play();
         } catch (Exception e) {
             tvLoadingMsg.setText("Gagal: " + e.getMessage());
         }
 
-        // Update panel active
         channelAdapter.setActiveIndex(idx);
-
-        // Show ch info briefly
         showChInfo();
     }
 
@@ -317,7 +348,6 @@ public class PlayerActivity extends Activity {
         tvChGroup.setText(ch.group);
         tvChPlaylistName.setText(playlistName);
 
-        // Logo
         if (ch.logoUrl != null && !ch.logoUrl.isEmpty()) {
             ivChLogo.setVisibility(View.VISIBLE);
             tvChLogoFallback.setVisibility(View.GONE);
@@ -341,7 +371,6 @@ public class PlayerActivity extends Activity {
         channelInfo.setAlpha(1f);
         channelInfo.setTranslationX(0f);
 
-        // Auto hide after 4s
         if (chInfoHideRunnable != null) handler.removeCallbacks(chInfoHideRunnable);
         chInfoHideRunnable = () -> hideChInfo();
         handler.postDelayed(chInfoHideRunnable, 4000);
@@ -374,7 +403,6 @@ public class PlayerActivity extends Activity {
         chListPanel.animate().translationX(0f).setDuration(300)
                 .setInterpolator(new AccelerateDecelerateInterpolator()).start();
 
-        // Scroll to active
         if (currentChannelIdx >= 0) {
             rvChList.scrollToPosition(currentChannelIdx);
         }
@@ -400,8 +428,6 @@ public class PlayerActivity extends Activity {
         ).start();
     }
 
-    // ===== SWIPE HINT =====
-
     private void showSwipeHint() {
         swipeHint.animate().alpha(1f).setDuration(500).start();
         if (swipeHintHideRunnable != null) handler.removeCallbacks(swipeHintHideRunnable);
@@ -409,8 +435,6 @@ public class PlayerActivity extends Activity {
                 swipeHint.animate().alpha(0f).setDuration(800).start();
         handler.postDelayed(swipeHintHideRunnable, 3000);
     }
-
-    // ===== BLACK FLASH =====
 
     private void blackFlash() {
         blackFlash.setVisibility(View.VISIBLE);
@@ -420,33 +444,23 @@ public class PlayerActivity extends Activity {
                 .start();
     }
 
-    // ===== TV REMOTE D-PAD =====
+    // ===== TV REMOTE =====
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         switch (keyCode) {
             case KeyEvent.KEYCODE_DPAD_UP:
             case KeyEvent.KEYCODE_PAGE_UP:
-                if (!panelOpen) {
-                    showSwipeFeedback(true);
-                    playChannel(currentChannelIdx + 1, true);
-                }
+                if (!panelOpen) { showSwipeFeedback(true); playChannel(currentChannelIdx + 1, true); }
                 return true;
 
             case KeyEvent.KEYCODE_DPAD_DOWN:
             case KeyEvent.KEYCODE_PAGE_DOWN:
-                if (!panelOpen) {
-                    showSwipeFeedback(false);
-                    playChannel(currentChannelIdx - 1, true);
-                }
+                if (!panelOpen) { showSwipeFeedback(false); playChannel(currentChannelIdx - 1, true); }
                 return true;
 
             case KeyEvent.KEYCODE_DPAD_LEFT:
-                if (panelOpen) {
-                    hidePanel();
-                } else {
-                    openPanel();
-                }
+                if (panelOpen) hidePanel(); else openPanel();
                 return true;
 
             case KeyEvent.KEYCODE_DPAD_RIGHT:
@@ -460,15 +474,10 @@ public class PlayerActivity extends Activity {
 
             case KeyEvent.KEYCODE_BACK:
             case KeyEvent.KEYCODE_ESCAPE:
-                if (panelOpen) {
-                    hidePanel();
-                } else {
-                    finish();
-                }
+                if (panelOpen) { hidePanel(); } else { finish(); }
                 return true;
 
             default:
-                // Number keys for channel direct input (TV remote)
                 if (keyCode >= KeyEvent.KEYCODE_0 && keyCode <= KeyEvent.KEYCODE_9) {
                     handleNumKey(keyCode - KeyEvent.KEYCODE_0);
                     return true;
@@ -506,7 +515,6 @@ public class PlayerActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (player != null) player.play();
-        // Re-apply fullscreen
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_FULLSCREEN |
                 View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
@@ -518,19 +526,12 @@ public class PlayerActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (player != null) {
-            player.release();
-            player = null;
-        }
+        if (player != null) { player.release(); player = null; }
         handler.removeCallbacksAndMessages(null);
     }
 
     @Override
     public void onBackPressed() {
-        if (panelOpen) {
-            hidePanel();
-        } else {
-            super.onBackPressed();
-        }
+        if (panelOpen) { hidePanel(); } else { finish(); }
     }
 }
