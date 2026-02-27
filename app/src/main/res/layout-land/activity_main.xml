@@ -1,88 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- LANDSCAPE/TV: Sidebar kiri (channel list) + area kanan (info/preview) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal"
-    android:background="@color/bg_dark">
+    android:background="#0a1628">
 
-    <!-- ===== SIDEBAR KIRI: Channel List ===== -->
     <LinearLayout
         android:layout_width="300dp"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="@color/bg_card2">
+        android:background="#162a50">
 
-        <!-- Header Sidebar -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingHorizontal="16dp"
-            android:background="@color/bg_card">
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:background="#112244">
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="▶ PLAY M3U"
-                android:textColor="@color/text_primary"
+                android:textColor="#ffffff"
                 android:textSize="15sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"/>
 
             <TextView
                 android:id="@+id/btn_add_playlist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="+"
-                android:textColor="@color/accent"
+                android:textColor="#c8851a"
                 android:textSize="22sp"
-                android:paddingHorizontal="4dp"
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp"
                 android:focusable="true"
-                android:clickable="true" />
+                android:clickable="true"/>
 
             <TextView
                 android:id="@+id/btn_refresh"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="↻"
-                android:textColor="@color/accent"
+                android:textColor="#c8851a"
                 android:textSize="20sp"
-                android:paddingStart="8dp"
+                android:paddingLeft="8dp"
                 android:focusable="true"
-                android:clickable="true" />
+                android:clickable="true"/>
         </LinearLayout>
 
-        <!-- Playlist Tabs -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_playlists"
             android:layout_width="match_parent"
             android:layout_height="36dp"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="3dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
             android:orientation="horizontal"
             android:clipToPadding="false"
-            android:background="@color/bg_card" />
+            android:background="#112244"/>
 
-        <!-- Search -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="38dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:marginHorizontal="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="4dp"
             android:background="@drawable/bg_channel_logo"
-            android:paddingHorizontal="10dp">
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="🔍"
                 android:textSize="12sp"
-                android:paddingEnd="6dp" />
+                android:paddingRight="6dp"/>
 
             <EditText
                 android:id="@+id/et_search"
@@ -90,43 +91,40 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:hint="Cari saluran..."
-                android:hintTextColor="@color/text_muted"
-                android:textColor="@color/text_primary"
+                android:textColor="#ffffff"
                 android:textSize="12sp"
                 android:background="@null"
                 android:inputType="text"
-                android:singleLine="true" />
+                android:singleLine="true"/>
         </LinearLayout>
 
-        <!-- Group Filter -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_groups"
             android:layout_width="match_parent"
             android:layout_height="36dp"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="4dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
             android:orientation="horizontal"
-            android:clipToPadding="false" />
+            android:clipToPadding="false"/>
 
-        <!-- Progress -->
         <ProgressBar
             android:id="@+id/progress_bar"
             android:layout_width="match_parent"
             android:layout_height="2dp"
             style="?android:attr/progressBarStyleHorizontal"
             android:indeterminate="true"
-            android:indeterminateTint="@color/accent"
-            android:visibility="gone" />
+            android:indeterminateTint="#c8851a"
+            android:visibility="gone"/>
 
-        <!-- Channel List -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_channels"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:clipToPadding="false" />
+            android:clipToPadding="false"/>
 
-        <!-- Empty State -->
         <LinearLayout
             android:id="@+id/layout_empty"
             android:layout_width="match_parent"
@@ -140,47 +138,46 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="📺"
-                android:textSize="32sp" />
+                android:textSize="32sp"/>
 
             <TextView
                 android:id="@+id/tv_empty"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Tambahkan\nplaylist M3U"
-                android:textColor="@color/text_muted"
+                android:textColor="#8aaad4"
                 android:textSize="12sp"
                 android:gravity="center"
-                android:layout_marginTop="8dp" />
+                android:layout_marginTop="8dp"/>
 
             <TextView
                 android:id="@+id/btn_empty_add"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="+ Tambah"
-                android:textColor="@color/accent"
+                android:textColor="#ffffff"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:layout_marginTop="12dp"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="8dp"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
                 android:background="@drawable/bg_accent_rounded"
                 android:focusable="true"
-                android:clickable="true" />
+                android:clickable="true"/>
         </LinearLayout>
 
-        <!-- Channel count footer -->
         <TextView
             android:id="@+id/tv_channel_count"
             android:layout_width="match_parent"
             android:layout_height="24dp"
             android:gravity="center"
-            android:textColor="@color/text_muted"
+            android:textColor="#8aaad4"
             android:textSize="10sp"
-            android:background="@color/bg_card" />
-
+            android:background="#112244"/>
     </LinearLayout>
 
-    <!-- ===== AREA KANAN: Info / Welcome ===== -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
@@ -189,46 +186,44 @@
         android:gravity="center"
         android:padding="40dp">
 
-        <!-- Placeholder saat belum pilih channel -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="📺"
-            android:textSize="72sp" />
+            android:textSize="72sp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="PLAY M3U"
-            android:textColor="@color/text_primary"
+            android:textColor="#ffffff"
             android:textSize="28sp"
             android:textStyle="bold"
-            android:letterSpacing="0.1"
-            android:layout_marginTop="16dp" />
+            android:layout_marginTop="16dp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Pilih saluran dari daftar\ndi sebelah kiri untuk mulai menonton"
-            android:textColor="@color/text_muted"
+            android:text="Pilih saluran dari daftar di sebelah kiri\nuntuk mulai menonton"
+            android:textColor="#8aaad4"
             android:textSize="13sp"
             android:gravity="center"
             android:lineSpacingMultiplier="1.6"
-            android:layout_marginTop="12dp" />
+            android:layout_marginTop="12dp"/>
 
         <View
             android:layout_width="60dp"
             android:layout_height="2dp"
-            android:background="@color/accent"
-            android:layout_marginTop="24dp" />
+            android:background="#c8851a"
+            android:layout_marginTop="24dp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Remote: ↑↓ ganti channel  •  OK untuk tonton"
-            android:textColor="@color/text_muted"
+            android:textColor="#8aaad4"
             android:textSize="11sp"
-            android:layout_marginTop="16dp" />
+            android:layout_marginTop="16dp"/>
     </LinearLayout>
 
 </LinearLayout>
