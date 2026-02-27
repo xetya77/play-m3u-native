@@ -4,61 +4,59 @@
     android:layout_height="64dp"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingHorizontal="14dp"
-    android:paddingVertical="8dp"
+    android:paddingLeft="14dp"
+    android:paddingRight="14dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
     android:focusable="true"
     android:clickable="true"
     android:background="@drawable/selector_channel_item">
 
-    <!-- Nomor Channel -->
     <TextView
         android:id="@+id/tv_number"
         android:layout_width="30dp"
         android:layout_height="wrap_content"
-        android:textColor="@color/text_muted"
+        android:textColor="#8aaad4"
         android:textSize="11sp"
         android:gravity="center"
-        android:paddingEnd="4dp" />
+        android:paddingRight="4dp"/>
 
-    <!-- Logo -->
     <ImageView
         android:id="@+id/iv_logo"
         android:layout_width="44dp"
         android:layout_height="44dp"
         android:scaleType="fitCenter"
         android:padding="4dp"
-        android:background="@drawable/bg_channel_logo" />
+        android:background="@drawable/bg_channel_logo"/>
 
-    <!-- Nama + Group -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:paddingStart="12dp">
+        android:paddingLeft="12dp">
 
         <TextView
             android:id="@+id/tv_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_primary"
+            android:textColor="#ffffff"
             android:textSize="13sp"
             android:textStyle="bold"
             android:singleLine="true"
-            android:ellipsize="end" />
+            android:ellipsize="end"/>
 
         <TextView
             android:id="@+id/tv_group"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_muted"
+            android:textColor="#8aaad4"
             android:textSize="11sp"
             android:singleLine="true"
             android:ellipsize="end"
-            android:layout_marginTop="2dp" />
+            android:layout_marginTop="2dp"/>
     </LinearLayout>
 
-    <!-- DRM Badge -->
     <TextView
         android:id="@+id/tv_drm"
         android:layout_width="wrap_content"
@@ -66,9 +64,10 @@
         android:text="DRM"
         android:textColor="#ff6b6b"
         android:textSize="9sp"
-        android:paddingHorizontal="5dp"
-        android:paddingVertical="2dp"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
         android:background="@drawable/bg_status_pill"
-        android:visibility="gone" />
-
+        android:visibility="gone"/>
 </LinearLayout>
