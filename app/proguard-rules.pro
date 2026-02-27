@@ -1,0 +1,3 @@
+-keep class com.iptvplayer.app.data.** { *; }
+-keep class androidx.media3.** { *; }
+-dontwarn androidx.media3.**
