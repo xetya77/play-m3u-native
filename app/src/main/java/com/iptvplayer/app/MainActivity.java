@@ -32,7 +32,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class MainActivity extends Activity {
+public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     // ===== PAGES =====
     private View pageWelcome, pageSource, pageUrl, pageName, pageSettings, pagePlaylists;

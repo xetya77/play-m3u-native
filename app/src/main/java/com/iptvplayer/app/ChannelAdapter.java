@@ -86,7 +86,7 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.VH> {
                     .load(ch.logoUrl)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .placeholder(R.drawable.bg_ch_logo)
-                    .error(null)
+                    .error((android.graphics.drawable.Drawable) null)
                     .into(h.ivLogo);
         } else {
             h.ivLogo.setVisibility(View.GONE);

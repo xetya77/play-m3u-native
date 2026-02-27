@@ -325,7 +325,7 @@ public class PlayerActivity extends Activity {
                     .load(ch.logoUrl)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .placeholder(R.drawable.bg_ch_logo)
-                    .error(null)
+                    .error((android.graphics.drawable.Drawable) null)
                     .into(ivChLogo);
         } else {
             ivChLogo.setVisibility(View.GONE);
