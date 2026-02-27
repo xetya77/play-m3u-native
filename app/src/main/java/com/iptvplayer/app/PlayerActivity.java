@@ -163,11 +163,14 @@ public class PlayerActivity extends Activity {
             @Override
             public void onPlaybackStateChanged(int state) {
                 if (state == Player.STATE_BUFFERING) {
+                    // Transparan saat buffering - siaran terakhir masih terlihat
+                    videoLoading.setBackgroundColor(0x00000000);
                     videoLoading.setVisibility(View.VISIBLE);
                     tvLoadingMsg.setText("Memuat...");
                 } else if (state == Player.STATE_READY) {
                     videoLoading.setVisibility(View.GONE);
                 } else if (state == Player.STATE_ENDED) {
+                    videoLoading.setBackgroundColor(0x00000000);
                     videoLoading.setVisibility(View.VISIBLE);
                     tvLoadingMsg.setText("Stream berakhir...");
                 }
@@ -292,6 +295,8 @@ public class PlayerActivity extends Activity {
 
         if (withFlash) blackFlash();
 
+        // Loading selalu transparan agar siaran terakhir tetap terlihat
+        videoLoading.setBackgroundColor(0x00000000);
         videoLoading.setVisibility(View.VISIBLE);
         tvLoadingMsg.setText("Memuat...");
 

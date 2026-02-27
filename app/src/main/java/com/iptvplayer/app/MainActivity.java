@@ -104,7 +104,14 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         if (playlists.isEmpty()) {
             showPage("welcome");
         } else {
-            showPage("settings");
+            // Jika sudah ada playlist, langsung play tanpa perlu klik "Mulai Menonton"
+            boolean launchedFromIcon = getIntent().getAction() != null &&
+                    getIntent().getAction().equals(android.content.Intent.ACTION_MAIN);
+            if (launchedFromIcon) {
+                autoPlay();
+            } else {
+                showPage("settings");
+            }
         }
     }
 
@@ -276,6 +283,27 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 rebuildPlaylistList();
                 break;
         }
+    }
+
+    private void autoPlay() {
+        if (playlists.isEmpty()) {
+            showPage("welcome");
+            return;
+        }
+        Playlist pl = playlists.get(currentPlaylistIdx);
+        if (pl.channels == null || pl.channels.isEmpty()) {
+            // Channel belum ada, tampilkan settings
+            showPage("settings");
+            return;
+        }
+        int chIdx = prefs.getCurrentChannelIndex();
+        if (chIdx >= pl.channels.size()) chIdx = 0;
+        Intent intent = new Intent(this, PlayerActivity.class);
+        intent.putExtra("playlist_index", currentPlaylistIdx);
+        intent.putExtra("channel_index", chIdx);
+        startActivity(intent);
+        // Tetap tampilkan settings di belakang agar bisa balik
+        showPage("settings");
     }
 
     private void confirmExit() {
