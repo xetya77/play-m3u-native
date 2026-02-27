@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.IPTVPlayer" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:windowBackground">#0a1628</item>
-        <item name="android:statusBarColor">#0a1628</item>
-        <item name="android:navigationBarColor">#0a1628</item>
-        <item name="colorPrimary">#c8851a</item>
-        <item name="colorPrimaryDark">#162a50</item>
+    <style name="Theme.PlayM3U" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/bg_dark</item>
+        <item name="android:statusBarColor">@color/bg_dark</item>
+        <item name="android:navigationBarColor">@color/bg_dark</item>
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorPrimaryDark">@color/bg_card2</item>
+        <item name="android:textColor">@color/text_white</item>
+    </style>
+
+    <style name="Theme.PlayM3U.Player" parent="Theme.PlayM3U">
+        <item name="android:windowBackground">@color/black</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:statusBarColor">@color/transparent</item>
+        <item name="android:navigationBarColor">@color/transparent</item>
     </style>
 </resources>

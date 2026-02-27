@@ -4,8 +4,11 @@
     <color name="bg_card">#112244</color>
     <color name="bg_card2">#162a50</color>
     <color name="accent">#c8851a</color>
-    <color name="accent_hover">#e09820</color>
-    <color name="text_primary">#ffffff</color>
+    <color name="accent2">#e09820</color>
+    <color name="text_white">#ffffff</color>
     <color name="text_muted">#8aaad4</color>
-    <color name="player_bg">#000000</color>
+    <color name="text_desc">#ccd6ec</color>
+    <color name="divider">#14ffffff</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
 </resources>
