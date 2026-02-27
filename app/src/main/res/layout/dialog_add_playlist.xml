@@ -3,38 +3,97 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:background="@drawable/bg_card"
+    android:padding="24dp">
 
+    <!-- Title -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Tambah Playlist"
+        android:textColor="@color/text_primary"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Nama -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Nama Playlist"
-        android:textColor="#374151"
+        android:textColor="@color/text_muted"
         android:textSize="12sp"
-        android:paddingBottom="4dp" />
+        android:layout_marginBottom="8dp" />
 
     <EditText
         android:id="@+id/et_playlist_name"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:hint="Contoh: TV Indonesia"
+        android:hintTextColor="@color/text_muted"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
         android:inputType="text"
-        android:layout_marginBottom="12dp" />
+        android:paddingHorizontal="14dp"
+        android:background="@drawable/bg_input"
+        android:layout_marginBottom="16dp" />
 
+    <!-- URL -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="URL Playlist M3U"
-        android:textColor="#374151"
+        android:textColor="@color/text_muted"
         android:textSize="12sp"
-        android:paddingBottom="4dp" />
+        android:layout_marginBottom="8dp" />
 
     <EditText
         android:id="@+id/et_playlist_url"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="http://..."
+        android:layout_height="48dp"
+        android:hint="http://contoh.com/playlist.m3u"
+        android:hintTextColor="@color/text_muted"
+        android:textColor="@color/text_primary"
+        android:textSize="13sp"
         android:inputType="textUri"
-        android:singleLine="true" />
+        android:singleLine="true"
+        android:paddingHorizontal="14dp"
+        android:background="@drawable/bg_input" />
+
+    <!-- Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:layout_marginTop="24dp">
+
+        <TextView
+            android:id="@+id/btn_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:gravity="center"
+            android:text="Batal"
+            android:textColor="@color/text_muted"
+            android:textSize="14sp"
+            android:paddingHorizontal="20dp"
+            android:focusable="true"
+            android:clickable="true" />
+
+        <TextView
+            android:id="@+id/btn_confirm"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:gravity="center"
+            android:text="Tambah"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:paddingHorizontal="20dp"
+            android:background="@drawable/bg_accent_rounded"
+            android:focusable="true"
+            android:clickable="true"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
 
 </LinearLayout>
