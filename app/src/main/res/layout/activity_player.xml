@@ -10,111 +10,68 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <!-- Black flash on channel change -->
-    <View
-        android:id="@+id/black_flash"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/black"
-        android:alpha="0"
-        android:visibility="invisible"/>
-
-    <!-- Loading dots (like HTML video-loading) -->
+    <!-- Buffering overlay -->
     <LinearLayout
-        android:id="@+id/video_loading"
+        android:id="@+id/layout_buffering"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="center"
-        android:background="@color/black">
+        android:background="#aa000000"
+        android:visibility="gone">
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center">
-            <ProgressBar
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:indeterminateTint="#3a7bd5"/>
-        </LinearLayout>
+        <ProgressBar
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:indeterminateTint="#3a7bd5"/>
 
         <TextView
-            android:id="@+id/tv_loading_msg"
+            android:id="@+id/tv_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Memuat..."
-            android:textColor="#80ffffff"
+            android:textColor="#ccffffff"
             android:textSize="13sp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:paddingLeft="20dp"
             android:paddingRight="20dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
             android:background="@drawable/bg_loading_pill"/>
     </LinearLayout>
 
-    <!-- Channel Info OSD (bottom-right like HTML) -->
+    <!-- OSD (bottom bar) -->
     <LinearLayout
-        android:id="@+id/channel_info"
-        android:layout_width="wrap_content"
+        android:id="@+id/osd_layout"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|right"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="20dp"
+        android:layout_gravity="bottom"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@drawable/bg_ch_info_osd"
-        android:paddingLeft="14dp"
-        android:paddingRight="18dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="12dp"
-        android:minWidth="200dp"
-        android:maxWidth="320dp"
+        android:background="@drawable/bg_osd"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
         android:visibility="gone">
 
-        <!-- Logo -->
-        <FrameLayout
-            android:id="@+id/ch_logo_container"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+        <!-- Channel logo -->
+        <ImageView
+            android:id="@+id/iv_channel_logo"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:scaleType="fitCenter"
             android:background="@drawable/bg_ch_logo"
-            android:layout_marginRight="12dp">
+            android:padding="4dp"
+            android:layout_marginRight="12dp"/>
 
-            <ImageView
-                android:id="@+id/iv_ch_logo"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="fitCenter"
-                android:padding="4dp"/>
-
-            <TextView
-                android:id="@+id/tv_ch_logo_fallback"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:textColor="#66ffffff"
-                android:textSize="10sp"
-                android:textStyle="bold"
-                android:visibility="gone"/>
-        </FrameLayout>
-
-        <!-- Channel details -->
+        <!-- Channel info -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:orientation="vertical">
 
-            <!-- Playlist name (orange) -->
-            <TextView
-                android:id="@+id/tv_ch_playlist_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/accent2"
-                android:textSize="11sp"
-                android:layout_marginBottom="3dp"/>
-
-            <!-- Number + Channel name -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -122,154 +79,163 @@
                 android:gravity="center_vertical">
 
                 <TextView
-                    android:id="@+id/tv_ch_num"
+                    android:id="@+id/tv_channel_number"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/text_white"
-                    android:textSize="22sp"
-                    android:layout_marginRight="10dp"/>
+                    android:textColor="@color/accent2"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:layout_marginRight="8dp"/>
 
                 <TextView
-                    android:id="@+id/tv_ch_name"
+                    android:id="@+id/tv_channel_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="@color/text_white"
                     android:textSize="16sp"
+                    android:textStyle="bold"
                     android:singleLine="true"
-                    android:ellipsize="end"
-                    android:maxWidth="180dp"/>
+                    android:ellipsize="end"/>
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_channel_group"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#99ffffff"
+                android:textSize="12sp"
+                android:layout_marginTop="2dp"/>
         </LinearLayout>
 
-        <!-- Group (top right of OSD) -->
+        <!-- Channel list button -->
         <TextView
-            android:id="@+id/tv_ch_group"
+            android:id="@+id/btn_channel_list"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="top|right"
-            android:textColor="#b3ffffff"
-            android:textSize="11sp"/>
+            android:text="☰ Saluran"
+            android:textColor="@color/accent2"
+            android:textSize="13sp"
+            android:background="@drawable/bg_accent_rounded"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"/>
     </LinearLayout>
 
-    <!-- Number input overlay (TV remote) -->
-    <TextView
-        android:id="@+id/num_overlay"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|right"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="80dp"
-        android:textColor="@color/text_white"
-        android:textSize="36sp"
-        android:textStyle="bold"
-        android:paddingLeft="24dp"
-        android:paddingRight="24dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="12dp"
-        android:letterSpacing="0.1"
-        android:background="@drawable/bg_loading_pill"
-        android:visibility="gone"/>
-
-    <!-- Channel List Panel (from right, like HTML) -->
+    <!-- Backdrop for channel panel -->
     <View
         android:id="@+id/ch_list_backdrop"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#80000000"
-        android:alpha="0"
-        android:visibility="invisible"/>
+        android:visibility="gone"/>
 
+    <!-- Channel list panel (slides from left) -->
     <LinearLayout
         android:id="@+id/ch_list_panel"
-        android:layout_width="360dp"
+        android:layout_width="300dp"
         android:layout_height="match_parent"
-        android:layout_gravity="right"
+        android:layout_gravity="left"
         android:orientation="vertical"
         android:background="#f70a1628"
-        android:translationX="360dp"
-        android:elevation="8dp">
+        android:elevation="8dp"
+        android:visibility="gone">
 
         <!-- Panel header -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingLeft="20dp"
-            android:paddingRight="20dp"
-            android:paddingTop="20dp"
-            android:paddingBottom="14dp">
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="12dp">
 
-            <TextView
-                android:id="@+id/tv_panel_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="SEMUA SALURAN"
-                android:textColor="@color/accent2"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.07"
-                android:layout_marginBottom="12dp"/>
-
-            <EditText
-                android:id="@+id/et_ch_search"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="42dp"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="10dp">
+
+                <TextView
+                    android:id="@+id/tv_panel_playlist_name"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/accent2"
+                    android:textSize="13sp"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/btn_close_panel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="✕"
+                    android:textColor="#99ffffff"
+                    android:textSize="18sp"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="8dp"/>
+            </LinearLayout>
+
+            <!-- Search -->
+            <EditText
+                android:id="@+id/et_panel_search"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
                 android:hint="Cari saluran..."
                 android:textColor="@color/text_white"
+                android:textColorHint="#66ffffff"
                 android:textSize="13sp"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
                 android:background="@drawable/bg_search"
                 android:inputType="text"
                 android:singleLine="true"/>
         </LinearLayout>
 
+        <!-- Group tabs -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_panel_groups"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingBottom="8dp"
+            android:clipToPadding="false"/>
+
         <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#14ffffff"/>
 
-        <!-- Channel RecyclerView -->
+        <!-- Channel list -->
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_ch_list"
+            android:id="@+id/rv_panel_channels"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"/>
     </LinearLayout>
 
-    <!-- Swipe hint -->
+    <!-- Swipe feedback up -->
     <TextView
-        android:id="@+id/swipe_hint"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="40dp"
-        android:text="↑↓ ganti channel  |  ← daftar saluran"
-        android:textColor="#b3ffffff"
-        android:textSize="11sp"
-        android:paddingLeft="18dp"
-        android:paddingRight="18dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:background="@drawable/bg_loading_pill"
-        android:alpha="0"/>
-
-    <!-- Swipe feedback arrows -->
-    <TextView
-        android:id="@+id/swipe_fb_up"
+        android:id="@+id/swipe_up_fb"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|center_horizontal"
-        android:layout_marginTop="80dp"
+        android:layout_marginTop="60dp"
         android:text="⬆"
         android:textSize="32sp"
-        android:alpha="0"/>
+        android:textColor="#ccffffff"
+        android:visibility="gone"/>
 
+    <!-- Swipe feedback down -->
     <TextView
-        android:id="@+id/swipe_fb_down"
+        android:id="@+id/swipe_down_fb"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="80dp"
+        android:layout_marginBottom="60dp"
         android:text="⬇"
         android:textSize="32sp"
-        android:alpha="0"/>
+        android:textColor="#ccffffff"
+        android:visibility="gone"/>
 
 </FrameLayout>
