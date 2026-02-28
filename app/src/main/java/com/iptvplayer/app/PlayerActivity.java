@@ -342,10 +342,10 @@ public class PlayerActivity extends Activity {
                 String key   = parts[1].trim();
 
                 // Build ClearKey JSON
-                byte[] clearKeyJson = ("{"keys":[{"kty":"oct","kid":""
-                        + toBase64Url(hexToBytes(keyId)) + "","k":""
-                        + toBase64Url(hexToBytes(key)) + ""}],"type":"temporary"}")
-                        .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                String clearKeyJsonStr = "{\"keys\":[{\"kty\":\"oct\",\"kid\":\""
+                        + toBase64Url(hexToBytes(keyId)) + "\",\"k\":\""
+                        + toBase64Url(hexToBytes(key)) + "\"}],\"type\":\"temporary\"}";
+                byte[] clearKeyJson = clearKeyJsonStr.getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
                 androidx.media3.exoplayer.drm.DefaultDrmSessionManager drmManager =
                         new androidx.media3.exoplayer.drm.DefaultDrmSessionManager.Builder()
