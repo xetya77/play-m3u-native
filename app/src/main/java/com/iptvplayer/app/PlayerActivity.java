@@ -318,19 +318,26 @@ public class PlayerActivity extends Activity {
                     ? ch.userAgent
                     : "Mozilla/5.0 (Linux; Android 10; TV) AppleWebKit/537.36 Chrome/96.0 Safari/537.36";
 
-            DefaultHttpDataSource.Factory dsFactory = new DefaultHttpDataSource.Factory()
-                    .setUserAgent(ua)
-                    .setConnectTimeoutMs(15000)
-                    .setReadTimeoutMs(20000)
-                    .setAllowCrossProtocolRedirects(true);
+            Map<String, String> headers = new HashMap<>();
 
             // Set referrer/origin jika ada
             if (ch.referrer != null && !ch.referrer.isEmpty()) {
-                Map<String, String> headers = new HashMap<>();
+                String origin = ch.referrer.replaceAll("/$", "");
                 headers.put("Referer", ch.referrer);
-                headers.put("Origin", ch.referrer.replaceAll("/$", ""));
-                dsFactory.setDefaultRequestProperties(headers);
+                headers.put("Origin", origin);
             }
+
+            // Tambah Accept header standar browser
+            headers.put("Accept", "*/*");
+            headers.put("Accept-Language", "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7");
+            headers.put("Connection", "keep-alive");
+
+            DefaultHttpDataSource.Factory dsFactory = new DefaultHttpDataSource.Factory()
+                    .setUserAgent(ua)
+                    .setConnectTimeoutMs(20000)
+                    .setReadTimeoutMs(30000)
+                    .setAllowCrossProtocolRedirects(true)
+                    .setDefaultRequestProperties(headers);
 
             String urlLower = ch.url.toLowerCase();
             MediaSource mediaSource;
