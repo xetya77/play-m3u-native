@@ -22,9 +22,17 @@ import androidx.annotation.OptIn;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
+import androidx.media3.common.C;
+import androidx.media3.common.util.Util;
 import androidx.media3.datasource.DefaultHttpDataSource;
 import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.drm.DefaultDrmSessionManagerProvider;
+import androidx.media3.exoplayer.drm.DrmSessionManagerProvider;
+import androidx.media3.exoplayer.drm.FrameworkMediaDrm;
+import androidx.media3.exoplayer.drm.LocalMediaDrmCallback;
+import androidx.media3.exoplayer.drm.DefaultDrmSessionManager;
 import androidx.media3.exoplayer.hls.HlsMediaSource;
+import androidx.media3.exoplayer.dash.DashMediaSource;
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
 import androidx.media3.exoplayer.source.MediaSource;
 import androidx.media3.ui.PlayerView;
@@ -324,13 +332,44 @@ public class PlayerActivity extends Activity {
                 dsFactory.setDefaultRequestProperties(headers);
             }
 
-            MediaItem media = MediaItem.fromUri(ch.url);
+            String urlLower = ch.url.toLowerCase();
             MediaSource mediaSource;
 
-            String urlLower = ch.url.toLowerCase();
-            if (urlLower.contains(".m3u8") || urlLower.contains("/hls/") || urlLower.contains("m3u8")) {
+            // ClearKey DRM (contoh: MNCTV)
+            if ("clearkey".equals(ch.drmType) && ch.drmKey != null && ch.drmKey.contains(":")) {
+                String[] parts = ch.drmKey.split(":");
+                String keyId = parts[0].trim();
+                String key   = parts[1].trim();
+
+                // Build ClearKey JSON
+                byte[] clearKeyJson = ("{"keys":[{"kty":"oct","kid":""
+                        + toBase64Url(hexToBytes(keyId)) + "","k":""
+                        + toBase64Url(hexToBytes(key)) + ""}],"type":"temporary"}")
+                        .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+                androidx.media3.exoplayer.drm.DefaultDrmSessionManager drmManager =
+                        new androidx.media3.exoplayer.drm.DefaultDrmSessionManager.Builder()
+                                .setUuidAndExoMediaDrmProvider(
+                                        androidx.media3.common.C.CLEARKEY_UUID,
+                                        androidx.media3.exoplayer.drm.FrameworkMediaDrm.DEFAULT_PROVIDER)
+                                .build(new androidx.media3.exoplayer.drm.LocalMediaDrmCallback(clearKeyJson));
+
+                MediaItem media = MediaItem.fromUri(ch.url);
+                mediaSource = new DashMediaSource.Factory(dsFactory)
+                        .setDrmSessionManagerProvider(unusedMediaItem -> drmManager)
+                        .createMediaSource(media);
+
+            } else if (urlLower.contains(".mpd") || urlLower.contains("dash")) {
+                // DASH tanpa DRM atau Widevine (Widevine butuh lisensi server)
+                MediaItem media = MediaItem.fromUri(ch.url);
+                mediaSource = new DashMediaSource.Factory(dsFactory).createMediaSource(media);
+
+            } else if (urlLower.contains(".m3u8") || urlLower.contains("/hls/") || urlLower.contains("m3u8")) {
+                MediaItem media = MediaItem.fromUri(ch.url);
                 mediaSource = new HlsMediaSource.Factory(dsFactory).createMediaSource(media);
+
             } else {
+                MediaItem media = MediaItem.fromUri(ch.url);
                 mediaSource = new DefaultMediaSourceFactory(dsFactory).createMediaSource(media);
             }
 
@@ -506,6 +545,24 @@ public class PlayerActivity extends Activity {
             }
         };
         handler.postDelayed(numClearRunnable, 1500);
+    }
+
+
+    // ===== DRM HELPERS =====
+
+    private static byte[] hexToBytes(String hex) {
+        int len = hex.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+                    + Character.digit(hex.charAt(i + 1), 16));
+        }
+        return data;
+    }
+
+    private static String toBase64Url(byte[] input) {
+        String b64 = android.util.Base64.encodeToString(input, android.util.Base64.NO_WRAP);
+        return b64.replace('+', '-').replace('/', '_').replace("=", "");
     }
 
     // ===== LIFECYCLE =====

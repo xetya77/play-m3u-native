@@ -8,6 +8,8 @@ public class Channel {
     public boolean isDrm;
     public String userAgent;
     public String referrer;
+    public String drmType;   // "clearkey" atau "widevine"
+    public String drmKey;    // untuk clearkey: "keyid:key"
 
     public Channel(String name, String url, String logoUrl, String group) {
         this.name = name;
