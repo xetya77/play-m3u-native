@@ -380,12 +380,18 @@ public class PlayerActivity extends Activity {
                 float dX = e2.getX() - e1.getX();
 
                 if (Math.abs(dX) > Math.abs(dY)) {
-                    if (dX < -80 && Math.abs(vX) > 100) {
-                        // Swipe kiri → buka panel
-                        if (!panelOpen && !categoryFullOpen) openPanel();
+                    if (dX > 80 && Math.abs(vX) > 100) {
+                        // Swipe KANAN:
+                        // - Tidak ada panel terbuka → buka panel daftar channel
+                        // - Panel sudah terbuka → buka panel kategori (keterangan icon)
+                        if (!panelOpen && !categoryFullOpen) {
+                            openPanel();
+                        } else if (panelOpen && !categoryFullOpen) {
+                            openCategoryFull();
+                        }
                         return true;
-                    } else if (dX > 80 && Math.abs(vX) > 100) {
-                        // Swipe kanan → tutup panel
+                    } else if (dX < -80 && Math.abs(vX) > 100) {
+                        // Swipe KIRI → tutup / kembali
                         if (categoryFullOpen) closeCategoryFull();
                         else if (panelOpen) hidePanel();
                         return true;
@@ -729,12 +735,18 @@ public class PlayerActivity extends Activity {
                 return true;
 
             case KeyEvent.KEYCODE_DPAD_LEFT:
-                if (categoryFullOpen) closeCategoryFull();
-                else if (panelOpen) hidePanel();
-                else openPanel();
+                // Kiri 1x → buka daftar channel
+                // Kiri 2x (panel sudah terbuka) → buka kategori
+                if (!panelOpen && !categoryFullOpen) {
+                    openPanel();
+                } else if (panelOpen && !categoryFullOpen) {
+                    openCategoryFull();
+                }
+                // Jika kategori sudah terbuka, kiri tidak ada aksi (gunakan BACK untuk kembali)
                 return true;
 
             case KeyEvent.KEYCODE_DPAD_RIGHT:
+                // Kanan = tutup/kembali (kebalikan dari kiri)
                 if (categoryFullOpen) closeCategoryFull();
                 else if (panelOpen) hidePanel();
                 return true;
