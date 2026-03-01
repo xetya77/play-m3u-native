@@ -144,15 +144,12 @@
         android:background="#99000000" android:alpha="0" android:visibility="invisible"/>
 
     <!--
-        SIDEBAR KATEGORI — SATU panel, dua mode:
-        MODE NORMAL (panelOpen): lebar 68dp saja yang terlihat (icon strip)
-          → translationX = -(240-68) = -172dp
-        MODE EXPANDED (categoryFullOpen): seluruh 240dp terlihat (icon + teks)
-          → translationX = 0
-        Label teks (tv_cat_*) gone saat normal, visible saat expanded
+        SIDEBAR KATEGORI — icon strip 68dp (fixed, tidak melebar)
+        Selalu tampil saat panel terbuka
+        Masuk dari kiri: translationX dari -68dp → 0
     -->
     <LinearLayout android:id="@+id/category_sidebar"
-        android:layout_width="240dp"
+        android:layout_width="68dp"
         android:layout_height="match_parent"
         android:layout_gravity="left"
         android:orientation="vertical"
@@ -160,95 +157,59 @@
         android:background="@drawable/bg_sidebar"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
-        android:translationX="-240dp"
         android:visibility="invisible"
         android:elevation="12dp">
 
-        <!-- Semua -->
         <LinearLayout android:id="@+id/cat_all"
             android:layout_width="match_parent" android:layout_height="56dp"
-            android:orientation="horizontal" android:gravity="center_vertical"
-            android:paddingLeft="21dp" android:paddingRight="12dp"
+            android:gravity="center"
             android:clickable="true" android:focusable="true">
             <ImageView android:id="@+id/ic_cat_all"
                 android:layout_width="26dp" android:layout_height="26dp"
                 android:src="@drawable/ic_all" android:alpha="1.0"/>
-            <TextView android:id="@+id/tv_cat_all"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginLeft="18dp"
-                android:text="Semua" android:textColor="#FFFFFF"
-                android:textSize="17sp" android:visibility="gone"/>
         </LinearLayout>
 
-        <!-- Siaran TV -->
         <LinearLayout android:id="@+id/cat_tv"
             android:layout_width="match_parent" android:layout_height="56dp"
-            android:orientation="horizontal" android:gravity="center_vertical"
-            android:paddingLeft="21dp" android:paddingRight="12dp"
+            android:gravity="center"
             android:clickable="true" android:focusable="true">
             <ImageView android:id="@+id/ic_cat_tv"
                 android:layout_width="26dp" android:layout_height="26dp"
                 android:src="@drawable/ic_tv" android:alpha="0.5"/>
-            <TextView android:id="@+id/tv_cat_tv"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginLeft="18dp"
-                android:text="Siaran TV" android:textColor="#80FFFFFF"
-                android:textSize="17sp" android:visibility="gone"/>
         </LinearLayout>
 
-        <!-- Radio -->
         <LinearLayout android:id="@+id/cat_radio"
             android:layout_width="match_parent" android:layout_height="56dp"
-            android:orientation="horizontal" android:gravity="center_vertical"
-            android:paddingLeft="21dp" android:paddingRight="12dp"
+            android:gravity="center"
             android:clickable="true" android:focusable="true">
             <ImageView android:id="@+id/ic_cat_radio"
                 android:layout_width="26dp" android:layout_height="26dp"
                 android:src="@drawable/ic_radio" android:alpha="0.5"/>
-            <TextView android:id="@+id/tv_cat_radio"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginLeft="18dp"
-                android:text="Radio" android:textColor="#80FFFFFF"
-                android:textSize="17sp" android:visibility="gone"/>
         </LinearLayout>
 
-        <!-- Film -->
         <LinearLayout android:id="@+id/cat_movie"
             android:layout_width="match_parent" android:layout_height="56dp"
-            android:orientation="horizontal" android:gravity="center_vertical"
-            android:paddingLeft="21dp" android:paddingRight="12dp"
+            android:gravity="center"
             android:clickable="true" android:focusable="true">
             <ImageView android:id="@+id/ic_cat_movie"
                 android:layout_width="26dp" android:layout_height="26dp"
                 android:src="@drawable/ic_movie" android:alpha="0.5"/>
-            <TextView android:id="@+id/tv_cat_movie"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginLeft="18dp"
-                android:text="Film" android:textColor="#80FFFFFF"
-                android:textSize="17sp" android:visibility="gone"/>
         </LinearLayout>
 
-        <!-- Pengaturan -->
         <LinearLayout android:id="@+id/cat_settings"
             android:layout_width="match_parent" android:layout_height="56dp"
-            android:orientation="horizontal" android:gravity="center_vertical"
-            android:paddingLeft="21dp" android:paddingRight="12dp"
+            android:gravity="center"
             android:clickable="true" android:focusable="true">
             <ImageView android:id="@+id/ic_cat_settings"
                 android:layout_width="26dp" android:layout_height="26dp"
                 android:src="@drawable/ic_settings" android:alpha="0.5"/>
-            <TextView android:id="@+id/tv_cat_settings"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginLeft="18dp"
-                android:text="Pengaturan" android:textColor="#80FFFFFF"
-                android:textSize="17sp" android:visibility="gone"/>
         </LinearLayout>
     </LinearLayout>
 
     <!--
         PANEL DAFTAR CHANNEL
-        marginLeft=68dp → muncul tepat di sebelah kanan icon strip
-        Hanya tampil saat panelOpen && !categoryFullOpen
+        layout_marginLeft=68dp → tepat di sebelah kanan sidebar
+        Tampil saat panelOpen, tersembunyi saat categoryFullOpen
     -->
     <LinearLayout android:id="@+id/ch_list_panel"
         android:layout_width="380dp"
@@ -291,6 +252,102 @@
 
         <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_ch_list"
             android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+    </LinearLayout>
+
+    <!--
+        PANEL KATEGORI EXPANDED — muncul di sebelah kanan sidebar (margin 68dp),
+        elevation lebih tinggi dari ch_list_panel → tampil di atasnya.
+        Berisi icon + label teks. Slide dari kiri (translationX -280 → 0).
+        Hanya muncul saat categoryFullOpen.
+    -->
+    <LinearLayout android:id="@+id/category_panel_full"
+        android:layout_width="240dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="left"
+        android:layout_marginLeft="68dp"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_category_panel"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:translationX="-240dp"
+        android:elevation="13dp"
+        android:visibility="invisible">
+
+        <!-- Semua -->
+        <LinearLayout android:id="@+id/cat_full_all"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingLeft="16dp" android:paddingRight="16dp"
+            android:layout_marginLeft="6dp" android:layout_marginRight="6dp"
+            android:clickable="true" android:focusable="true">
+            <ImageView android:id="@+id/cat_full_all_icon"
+                android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_all" android:layout_marginRight="16dp"/>
+            <TextView android:id="@+id/cat_full_all_text"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Semua" android:textColor="#FFFFFF" android:textSize="17sp"/>
+        </LinearLayout>
+
+        <!-- Siaran TV -->
+        <LinearLayout android:id="@+id/cat_full_tv"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingLeft="16dp" android:paddingRight="16dp"
+            android:layout_marginLeft="6dp" android:layout_marginRight="6dp"
+            android:clickable="true" android:focusable="true">
+            <ImageView android:id="@+id/cat_full_tv_icon"
+                android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_tv" android:layout_marginRight="16dp" android:alpha="0.5"/>
+            <TextView android:id="@+id/cat_full_tv_text"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Siaran TV" android:textColor="#80FFFFFF" android:textSize="17sp"/>
+        </LinearLayout>
+
+        <!-- Radio -->
+        <LinearLayout android:id="@+id/cat_full_radio"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingLeft="16dp" android:paddingRight="16dp"
+            android:layout_marginLeft="6dp" android:layout_marginRight="6dp"
+            android:clickable="true" android:focusable="true">
+            <ImageView android:id="@+id/cat_full_radio_icon"
+                android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_radio" android:layout_marginRight="16dp" android:alpha="0.5"/>
+            <TextView android:id="@+id/cat_full_radio_text"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Radio" android:textColor="#80FFFFFF" android:textSize="17sp"/>
+        </LinearLayout>
+
+        <!-- Film -->
+        <LinearLayout android:id="@+id/cat_full_movie"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingLeft="16dp" android:paddingRight="16dp"
+            android:layout_marginLeft="6dp" android:layout_marginRight="6dp"
+            android:clickable="true" android:focusable="true">
+            <ImageView android:id="@+id/cat_full_movie_icon"
+                android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_movie" android:layout_marginRight="16dp" android:alpha="0.5"/>
+            <TextView android:id="@+id/cat_full_movie_text"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Film" android:textColor="#80FFFFFF" android:textSize="17sp"/>
+        </LinearLayout>
+
+        <!-- Pengaturan -->
+        <LinearLayout android:id="@+id/cat_full_settings"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingLeft="16dp" android:paddingRight="16dp"
+            android:layout_marginLeft="6dp" android:layout_marginRight="6dp"
+            android:clickable="true" android:focusable="true">
+            <ImageView android:id="@+id/cat_full_settings_icon"
+                android:layout_width="24dp" android:layout_height="24dp"
+                android:src="@drawable/ic_settings" android:layout_marginRight="16dp" android:alpha="0.5"/>
+            <TextView android:id="@+id/cat_full_settings_text"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Pengaturan" android:textColor="#80FFFFFF" android:textSize="17sp"/>
+        </LinearLayout>
     </LinearLayout>
 
     <!-- Swipe feedback -->
