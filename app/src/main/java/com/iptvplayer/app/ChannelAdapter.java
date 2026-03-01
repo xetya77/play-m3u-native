@@ -1,5 +1,7 @@
 package com.iptvplayer.app;
 
+import android.animation.ObjectAnimator;
+import android.animation.AnimatorSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -131,13 +133,14 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.VH> {
         // Background: putih saat active (dipilih), transparan lainnya
         if (isActive) {
             h.itemBg.setVisibility(View.VISIBLE);
-            // Tampilkan waveform indikator, play arrow tersembunyi
-            h.tvWaveform.setVisibility(View.VISIBLE);
+            h.waveformBars.setVisibility(View.VISIBLE);
             h.ivPlayArrow.setVisibility(View.GONE);
+            h.startEqualizer();
         } else {
             h.itemBg.setVisibility(View.INVISIBLE);
-            h.tvWaveform.setVisibility(View.GONE);
+            h.waveformBars.setVisibility(View.GONE);
             h.ivPlayArrow.setVisibility(View.GONE);
+            h.stopEqualizer();
         }
 
         h.itemView.setOnClickListener(v -> {
@@ -146,23 +149,69 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.VH> {
     }
 
     @Override
+    public void onViewRecycled(@NonNull VH h) {
+        super.onViewRecycled(h);
+        h.stopEqualizer();
+    }
+
+    @Override
     public int getItemCount() { return filteredChannels.size(); }
 
     static class VH extends RecyclerView.ViewHolder {
         View itemBg;
-        TextView tvNum, tvName, tvEpg, tvFallback, tvWaveform;
+        TextView tvNum, tvName, tvEpg, tvFallback;
         ImageView ivLogo, ivPlayArrow;
+        LinearLayout waveformBars;
+        View eqBar1, eqBar2, eqBar3;
+        AnimatorSet eqAnimator;
 
         VH(View v) {
             super(v);
-            itemBg      = v.findViewById(R.id.item_bg);
-            tvNum       = v.findViewById(R.id.tv_num);
-            tvName      = v.findViewById(R.id.tv_ch_name);
-            tvEpg       = v.findViewById(R.id.tv_ch_epg);
-            ivLogo      = v.findViewById(R.id.iv_logo);
-            tvFallback  = v.findViewById(R.id.tv_logo_fallback);
-            ivPlayArrow = v.findViewById(R.id.iv_play_arrow);
-            tvWaveform  = v.findViewById(R.id.tv_waveform);
+            itemBg       = v.findViewById(R.id.item_bg);
+            tvNum        = v.findViewById(R.id.tv_num);
+            tvName       = v.findViewById(R.id.tv_ch_name);
+            tvEpg        = v.findViewById(R.id.tv_ch_epg);
+            ivLogo       = v.findViewById(R.id.iv_logo);
+            tvFallback   = v.findViewById(R.id.tv_logo_fallback);
+            ivPlayArrow  = v.findViewById(R.id.iv_play_arrow);
+            waveformBars = v.findViewById(R.id.waveform_bars);
+            eqBar1       = v.findViewById(R.id.eq_bar1);
+            eqBar2       = v.findViewById(R.id.eq_bar2);
+            eqBar3       = v.findViewById(R.id.eq_bar3);
+        }
+
+        void startEqualizer() {
+            stopEqualizer();
+            // Bar 1: lambat, bar 2: cepat, bar 3: sedang — fase berbeda
+            ObjectAnimator anim1 = makeBarAnim(eqBar1, 0.2f, 1.0f, 700);
+            ObjectAnimator anim2 = makeBarAnim(eqBar2, 0.15f, 1.0f, 450);
+            ObjectAnimator anim3 = makeBarAnim(eqBar3, 0.25f, 1.0f, 600);
+            anim1.setStartDelay(0);
+            anim2.setStartDelay(150);
+            anim3.setStartDelay(300);
+            eqAnimator = new AnimatorSet();
+            eqAnimator.playTogether(anim1, anim2, anim3);
+            eqAnimator.start();
+        }
+
+        void stopEqualizer() {
+            if (eqAnimator != null) {
+                eqAnimator.cancel();
+                eqAnimator = null;
+            }
+            // Reset bar ke tinggi normal
+            if (eqBar1 != null) eqBar1.setScaleY(1f);
+            if (eqBar2 != null) eqBar2.setScaleY(1f);
+            if (eqBar3 != null) eqBar3.setScaleY(1f);
+        }
+
+        private ObjectAnimator makeBarAnim(View bar, float minScale, float maxScale, int duration) {
+            ObjectAnimator anim = ObjectAnimator.ofFloat(bar, "scaleY", maxScale, minScale);
+            anim.setDuration(duration);
+            anim.setRepeatCount(ObjectAnimator.INFINITE);
+            anim.setRepeatMode(ObjectAnimator.REVERSE);
+            anim.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+            return anim;
         }
     }
 }
