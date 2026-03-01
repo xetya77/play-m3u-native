@@ -28,6 +28,7 @@ import androidx.media3.exoplayer.drm.DefaultDrmSessionManager;
 import androidx.media3.exoplayer.drm.FrameworkMediaDrm;
 import androidx.media3.exoplayer.drm.LocalMediaDrmCallback;
 import androidx.media3.exoplayer.hls.HlsMediaSource;
+import androidx.media3.datasource.DefaultBandwidthMeter;
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
 import androidx.media3.exoplayer.source.MediaSource;
 import androidx.media3.ui.PlayerView;
@@ -54,7 +55,7 @@ public class PlayerActivity extends Activity {
     private TextView tvLoadingMsg;
 
     // Clock
-    private TextView tvClock, tvPanelClock;
+    private TextView tvClock;
 
     // Channel info OSD
     private LinearLayout channelInfo;
@@ -102,7 +103,7 @@ public class PlayerActivity extends Activity {
 
     private Handler handler = new Handler(Looper.getMainLooper());
     private Runnable chInfoHideRunnable, numClearRunnable, swipeHintHideRunnable;
-    private Runnable clockRunnable, dominoRunnable;
+    private Runnable clockRunnable, dominoRunnable, bitrateRunnable;
     private int dominoPhase = 0;
     private long lastTapTime = 0;
 
@@ -138,6 +139,7 @@ public class PlayerActivity extends Activity {
         setupGestures();
         setupCategoryListeners();
         startClock();
+        startBitrateUpdater();
         startDominoAnimation();
         playChannel(currentChannelIdx, false);
         showSwipeHint();
@@ -152,7 +154,7 @@ public class PlayerActivity extends Activity {
         bar3              = findViewById(R.id.bar3);
         tvLoadingMsg      = findViewById(R.id.tv_loading_msg);
         tvClock           = findViewById(R.id.tv_clock);
-        tvPanelClock      = findViewById(R.id.tv_panel_clock);
+        // tv_panel_clock dihapus dari layout, jam hanya di tv_clock
 
         channelInfo       = findViewById(R.id.channel_info);
         tvChNum           = findViewById(R.id.tv_ch_num);
@@ -208,13 +210,37 @@ public class PlayerActivity extends Activity {
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
         clockRunnable = new Runnable() {
             @Override public void run() {
-                String t = sdf.format(new Date());
-                tvClock.setText(t);
-                if (tvPanelClock != null) tvPanelClock.setText(t);
+                tvClock.setText(sdf.format(new Date()));
                 handler.postDelayed(this, 1000);
             }
         };
         handler.post(clockRunnable);
+    }
+
+    // ===== BITRATE REAL-TIME =====
+    private void startBitrateUpdater() {
+        bitrateRunnable = new Runnable() {
+            @Override public void run() {
+                try {
+                    if (player != null && player.isPlaying()) {
+                        long bitsPerSecond = player.getBandwidthMeter().getBitrateEstimate();
+                        if (tvBitrate != null) {
+                            if (bitsPerSecond > 0) {
+                                long kbps = bitsPerSecond / 1000;
+                                tvBitrate.setText(kbps + " kb/s");
+                            }
+                        }
+                        // Update resolusi juga
+                        Format vf = player.getVideoFormat();
+                        if (vf != null && tvResolution != null) {
+                            tvResolution.setText(vf.width + "x" + vf.height);
+                        }
+                    }
+                } catch (Exception ignored) {}
+                handler.postDelayed(this, 1000);
+            }
+        };
+        handler.postDelayed(bitrateRunnable, 1000);
     }
 
     // ===== DOMINO ANIMATION =====
@@ -252,7 +278,6 @@ public class PlayerActivity extends Activity {
                     videoLoading.setVisibility(View.GONE);
                     if (!streamStarted) onFirstStreamReady();
                     streamStarted = true;
-                    updateVideoStats();
                 } else if (state == Player.STATE_ENDED) {
                     videoLoading.setBackgroundColor(0x00000000);
                     videoLoading.setVisibility(View.VISIBLE);
@@ -270,17 +295,8 @@ public class PlayerActivity extends Activity {
         if (remoteGuide != null)
             remoteGuide.animate().alpha(0f).setDuration(800)
                     .withEndAction(() -> remoteGuide.setVisibility(View.GONE)).start();
-        tvClock.animate().alpha(0.65f).setDuration(600).start();
-    }
-    private void updateVideoStats() {
-        try {
-            Format vf = player.getVideoFormat();
-            if (vf != null) {
-                if (tvResolution != null) tvResolution.setText(vf.width + "x" + vf.height);
-                if (tvBitrate != null && vf.bitrate > 0)
-                    tvBitrate.setText("  " + (vf.bitrate/1000) + " kb/s");
-            }
-        } catch (Exception ignored) {}
+        // Jam opacity 50% saat menonton (panel tutup)
+        tvClock.animate().alpha(0.5f).setDuration(600).start();
     }
     private String getErrorMessage(androidx.media3.common.PlaybackException e) {
         int c = e.errorCode;
@@ -475,6 +491,9 @@ public class PlayerActivity extends Activity {
         chListBackdrop.setVisibility(View.VISIBLE);
         chListBackdrop.animate().alpha(1f).setDuration(250).start();
 
+        // Jam opacity 100% saat panel terbuka
+        tvClock.animate().alpha(1.0f).setDuration(250).start();
+
         // Sidebar icon masuk dari kiri: reset posisi ke -68dp lalu animasi ke 0
         categorySidebar.setVisibility(View.VISIBLE);
         categorySidebar.setTranslationX(-68f * dp);
@@ -497,6 +516,9 @@ public class PlayerActivity extends Activity {
         categoryFullOpen = false;
 
         float dp = getResources().getDisplayMetrics().density;
+
+        // Jam kembali opacity 50% saat panel ditutup
+        tvClock.animate().alpha(0.5f).setDuration(300).start();
 
         categorySidebar.animate().translationX(-68f * dp).setDuration(280)
                 .withEndAction(() -> categorySidebar.setVisibility(View.INVISIBLE)).start();
