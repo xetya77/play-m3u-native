@@ -223,6 +223,9 @@ public class PlayerActivity extends Activity {
     // ===== BITRATE REAL-TIME =====
     private final AtomicLong bytesAccumulator = new AtomicLong(0);
     private long lastByteSnapshot = 0;
+    // Moving average — simpan bytes dari 4 window terakhir (masing-masing 1 detik)
+    private final long[] bitrateWindow = new long[4];
+    private int bitrateWindowIdx = 0;
 
     // TransferListener sebagai field — dipasang sekali, aktif terus
     private final TransferListener transferListener = new TransferListener() {
@@ -237,16 +240,27 @@ public class PlayerActivity extends Activity {
     private void startBitrateUpdater() {
         if (bitrateRunnable != null) handler.removeCallbacks(bitrateRunnable);
         lastByteSnapshot = bytesAccumulator.get();
+        // Reset window rata-rata
+        for (int i = 0; i < bitrateWindow.length; i++) bitrateWindow[i] = 0;
+        bitrateWindowIdx = 0;
+
         bitrateRunnable = new Runnable() {
             @Override public void run() {
                 try {
                     long totalBytes = bytesAccumulator.get();
-                    long bytesThisPeriod = totalBytes - lastByteSnapshot;
+                    long bytesThisSecond = totalBytes - lastByteSnapshot;
                     lastByteSnapshot = totalBytes;
 
-                    // Bitrate — bytes per 500ms × 2 × 8 ÷ 1000 = kbps
+                    // Simpan ke window, hitung rata-rata 4 detik terakhir
+                    bitrateWindow[bitrateWindowIdx % bitrateWindow.length] = bytesThisSecond;
+                    bitrateWindowIdx++;
+                    long sumBytes = 0;
+                    int validCount = Math.min(bitrateWindowIdx, bitrateWindow.length);
+                    for (int i = 0; i < validCount; i++) sumBytes += bitrateWindow[i];
+                    long avgBytesPerSec = sumBytes / validCount;
+                    long kbps = (avgBytesPerSec * 8) / 1000;
+
                     if (tvBitrate != null) {
-                        long kbps = (bytesThisPeriod * 2 * 8) / 1000;
                         tvBitrate.setText(kbps + " kb/s");
                     }
 
@@ -271,7 +285,7 @@ public class PlayerActivity extends Activity {
                         }
                     }
                 } catch (Exception ignored) {}
-                handler.postDelayed(this, 500); // update setiap 500ms = lebih real-time
+                handler.postDelayed(this, 1000); // 1 detik per window
             }
         };
         handler.post(bitrateRunnable);
