@@ -41,7 +41,7 @@
         android:layout_gravity="top|right"
         android:layout_marginTop="12dp" android:layout_marginRight="16dp"
         android:textColor="#FFFFFFFF" android:textSize="20sp" android:textStyle="bold"
-        android:text="00:00:00" android:alpha="1.0"/>
+        android:text="00:00:00" android:alpha="0.5"/>
 
     <!-- Channel Info OSD kiri bawah -->
     <LinearLayout android:id="@+id/channel_info"
@@ -227,13 +227,9 @@
             android:paddingLeft="16dp" android:paddingRight="16dp"
             android:paddingTop="14dp" android:paddingBottom="8dp">
             <TextView android:id="@+id/tv_panel_title"
-                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:text="SEMUA SALURAN" android:textColor="#99FFFFFF"
                 android:textSize="12sp" android:textStyle="bold"/>
-            <TextView android:id="@+id/tv_panel_clock"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:textColor="#FFFFFF" android:textSize="25sp" android:textStyle="bold"
-                android:text="00:00:00"/>
         </LinearLayout>
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
