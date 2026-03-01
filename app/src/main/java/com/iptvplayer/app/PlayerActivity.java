@@ -490,10 +490,12 @@ public class PlayerActivity extends Activity {
         if (active) {
             item.setBackground(getDrawable(R.drawable.bg_category_item_active));
             icon.setAlpha(1.0f);
+            icon.setColorFilter(0xFF000000, android.graphics.PorterDuff.Mode.SRC_IN); // hitam sesuai teks
             text.setTextColor(0xFF000000);
         } else {
             item.setBackground(null);
             icon.setAlpha(0.5f);
+            icon.setColorFilter(0xFFFFFFFF, android.graphics.PorterDuff.Mode.SRC_IN); // putih
             text.setTextColor(0x80FFFFFF);
         }
     }
@@ -684,6 +686,12 @@ public class PlayerActivity extends Activity {
         if (!panelOpen) openPanel();
         categoryFullOpen = true;
 
+        // Geser panel daftar channel ke kanan agar tidak terlihat di belakang panel kategori
+        float sidebarW = 68f * getResources().getDisplayMetrics().density;
+        float panelW   = chListPanel.getWidth();
+        chListPanel.animate().translationX(panelW + sidebarW).setDuration(280)
+                .setInterpolator(new DecelerateInterpolator()).start();
+
         categoryPanelFull.setVisibility(View.VISIBLE);
         categoryPanelFull.animate().translationX(0f).setDuration(300)
                 .setInterpolator(new DecelerateInterpolator()).start();
@@ -692,6 +700,10 @@ public class PlayerActivity extends Activity {
     private void closeCategoryFull() {
         if (!categoryFullOpen) return;
         categoryFullOpen = false;
+
+        // Kembalikan panel daftar channel ke posisi semula
+        chListPanel.animate().translationX(0f).setDuration(300)
+                .setInterpolator(new DecelerateInterpolator()).start();
 
         float panelW = categoryPanelFull.getWidth();
         categoryPanelFull.animate().translationX(-panelW).setDuration(280)
