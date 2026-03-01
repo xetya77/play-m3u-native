@@ -422,12 +422,12 @@ public class PlayerActivity extends Activity {
     private void selectCategory(String cat) {
         activeCategoryFilter = cat;
 
-        // Update sidebar icon opacity
-        icCatAll.setAlpha(cat.equals("ALL") ? 1.0f : 0.5f);
-        icCatTv.setAlpha(cat.equals("TV") ? 1.0f : 0.5f);
-        icCatRadio.setAlpha(cat.equals("RADIO") ? 1.0f : 0.5f);
-        icCatMovie.setAlpha(cat.equals("FILM") ? 1.0f : 0.5f);
-        icCatSettings.setAlpha(0.5f);
+        // Update sidebar icon — highlight + warna icon sesuai aktif/tidak
+        updateSidebarItemStyle(catAll,      icCatAll,      cat.equals("ALL"));
+        updateSidebarItemStyle(catTv,       icCatTv,       cat.equals("TV"));
+        updateSidebarItemStyle(catRadio,    icCatRadio,    cat.equals("RADIO"));
+        updateSidebarItemStyle(catMovie,    icCatMovie,    cat.equals("FILM"));
+        updateSidebarItemStyle(catSettings, icCatSettings, false);
 
         // Update styling panel kategori
         updateCategoryItemStyle(catFullAll, catFullAllText, cat.equals("ALL"));
@@ -450,6 +450,18 @@ public class PlayerActivity extends Activity {
         } else {
             item.setBackground(null);
             text.setTextColor(0xCCFFFFFF);
+        }
+    }
+
+    private void updateSidebarItemStyle(LinearLayout item, ImageView icon, boolean active) {
+        if (active) {
+            item.setBackground(getDrawable(R.drawable.bg_category_item_active));
+            icon.setAlpha(1.0f);
+            icon.setColorFilter(0xFF000000, android.graphics.PorterDuff.Mode.SRC_IN);
+        } else {
+            item.setBackground(null);
+            icon.setAlpha(0.5f);
+            icon.clearColorFilter();
         }
     }
 
