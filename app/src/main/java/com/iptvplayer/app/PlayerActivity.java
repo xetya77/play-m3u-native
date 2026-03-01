@@ -522,20 +522,18 @@ public class PlayerActivity extends Activity {
 
         float dp = getResources().getDisplayMetrics().density;
 
-        // Sembunyikan sidebar icon agar tidak ganda dengan icon di panel kategori expanded
-        categorySidebar.animate().translationX(-68f * dp).setDuration(200)
-                .setInterpolator(new DecelerateInterpolator())
-                .withEndAction(() -> categorySidebar.setVisibility(View.INVISIBLE)).start();
-
-        // Geser ch_list_panel ke kanan sebesar 240dp agar tidak tertimpa panel kategori
-        chListPanel.animate().translationX(240f * dp).setDuration(280)
-                .setInterpolator(new DecelerateInterpolator()).start();
-
-        // Panel kategori slide masuk dari kiri (mulai dari -240dp → 0)
+        // Sidebar tetap terlihat di posisinya — tidak disembunyikan
+        // Panel kategori expanded slide masuk dari kiri (mulai dari -240dp → 0)
+        // Layout: sidebar(68dp) | category_panel_full(240dp) | ch_list_panel
+        // category_panel_full sudah punya layout_marginLeft="68dp" jadi posisi sudah benar
         categoryPanelFull.setVisibility(View.VISIBLE);
         categoryPanelFull.setAlpha(1f);
         categoryPanelFull.setTranslationX(-240f * dp);
         categoryPanelFull.animate().translationX(0f).setDuration(280)
+                .setInterpolator(new DecelerateInterpolator()).start();
+
+        // Geser ch_list_panel ke kanan sebesar 240dp agar tidak tertimpa panel kategori
+        chListPanel.animate().translationX(240f * dp).setDuration(280)
                 .setInterpolator(new DecelerateInterpolator()).start();
     }
 
@@ -545,20 +543,14 @@ public class PlayerActivity extends Activity {
 
         float dp = getResources().getDisplayMetrics().density;
 
-        // Kembalikan ch_list_panel ke posisi semula (translationX = 0)
-        chListPanel.animate().translationX(0f).setDuration(280)
-                .setInterpolator(new DecelerateInterpolator()).start();
-
-        // Tampilkan kembali sidebar icon
-        categorySidebar.setVisibility(View.VISIBLE);
-        categorySidebar.setTranslationX(-68f * dp);
-        categorySidebar.animate().translationX(0f).setDuration(280)
-                .setInterpolator(new DecelerateInterpolator()).start();
-
         // Panel kategori slide keluar ke kiri
         categoryPanelFull.animate().translationX(-240f * dp).setDuration(250)
                 .setInterpolator(new DecelerateInterpolator())
                 .withEndAction(() -> categoryPanelFull.setVisibility(View.INVISIBLE)).start();
+
+        // Kembalikan ch_list_panel ke posisi semula (translationX = 0)
+        chListPanel.animate().translationX(0f).setDuration(280)
+                .setInterpolator(new DecelerateInterpolator()).start();
     }
 
     // ===== PLAY CHANNEL =====
