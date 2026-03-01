@@ -334,7 +334,7 @@
     <TextView android:id="@+id/swipe_hint"
         android:layout_width="wrap_content" android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal" android:layout_marginBottom="40dp"
-        android:text="↑↓ ganti channel  |  ← daftar saluran"
+        android:text="↑↓ ganti channel  |  → daftar channel  |  → lagi: kategori"
         android:textColor="#b3ffffff" android:textSize="11sp"
         android:paddingLeft="18dp" android:paddingRight="18dp"
         android:paddingTop="8dp" android:paddingBottom="8dp"
