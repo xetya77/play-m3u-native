@@ -18,20 +18,15 @@
         android:layout_width="match_parent" android:layout_height="match_parent"
         android:orientation="vertical" android:gravity="center"
         android:background="#00000000" android:visibility="gone">
-
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:orientation="horizontal" android:gravity="bottom" android:layout_marginBottom="10dp">
-            <View android:id="@+id/bar1"
-                android:layout_width="7dp" android:layout_height="16dp"
+            <View android:id="@+id/bar1" android:layout_width="7dp" android:layout_height="16dp"
                 android:layout_marginRight="6dp" android:background="#FFFFFFFF" android:alpha="0.4"/>
-            <View android:id="@+id/bar2"
-                android:layout_width="7dp" android:layout_height="28dp"
+            <View android:id="@+id/bar2" android:layout_width="7dp" android:layout_height="28dp"
                 android:layout_marginRight="6dp" android:background="#FFFFFFFF" android:alpha="0.7"/>
-            <View android:id="@+id/bar3"
-                android:layout_width="7dp" android:layout_height="40dp"
+            <View android:id="@+id/bar3" android:layout_width="7dp" android:layout_height="40dp"
                 android:background="#FFFFFFFF" android:alpha="1.0"/>
         </LinearLayout>
-
         <TextView android:id="@+id/tv_loading_msg"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="Memuat..." android:textColor="#80ffffff" android:textSize="12sp"
@@ -48,7 +43,7 @@
         android:textColor="#FFFFFFFF" android:textSize="20sp" android:textStyle="bold"
         android:text="00:00:00" android:alpha="1.0"/>
 
-    <!-- Channel Info OSD kiri bawah (awalnya di luar layar kiri) -->
+    <!-- Channel Info OSD kiri bawah -->
     <LinearLayout android:id="@+id/channel_info"
         android:layout_width="wrap_content" android:layout_height="wrap_content"
         android:layout_gravity="bottom|left"
@@ -59,7 +54,6 @@
         android:paddingTop="18dp" android:paddingBottom="18dp"
         android:minWidth="340dp" android:maxWidth="500dp"
         android:translationX="-700dp">
-
         <FrameLayout android:id="@+id/ch_logo_container"
             android:layout_width="80dp" android:layout_height="80dp"
             android:background="@drawable/bg_ch_logo" android:layout_marginRight="18dp">
@@ -71,7 +65,6 @@
                 android:gravity="center" android:textColor="#80ffffff"
                 android:textSize="13sp" android:textStyle="bold" android:visibility="gone"/>
         </FrameLayout>
-
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:orientation="vertical">
             <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -105,12 +98,9 @@
         android:orientation="horizontal" android:gravity="center_vertical"
         android:background="@drawable/bg_loading_pill"
         android:paddingLeft="16dp" android:paddingRight="16dp"
-        android:paddingTop="10dp" android:paddingBottom="10dp"
-        android:alpha="1.0">
-
+        android:paddingTop="10dp" android:paddingBottom="10dp">
         <LinearLayout android:layout_width="54dp" android:layout_height="54dp"
-            android:gravity="center" android:orientation="vertical"
-            android:layout_marginRight="14dp">
+            android:gravity="center" android:orientation="vertical" android:layout_marginRight="14dp">
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:text="▲" android:textColor="#FFFFFF" android:textSize="11sp" android:gravity="center"/>
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -127,7 +117,6 @@
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:text="▼" android:textColor="#FFFFFF" android:textSize="11sp" android:gravity="center"/>
         </LinearLayout>
-
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:orientation="vertical">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -154,61 +143,123 @@
         android:layout_width="match_parent" android:layout_height="match_parent"
         android:background="#99000000" android:alpha="0" android:visibility="invisible"/>
 
-    <!-- Sidebar kategori (icon strip) -->
+    <!--
+        SIDEBAR KATEGORI — SATU panel, dua mode:
+        MODE NORMAL (panelOpen): lebar 68dp saja yang terlihat (icon strip)
+          → translationX = -(240-68) = -172dp
+        MODE EXPANDED (categoryFullOpen): seluruh 240dp terlihat (icon + teks)
+          → translationX = 0
+        Label teks (tv_cat_*) gone saat normal, visible saat expanded
+    -->
     <LinearLayout android:id="@+id/category_sidebar"
-        android:layout_width="68dp" android:layout_height="match_parent"
-        android:layout_gravity="left" android:orientation="vertical" android:gravity="center_vertical"
+        android:layout_width="240dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="left"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
         android:background="@drawable/bg_sidebar"
-        android:paddingTop="16dp" android:paddingBottom="16dp"
-        android:translationX="-68dp" android:visibility="invisible" android:elevation="10dp">
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:translationX="-240dp"
+        android:visibility="invisible"
+        android:elevation="12dp">
 
+        <!-- Semua -->
         <LinearLayout android:id="@+id/cat_all"
             android:layout_width="match_parent" android:layout_height="56dp"
-            android:gravity="center" android:clickable="true" android:focusable="true">
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingLeft="21dp" android:paddingRight="12dp"
+            android:clickable="true" android:focusable="true">
             <ImageView android:id="@+id/ic_cat_all"
                 android:layout_width="26dp" android:layout_height="26dp"
                 android:src="@drawable/ic_all" android:alpha="1.0"/>
+            <TextView android:id="@+id/tv_cat_all"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginLeft="18dp"
+                android:text="Semua" android:textColor="#FFFFFF"
+                android:textSize="17sp" android:visibility="gone"/>
         </LinearLayout>
 
+        <!-- Siaran TV -->
         <LinearLayout android:id="@+id/cat_tv"
             android:layout_width="match_parent" android:layout_height="56dp"
-            android:gravity="center" android:clickable="true" android:focusable="true">
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingLeft="21dp" android:paddingRight="12dp"
+            android:clickable="true" android:focusable="true">
             <ImageView android:id="@+id/ic_cat_tv"
                 android:layout_width="26dp" android:layout_height="26dp"
                 android:src="@drawable/ic_tv" android:alpha="0.5"/>
+            <TextView android:id="@+id/tv_cat_tv"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginLeft="18dp"
+                android:text="Siaran TV" android:textColor="#80FFFFFF"
+                android:textSize="17sp" android:visibility="gone"/>
         </LinearLayout>
 
+        <!-- Radio -->
         <LinearLayout android:id="@+id/cat_radio"
             android:layout_width="match_parent" android:layout_height="56dp"
-            android:gravity="center" android:clickable="true" android:focusable="true">
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingLeft="21dp" android:paddingRight="12dp"
+            android:clickable="true" android:focusable="true">
             <ImageView android:id="@+id/ic_cat_radio"
                 android:layout_width="26dp" android:layout_height="26dp"
                 android:src="@drawable/ic_radio" android:alpha="0.5"/>
+            <TextView android:id="@+id/tv_cat_radio"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginLeft="18dp"
+                android:text="Radio" android:textColor="#80FFFFFF"
+                android:textSize="17sp" android:visibility="gone"/>
         </LinearLayout>
 
+        <!-- Film -->
         <LinearLayout android:id="@+id/cat_movie"
             android:layout_width="match_parent" android:layout_height="56dp"
-            android:gravity="center" android:clickable="true" android:focusable="true">
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingLeft="21dp" android:paddingRight="12dp"
+            android:clickable="true" android:focusable="true">
             <ImageView android:id="@+id/ic_cat_movie"
                 android:layout_width="26dp" android:layout_height="26dp"
                 android:src="@drawable/ic_movie" android:alpha="0.5"/>
+            <TextView android:id="@+id/tv_cat_movie"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginLeft="18dp"
+                android:text="Film" android:textColor="#80FFFFFF"
+                android:textSize="17sp" android:visibility="gone"/>
         </LinearLayout>
 
+        <!-- Pengaturan -->
         <LinearLayout android:id="@+id/cat_settings"
             android:layout_width="match_parent" android:layout_height="56dp"
-            android:gravity="center" android:clickable="true" android:focusable="true">
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingLeft="21dp" android:paddingRight="12dp"
+            android:clickable="true" android:focusable="true">
             <ImageView android:id="@+id/ic_cat_settings"
                 android:layout_width="26dp" android:layout_height="26dp"
                 android:src="@drawable/ic_settings" android:alpha="0.5"/>
+            <TextView android:id="@+id/tv_cat_settings"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginLeft="18dp"
+                android:text="Pengaturan" android:textColor="#80FFFFFF"
+                android:textSize="17sp" android:visibility="gone"/>
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Panel daftar channel -->
+    <!--
+        PANEL DAFTAR CHANNEL
+        marginLeft=68dp → muncul tepat di sebelah kanan icon strip
+        Hanya tampil saat panelOpen && !categoryFullOpen
+    -->
     <LinearLayout android:id="@+id/ch_list_panel"
-        android:layout_width="380dp" android:layout_height="match_parent"
-        android:layout_gravity="left" android:layout_marginLeft="68dp"
-        android:orientation="vertical" android:background="@drawable/bg_channel_list_panel"
-        android:translationX="-448dp" android:elevation="9dp" android:visibility="invisible">
+        android:layout_width="380dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="left"
+        android:layout_marginLeft="68dp"
+        android:orientation="vertical"
+        android:background="@drawable/bg_channel_list_panel"
+        android:translationX="-448dp"
+        android:elevation="9dp"
+        android:visibility="invisible">
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="horizontal" android:gravity="center_vertical"
@@ -240,86 +291,6 @@
 
         <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_ch_list"
             android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
-    </LinearLayout>
-
-    <!-- Panel kategori full (tekan 2x) -->
-    <LinearLayout android:id="@+id/category_panel_full"
-        android:layout_width="220dp" android:layout_height="match_parent"
-        android:layout_gravity="left" android:layout_marginLeft="68dp"
-        android:orientation="vertical" android:gravity="center_vertical"
-        android:background="@drawable/bg_category_panel"
-        android:paddingTop="20dp" android:paddingBottom="20dp"
-        android:translationX="-220dp" android:elevation="11dp" android:visibility="invisible">
-
-        <LinearLayout android:id="@+id/cat_full_all"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="horizontal" android:gravity="center_vertical"
-            android:paddingLeft="20dp" android:paddingRight="20dp"
-            android:paddingTop="14dp" android:paddingBottom="14dp"
-            android:clickable="true" android:focusable="true">
-            <ImageView android:id="@+id/cat_full_all_icon"
-                android:layout_width="26dp" android:layout_height="26dp"
-                android:src="@drawable/ic_all" android:layout_marginRight="16dp"/>
-            <TextView android:id="@+id/cat_full_all_text"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Semua" android:textColor="#FFFFFF" android:textSize="19sp"/>
-        </LinearLayout>
-
-        <LinearLayout android:id="@+id/cat_full_tv"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="horizontal" android:gravity="center_vertical"
-            android:paddingLeft="20dp" android:paddingRight="20dp"
-            android:paddingTop="14dp" android:paddingBottom="14dp"
-            android:clickable="true" android:focusable="true">
-            <ImageView android:id="@+id/cat_full_tv_icon"
-                android:layout_width="26dp" android:layout_height="26dp"
-                android:src="@drawable/ic_tv" android:layout_marginRight="16dp" android:alpha="0.5"/>
-            <TextView android:id="@+id/cat_full_tv_text"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Siaran TV" android:textColor="#80FFFFFF" android:textSize="19sp"/>
-        </LinearLayout>
-
-        <LinearLayout android:id="@+id/cat_full_radio"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="horizontal" android:gravity="center_vertical"
-            android:paddingLeft="20dp" android:paddingRight="20dp"
-            android:paddingTop="14dp" android:paddingBottom="14dp"
-            android:clickable="true" android:focusable="true">
-            <ImageView android:id="@+id/cat_full_radio_icon"
-                android:layout_width="26dp" android:layout_height="26dp"
-                android:src="@drawable/ic_radio" android:layout_marginRight="16dp" android:alpha="0.5"/>
-            <TextView android:id="@+id/cat_full_radio_text"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Radio" android:textColor="#80FFFFFF" android:textSize="19sp"/>
-        </LinearLayout>
-
-        <LinearLayout android:id="@+id/cat_full_movie"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="horizontal" android:gravity="center_vertical"
-            android:paddingLeft="20dp" android:paddingRight="20dp"
-            android:paddingTop="14dp" android:paddingBottom="14dp"
-            android:clickable="true" android:focusable="true">
-            <ImageView android:id="@+id/cat_full_movie_icon"
-                android:layout_width="26dp" android:layout_height="26dp"
-                android:src="@drawable/ic_movie" android:layout_marginRight="16dp" android:alpha="0.5"/>
-            <TextView android:id="@+id/cat_full_movie_text"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Film" android:textColor="#80FFFFFF" android:textSize="19sp"/>
-        </LinearLayout>
-
-        <LinearLayout android:id="@+id/cat_full_settings"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="horizontal" android:gravity="center_vertical"
-            android:paddingLeft="20dp" android:paddingRight="20dp"
-            android:paddingTop="14dp" android:paddingBottom="14dp"
-            android:clickable="true" android:focusable="true">
-            <ImageView android:id="@+id/cat_full_settings_icon"
-                android:layout_width="26dp" android:layout_height="26dp"
-                android:src="@drawable/ic_settings" android:layout_marginRight="16dp" android:alpha="0.5"/>
-            <TextView android:id="@+id/cat_full_settings_text"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Pengaturan" android:textColor="#80FFFFFF" android:textSize="19sp"/>
-        </LinearLayout>
     </LinearLayout>
 
     <!-- Swipe feedback -->
