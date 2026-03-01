@@ -448,13 +448,14 @@ public class PlayerActivity extends Activity {
     // ===== KATEGORI LISTENERS =====
     private void setupCategoryListeners() {
         // Sidebar icons
-        catAll.setOnClickListener(v -> selectCategory("ALL"));
-        catTv.setOnClickListener(v -> selectCategory("TV"));
-        catRadio.setOnClickListener(v -> selectCategory("RADIO"));
-        catMovie.setOnClickListener(v -> selectCategory("FILM"));
+        // Sidebar icons → buka panel kategori (klik icon = tampilkan keterangan teks)
+        catAll.setOnClickListener(v -> { if (!panelOpen) openPanel(); openCategoryFull(); });
+        catTv.setOnClickListener(v -> { if (!panelOpen) openPanel(); openCategoryFull(); });
+        catRadio.setOnClickListener(v -> { if (!panelOpen) openPanel(); openCategoryFull(); });
+        catMovie.setOnClickListener(v -> { if (!panelOpen) openPanel(); openCategoryFull(); });
         catSettings.setOnClickListener(v -> goToSettings());
 
-        // Full category panel
+        // Full category panel → pilih kategori lalu tutup panel kategori
         catFullAll.setOnClickListener(v -> { selectCategory("ALL"); closeCategoryFull(); });
         catFullTv.setOnClickListener(v -> { selectCategory("TV"); closeCategoryFull(); });
         catFullRadio.setOnClickListener(v -> { selectCategory("RADIO"); closeCategoryFull(); });
