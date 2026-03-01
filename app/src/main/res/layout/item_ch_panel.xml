@@ -70,11 +70,24 @@
             android:src="@drawable/ic_play_arrow"
             android:visibility="gone"/>
 
-        <TextView android:id="@+id/tv_waveform"
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="▌▌▌" android:textColor="#000000"
-            android:textSize="10sp" android:letterSpacing="0.05"
-            android:visibility="gone"/>
+        <!-- Equalizer waveform: 3 bar animasi saat playing -->
+        <LinearLayout android:id="@+id/waveform_bars"
+            android:layout_width="wrap_content" android:layout_height="24dp"
+            android:orientation="horizontal"
+            android:gravity="bottom"
+            android:visibility="gone">
+            <View android:id="@+id/eq_bar1"
+                android:layout_width="4dp" android:layout_height="10dp"
+                android:layout_marginRight="3dp"
+                android:background="#000000"/>
+            <View android:id="@+id/eq_bar2"
+                android:layout_width="4dp" android:layout_height="18dp"
+                android:layout_marginRight="3dp"
+                android:background="#000000"/>
+            <View android:id="@+id/eq_bar3"
+                android:layout_width="4dp" android:layout_height="14dp"
+                android:background="#000000"/>
+        </LinearLayout>
     </LinearLayout>
 
 </FrameLayout>
