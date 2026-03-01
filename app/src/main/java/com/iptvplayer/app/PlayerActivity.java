@@ -82,7 +82,7 @@ public class PlayerActivity extends Activity {
     // Panel kategori expanded (icon + teks, muncul di atas ch_list_panel)
     private LinearLayout categoryPanelFull;
     private LinearLayout catFullAll, catFullTv, catFullRadio, catFullMovie, catFullSettings;
-    private ImageView catFullAllIcon, catFullTvIcon, catFullRadioIcon, catFullMovieIcon, catFullSettingsIcon;
+    // icon di category_panel_full dihapus dari layout, hanya teks
     private TextView catFullAllText, catFullTvText, catFullRadioText, catFullMovieText, catFullSettingsText;
 
     // Swipe
@@ -191,11 +191,7 @@ public class PlayerActivity extends Activity {
         catFullRadio         = findViewById(R.id.cat_full_radio);
         catFullMovie         = findViewById(R.id.cat_full_movie);
         catFullSettings      = findViewById(R.id.cat_full_settings);
-        catFullAllIcon       = findViewById(R.id.cat_full_all_icon);
-        catFullTvIcon        = findViewById(R.id.cat_full_tv_icon);
-        catFullRadioIcon     = findViewById(R.id.cat_full_radio_icon);
-        catFullMovieIcon     = findViewById(R.id.cat_full_movie_icon);
-        catFullSettingsIcon  = findViewById(R.id.cat_full_settings_icon);
+        // icon di category_panel_full sudah dihapus dari layout XML
         catFullAllText       = findViewById(R.id.cat_full_all_text);
         catFullTvText        = findViewById(R.id.cat_full_tv_text);
         catFullRadioText     = findViewById(R.id.cat_full_radio_text);
@@ -434,11 +430,11 @@ public class PlayerActivity extends Activity {
         icCatSettings.setAlpha(0.5f);
 
         // Update styling panel kategori
-        updateCategoryItemStyle(catFullAll, catFullAllIcon, catFullAllText, cat.equals("ALL"));
-        updateCategoryItemStyle(catFullTv,  catFullTvIcon,  catFullTvText,  cat.equals("TV"));
-        updateCategoryItemStyle(catFullRadio, catFullRadioIcon, catFullRadioText, cat.equals("RADIO"));
-        updateCategoryItemStyle(catFullMovie, catFullMovieIcon, catFullMovieText, cat.equals("FILM"));
-        updateCategoryItemStyle(catFullSettings, catFullSettingsIcon, catFullSettingsText, false);
+        updateCategoryItemStyle(catFullAll, catFullAllText, cat.equals("ALL"));
+        updateCategoryItemStyle(catFullTv,  catFullTvText,  cat.equals("TV"));
+        updateCategoryItemStyle(catFullRadio, catFullRadioText, cat.equals("RADIO"));
+        updateCategoryItemStyle(catFullMovie, catFullMovieText, cat.equals("FILM"));
+        updateCategoryItemStyle(catFullSettings, catFullSettingsText, false);
 
         // Filter daftar channel
         channelAdapter.applyGroupFilter(cat);
@@ -447,18 +443,12 @@ public class PlayerActivity extends Activity {
         closeCategoryFull();
     }
 
-    private void updateCategoryItemStyle(LinearLayout item, ImageView icon, TextView text, boolean active) {
+    private void updateCategoryItemStyle(LinearLayout item, TextView text, boolean active) {
         if (active) {
             item.setBackground(getDrawable(R.drawable.bg_category_item_active));
-            icon.setAlpha(1.0f);
-            // Ubah warna icon menjadi hitam agar kontras di atas background putih
-            icon.setColorFilter(0xFF000000, android.graphics.PorterDuff.Mode.SRC_IN);
             text.setTextColor(0xFF000000);
         } else {
             item.setBackground(null);
-            icon.setAlpha(0.5f);
-            // Kembalikan warna icon ke putih (default)
-            icon.clearColorFilter();
             text.setTextColor(0xCCFFFFFF);
         }
     }
