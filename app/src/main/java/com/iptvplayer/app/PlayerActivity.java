@@ -142,7 +142,6 @@ public class PlayerActivity extends Activity {
         setupGestures();
         setupCategoryListeners();
         startClock();
-        startBitrateUpdater();
         startDominoAnimation();
         playChannel(currentChannelIdx, false);
         showSwipeHint();
@@ -222,35 +221,44 @@ public class PlayerActivity extends Activity {
     }
 
     // ===== BITRATE REAL-TIME =====
-    private long lastBitrateEstimate = 0;
-    // Counter bytes untuk hitung bitrate real seperti VLC
     private final AtomicLong bytesAccumulator = new AtomicLong(0);
     private long lastByteSnapshot = 0;
 
+    // TransferListener sebagai field — dipasang sekali, aktif terus
+    private final TransferListener transferListener = new TransferListener() {
+        @Override public void onTransferInitializing(DataSource source, DataSpec dataSpec, boolean isNetwork) {}
+        @Override public void onTransferStart(DataSource source, DataSpec dataSpec, boolean isNetwork) {}
+        @Override public void onBytesTransferred(DataSource source, DataSpec dataSpec, boolean isNetwork, int bytesTransferred) {
+            if (isNetwork) bytesAccumulator.addAndGet(bytesTransferred);
+        }
+        @Override public void onTransferEnd(DataSource source, DataSpec dataSpec, boolean isNetwork) {}
+    };
+
     private void startBitrateUpdater() {
-        // Update UI setiap 1 detik — hitung bytes diterima per detik (seperti VLC)
+        if (bitrateRunnable != null) handler.removeCallbacks(bitrateRunnable);
+        lastByteSnapshot = bytesAccumulator.get();
         bitrateRunnable = new Runnable() {
             @Override public void run() {
                 try {
-                    // Bitrate: bytes detik ini × 8 ÷ 1000 = kbps
                     long totalBytes = bytesAccumulator.get();
-                    long bytesThisSecond = totalBytes - lastByteSnapshot;
+                    long bytesThisPeriod = totalBytes - lastByteSnapshot;
                     lastByteSnapshot = totalBytes;
-                    if (tvBitrate != null && bytesThisSecond > 0) {
-                        long kbps = (bytesThisSecond * 8) / 1000;
+
+                    // Bitrate — bytes per 500ms × 2 × 8 ÷ 1000 = kbps
+                    if (tvBitrate != null) {
+                        long kbps = (bytesThisPeriod * 2 * 8) / 1000;
                         tvBitrate.setText(kbps + " kb/s");
                     }
 
-                    // Kuota stream channel saat ini (direset tiap ganti channel)
+                    // Kuota total channel ini
                     if (tvQuotaUsed != null) {
-                        long sBytes = totalBytes; // totalBytes = bytesAccumulator.get()
                         String quota;
-                        if (sBytes < 1024L * 1024) {
-                            quota = (sBytes / 1024) + " KB";
-                        } else if (sBytes < 1024L * 1024 * 1024) {
-                            quota = String.format(Locale.getDefault(), "%.1f MB", sBytes / (1024.0 * 1024));
+                        if (totalBytes < 1024L * 1024) {
+                            quota = totalBytes / 1024 + " KB";
+                        } else if (totalBytes < 1024L * 1024 * 1024) {
+                            quota = String.format(Locale.getDefault(), "%.1f MB", totalBytes / (1024.0 * 1024));
                         } else {
-                            quota = String.format(Locale.getDefault(), "%.2f GB", sBytes / (1024.0 * 1024 * 1024));
+                            quota = String.format(Locale.getDefault(), "%.2f GB", totalBytes / (1024.0 * 1024 * 1024));
                         }
                         tvQuotaUsed.setText(quota);
                     }
@@ -263,10 +271,10 @@ public class PlayerActivity extends Activity {
                         }
                     }
                 } catch (Exception ignored) {}
-                handler.postDelayed(this, 1000);
+                handler.postDelayed(this, 500); // update setiap 500ms = lebih real-time
             }
         };
-        handler.postDelayed(bitrateRunnable, 1000);
+        handler.post(bitrateRunnable);
     }
 
     // ===== DOMINO ANIMATION =====
@@ -631,28 +639,10 @@ public class PlayerActivity extends Activity {
             DefaultHttpDataSource.Factory dsFactory = new DefaultHttpDataSource.Factory()
                     .setUserAgent(ua).setConnectTimeoutMs(20000).setReadTimeoutMs(30000)
                     .setAllowCrossProtocolRedirects(true).setDefaultRequestProperties(headers)
-                    .setTransferListener(new TransferListener() {
-                        @Override public void onTransferInitializing(
-                                DataSource source,
-                                DataSpec dataSpec, boolean isNetwork) {}
-                        @Override public void onTransferStart(
-                                DataSource source,
-                                DataSpec dataSpec, boolean isNetwork) {}
-                        @Override public void onBytesTransferred(
-                                DataSource source,
-                                DataSpec dataSpec,
-                                boolean isNetwork, int bytesTransferred) {
-                            if (isNetwork) {
-                                bytesAccumulator.addAndGet(bytesTransferred);
-                            }
-                        }
-                        @Override public void onTransferEnd(
-                                DataSource source,
-                                DataSpec dataSpec, boolean isNetwork) {}
-                    });
-            // Reset counter saat ganti channel
+                    .setTransferListener(transferListener);
+            // Reset counter & restart updater saat ganti channel
             bytesAccumulator.set(0);
-            lastByteSnapshot = 0;
+            startBitrateUpdater();
             String urlLower = ch.url.toLowerCase();
             MediaSource mediaSource;
             if ("clearkey".equals(ch.drmType) && ch.drmKey != null && ch.drmKey.contains(":")) {
