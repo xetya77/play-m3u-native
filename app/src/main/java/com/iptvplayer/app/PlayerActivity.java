@@ -22,6 +22,9 @@ import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.datasource.DefaultHttpDataSource;
+import androidx.media3.datasource.DataSource;
+import androidx.media3.datasource.DataSpec;
+import androidx.media3.datasource.TransferListener;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.dash.DashMediaSource;
 import androidx.media3.exoplayer.drm.DefaultDrmSessionManager;
@@ -42,6 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 @OptIn(markerClass = UnstableApi.class)
 public class PlayerActivity extends Activity {
@@ -218,27 +222,26 @@ public class PlayerActivity extends Activity {
 
     // ===== BITRATE REAL-TIME =====
     private long lastBitrateEstimate = 0;
+    // Counter bytes untuk hitung bitrate real seperti VLC
+    private final AtomicLong bytesAccumulator = new AtomicLong(0);
+    private long lastByteSnapshot = 0;
 
     private void startBitrateUpdater() {
-        // Tangkap bitrate real dari AnalyticsListener
-        player.addAnalyticsListener(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
-            @Override
-            public void onBandwidthEstimate(
-                    androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime eventTime,
-                    int totalLoadTimeMs, long totalBytesLoaded, long bitrateEstimate) {
-                lastBitrateEstimate = bitrateEstimate;
-            }
-        });
-
-        // Update UI setiap 1 detik
+        // Update UI setiap 1 detik — hitung bytes diterima per detik (seperti VLC)
         bitrateRunnable = new Runnable() {
             @Override public void run() {
                 try {
-                    if (tvBitrate != null && lastBitrateEstimate > 0) {
-                        long kbps = lastBitrateEstimate / 1000;
-                        tvBitrate.setText(kbps + " kb/s");
+                    long totalBytes = bytesAccumulator.get();
+                    long bytesThisSecond = totalBytes - lastByteSnapshot;
+                    lastByteSnapshot = totalBytes;
+
+                    if (tvBitrate != null) {
+                        if (bytesThisSecond > 0) {
+                            long kbps = (bytesThisSecond * 8) / 1000; // bytes→bits→kbps
+                            tvBitrate.setText(kbps + " kb/s");
+                        }
                     }
-                    // Update resolusi juga
+                    // Update resolusi
                     if (player != null) {
                         Format vf = player.getVideoFormat();
                         if (vf != null && tvResolution != null) {
@@ -613,7 +616,27 @@ public class PlayerActivity extends Activity {
             headers.put("Connection", "keep-alive");
             DefaultHttpDataSource.Factory dsFactory = new DefaultHttpDataSource.Factory()
                     .setUserAgent(ua).setConnectTimeoutMs(20000).setReadTimeoutMs(30000)
-                    .setAllowCrossProtocolRedirects(true).setDefaultRequestProperties(headers);
+                    .setAllowCrossProtocolRedirects(true).setDefaultRequestProperties(headers)
+                    .setTransferListener(new TransferListener() {
+                        @Override public void onTransferInitializing(
+                                DataSource source,
+                                DataSpec dataSpec, boolean isNetwork) {}
+                        @Override public void onTransferStart(
+                                DataSource source,
+                                DataSpec dataSpec, boolean isNetwork) {}
+                        @Override public void onBytesTransferred(
+                                DataSource source,
+                                DataSpec dataSpec,
+                                boolean isNetwork, int bytesTransferred) {
+                            if (isNetwork) bytesAccumulator.addAndGet(bytesTransferred);
+                        }
+                        @Override public void onTransferEnd(
+                                DataSource source,
+                                DataSpec dataSpec, boolean isNetwork) {}
+                    });
+            // Reset counter saat ganti channel
+            bytesAccumulator.set(0);
+            lastByteSnapshot = 0;
             String urlLower = ch.url.toLowerCase();
             MediaSource mediaSource;
             if ("clearkey".equals(ch.drmType) && ch.drmKey != null && ch.drmKey.contains(":")) {
