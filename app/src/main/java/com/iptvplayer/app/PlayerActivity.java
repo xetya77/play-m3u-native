@@ -642,8 +642,9 @@ public class PlayerActivity extends Activity {
                                 DataSource source,
                                 DataSpec dataSpec,
                                 boolean isNetwork, int bytesTransferred) {
-                        if (isNetwork) {
-                            bytesAccumulator.addAndGet(bytesTransferred);
+                            if (isNetwork) {
+                                bytesAccumulator.addAndGet(bytesTransferred);
+                            }
                         }
                         @Override public void onTransferEnd(
                                 DataSource source,
