@@ -72,10 +72,14 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.VH> {
     private boolean matchesGroupFilter(Channel ch) {
         if ("ALL".equals(groupFilter)) return true;
         String g = ch.group != null ? ch.group.toLowerCase() : "";
+        boolean isRadio = g.contains("radio") || g.contains(" fm") || g.equals("fm");
+        boolean isFilm  = g.contains("film") || g.contains("movie") || g.contains("hiburan")
+                       || g.contains("video musik") || g.contains("kartun") || g.contains("edukasi")
+                       || g.contains("dokumenter");
         switch (groupFilter) {
-            case "TV":    return g.contains("tv") || g.contains("nasional") || g.contains("berita") || g.contains("siaran");
-            case "RADIO": return g.contains("radio") || g.contains("fm");
-            case "FILM":  return g.contains("film") || g.contains("movie") || g.contains("video");
+            case "RADIO": return isRadio;
+            case "FILM":  return isFilm && !isRadio;
+            case "TV":    return !isRadio && !isFilm;
             default:      return true;
         }
     }

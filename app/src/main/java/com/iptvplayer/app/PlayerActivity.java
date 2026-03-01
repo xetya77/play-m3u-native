@@ -451,10 +451,14 @@ public class PlayerActivity extends Activity {
         if (active) {
             item.setBackground(getDrawable(R.drawable.bg_category_item_active));
             icon.setAlpha(1.0f);
+            // Ubah warna icon menjadi hitam agar kontras di atas background putih
+            icon.setColorFilter(0xFF000000, android.graphics.PorterDuff.Mode.SRC_IN);
             text.setTextColor(0xFF000000);
         } else {
             item.setBackground(null);
             icon.setAlpha(0.5f);
+            // Kembalikan warna icon ke putih (default)
+            icon.clearColorFilter();
             text.setTextColor(0xCCFFFFFF);
         }
     }
