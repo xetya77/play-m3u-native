@@ -152,7 +152,7 @@
     <!-- Backdrop -->
     <View android:id="@+id/ch_list_backdrop"
         android:layout_width="match_parent" android:layout_height="match_parent"
-        android:background="#80000000" android:alpha="0" android:visibility="invisible"/>
+        android:background="#99000000" android:alpha="0" android:visibility="invisible"/>
 
     <!-- Sidebar kategori (icon strip) -->
     <LinearLayout android:id="@+id/category_sidebar"
@@ -244,11 +244,12 @@
 
     <!-- Panel kategori full (tekan 2x) -->
     <LinearLayout android:id="@+id/category_panel_full"
-        android:layout_width="280dp" android:layout_height="match_parent"
-        android:layout_gravity="left" android:orientation="vertical" android:gravity="center_vertical"
+        android:layout_width="220dp" android:layout_height="match_parent"
+        android:layout_gravity="left" android:layout_marginLeft="68dp"
+        android:orientation="vertical" android:gravity="center_vertical"
         android:background="@drawable/bg_category_panel"
         android:paddingTop="20dp" android:paddingBottom="20dp"
-        android:translationX="-280dp" android:elevation="11dp" android:visibility="invisible">
+        android:translationX="-220dp" android:elevation="11dp" android:visibility="invisible">
 
         <LinearLayout android:id="@+id/cat_full_all"
             android:layout_width="match_parent" android:layout_height="wrap_content"
