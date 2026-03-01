@@ -518,8 +518,16 @@ public class PlayerActivity extends Activity {
 
         float dp = getResources().getDisplayMetrics().density;
 
+        // Sembunyikan sidebar icon agar tidak ganda dengan icon di panel kategori expanded
+        categorySidebar.animate().translationX(-68f * dp).setDuration(200)
+                .setInterpolator(new DecelerateInterpolator())
+                .withEndAction(() -> categorySidebar.setVisibility(View.INVISIBLE)).start();
+
+        // Geser ch_list_panel ke kanan sebesar 240dp agar tidak tertimpa panel kategori
+        chListPanel.animate().translationX(240f * dp).setDuration(280)
+                .setInterpolator(new DecelerateInterpolator()).start();
+
         // Panel kategori slide masuk dari kiri (mulai dari -240dp → 0)
-        // Ini menimpa ch_list_panel karena elevation lebih tinggi
         categoryPanelFull.setVisibility(View.VISIBLE);
         categoryPanelFull.setAlpha(1f);
         categoryPanelFull.setTranslationX(-240f * dp);
@@ -532,6 +540,16 @@ public class PlayerActivity extends Activity {
         categoryFullOpen = false;
 
         float dp = getResources().getDisplayMetrics().density;
+
+        // Kembalikan ch_list_panel ke posisi semula (translationX = 0)
+        chListPanel.animate().translationX(0f).setDuration(280)
+                .setInterpolator(new DecelerateInterpolator()).start();
+
+        // Tampilkan kembali sidebar icon
+        categorySidebar.setVisibility(View.VISIBLE);
+        categorySidebar.setTranslationX(-68f * dp);
+        categorySidebar.animate().translationX(0f).setDuration(280)
+                .setInterpolator(new DecelerateInterpolator()).start();
 
         // Panel kategori slide keluar ke kiri
         categoryPanelFull.animate().translationX(-240f * dp).setDuration(250)
