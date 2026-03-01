@@ -686,13 +686,12 @@ public class PlayerActivity extends Activity {
         if (!panelOpen) openPanel();
         categoryFullOpen = true;
 
-        // Geser panel daftar channel ke kanan agar tidak terlihat di belakang panel kategori
-        float sidebarW = 68f * getResources().getDisplayMetrics().density;
-        float panelW   = chListPanel.getWidth();
-        chListPanel.animate().translationX(panelW + sidebarW).setDuration(280)
-                .setInterpolator(new DecelerateInterpolator()).start();
+        // Sembunyikan panel daftar channel
+        chListPanel.animate().alpha(0f).setDuration(200)
+                .withEndAction(() -> chListPanel.setVisibility(View.INVISIBLE)).start();
 
         categoryPanelFull.setVisibility(View.VISIBLE);
+        categoryPanelFull.setAlpha(1f);
         categoryPanelFull.animate().translationX(0f).setDuration(300)
                 .setInterpolator(new DecelerateInterpolator()).start();
     }
@@ -701,9 +700,9 @@ public class PlayerActivity extends Activity {
         if (!categoryFullOpen) return;
         categoryFullOpen = false;
 
-        // Kembalikan panel daftar channel ke posisi semula
-        chListPanel.animate().translationX(0f).setDuration(300)
-                .setInterpolator(new DecelerateInterpolator()).start();
+        // Tampilkan kembali panel daftar channel
+        chListPanel.setVisibility(View.VISIBLE);
+        chListPanel.animate().alpha(1f).setDuration(250).start();
 
         float panelW = categoryPanelFull.getWidth();
         categoryPanelFull.animate().translationX(-panelW).setDuration(280)
