@@ -438,10 +438,9 @@ public class PlayerActivity extends Activity {
         });
 
         chListBackdrop.setOnTouchListener((v, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                if (categoryFullOpen) closeCategoryFull();
-                else if (panelOpen) hidePanel();
-            }
+            // Teruskan event ke gestureDetector agar swipe kanan bisa membuka panel kategori
+            gestureDetector.onTouchEvent(event);
+            // Tutup panel hanya saat tap biasa (bukan swipe), ditangani oleh onSingleTapConfirmed
             return true;
         });
     }
