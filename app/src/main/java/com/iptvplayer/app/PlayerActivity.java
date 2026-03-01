@@ -80,7 +80,7 @@ public class PlayerActivity extends Activity {
 
     // Panel daftar channel
     private LinearLayout chListPanel;
-    private TextView tvPanelTitle, tvResolution, tvBitrate;
+    private TextView tvPanelTitle, tvResolution, tvBitrate, tvQuotaUsed;
     private androidx.recyclerview.widget.RecyclerView rvChList;
 
     // Panel kategori expanded (icon + teks, muncul di atas ch_list_panel)
@@ -188,6 +188,7 @@ public class PlayerActivity extends Activity {
         tvPanelTitle      = findViewById(R.id.tv_panel_title);
         tvResolution      = findViewById(R.id.tv_resolution);
         tvBitrate         = findViewById(R.id.tv_bitrate);
+        tvQuotaUsed       = findViewById(R.id.tv_quota_used);
         rvChList          = findViewById(R.id.rv_ch_list);
 
         categoryPanelFull    = findViewById(R.id.category_panel_full);
@@ -231,17 +232,30 @@ public class PlayerActivity extends Activity {
         bitrateRunnable = new Runnable() {
             @Override public void run() {
                 try {
+                    // Bitrate: bytes detik ini × 8 ÷ 1000 = kbps
                     long totalBytes = bytesAccumulator.get();
                     long bytesThisSecond = totalBytes - lastByteSnapshot;
                     lastByteSnapshot = totalBytes;
-
-                    if (tvBitrate != null) {
-                        if (bytesThisSecond > 0) {
-                            long kbps = (bytesThisSecond * 8) / 1000; // bytes→bits→kbps
-                            tvBitrate.setText(kbps + " kb/s");
-                        }
+                    if (tvBitrate != null && bytesThisSecond > 0) {
+                        long kbps = (bytesThisSecond * 8) / 1000;
+                        tvBitrate.setText(kbps + " kb/s");
                     }
-                    // Update resolusi
+
+                    // Kuota stream channel saat ini (direset tiap ganti channel)
+                    if (tvQuotaUsed != null) {
+                        long sBytes = totalBytes; // totalBytes = bytesAccumulator.get()
+                        String quota;
+                        if (sBytes < 1024L * 1024) {
+                            quota = (sBytes / 1024) + " KB";
+                        } else if (sBytes < 1024L * 1024 * 1024) {
+                            quota = String.format(Locale.getDefault(), "%.1f MB", sBytes / (1024.0 * 1024));
+                        } else {
+                            quota = String.format(Locale.getDefault(), "%.2f GB", sBytes / (1024.0 * 1024 * 1024));
+                        }
+                        tvQuotaUsed.setText(quota);
+                    }
+
+                    // Resolusi
                     if (player != null) {
                         Format vf = player.getVideoFormat();
                         if (vf != null && tvResolution != null) {
@@ -628,7 +642,8 @@ public class PlayerActivity extends Activity {
                                 DataSource source,
                                 DataSpec dataSpec,
                                 boolean isNetwork, int bytesTransferred) {
-                            if (isNetwork) bytesAccumulator.addAndGet(bytesTransferred);
+                        if (isNetwork) {
+                            bytesAccumulator.addAndGet(bytesTransferred);
                         }
                         @Override public void onTransferEnd(
                                 DataSource source,
