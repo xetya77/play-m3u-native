@@ -62,39 +62,40 @@ public class PlayerActivity extends Activity {
     private ImageView ivChLogo;
     private TextView tvChLogoFallback;
 
-    // Remote guide & number overlay
+    // Remote & number
     private View remoteGuide;
     private TextView numOverlay;
 
     // Backdrop
     private View chListBackdrop;
 
-    // Sidebar kategori — SATU panel yang bisa melebar:
-    // - Mode normal (68dp terlihat): translationX = -(240-68) = -172dp (dalam pixel)
-    // - Mode expanded (240dp terlihat): translationX = 0
+    // Sidebar icon strip (68dp, fixed)
     private LinearLayout categorySidebar;
     private LinearLayout catAll, catTv, catRadio, catMovie, catSettings;
     private ImageView icCatAll, icCatTv, icCatRadio, icCatMovie, icCatSettings;
-    // Label teks (hanya visible saat expanded)
-    private TextView tvCatAll, tvCatTv, tvCatRadio, tvCatMovie, tvCatSettings;
 
     // Panel daftar channel
     private LinearLayout chListPanel;
     private TextView tvPanelTitle, tvResolution, tvBitrate;
     private androidx.recyclerview.widget.RecyclerView rvChList;
 
+    // Panel kategori expanded (icon + teks, muncul di atas ch_list_panel)
+    private LinearLayout categoryPanelFull;
+    private LinearLayout catFullAll, catFullTv, catFullRadio, catFullMovie, catFullSettings;
+    private ImageView catFullAllIcon, catFullTvIcon, catFullRadioIcon, catFullMovieIcon, catFullSettingsIcon;
+    private TextView catFullAllText, catFullTvText, catFullRadioText, catFullMovieText, catFullSettingsText;
+
     // Swipe
     private View swipeHint;
     private TextView swipeFbUp, swipeFbDown;
 
-    // Data & state
+    // State
     private List<Channel> channels = new ArrayList<>();
     private int currentChannelIdx = 0;
     private int playlistIdx = 0;
     private String playlistName = "";
-
-    private boolean panelOpen = false;         // sidebar + ch_list_panel terlihat
-    private boolean categoryFullOpen = false;  // sidebar expanded (240dp), ch_list_panel tersembunyi
+    private boolean panelOpen = false;
+    private boolean categoryFullOpen = false;
     private String activeCategoryFilter = "ALL";
     private String numBuffer = "";
     private boolean streamStarted = false;
@@ -108,12 +109,6 @@ public class PlayerActivity extends Activity {
     private PrefsManager prefs;
     private ChannelAdapter channelAdapter;
     private GestureDetector gestureDetector;
-
-    // Konstanta dimensi sidebar (dp)
-    private static final float SIDEBAR_ICON_DP  = 68f;   // lebar terlihat saat mode icon
-    private static final float SIDEBAR_FULL_DP  = 240f;  // lebar total sidebar
-    // translationX saat mode icon: -(FULL - ICON) = -172dp → hanya 68dp terlihat
-    private static final float SIDEBAR_ICON_OFFSET_DP = -(SIDEBAR_FULL_DP - SIDEBAR_ICON_DP); // -172
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -148,57 +143,68 @@ public class PlayerActivity extends Activity {
         showSwipeHint();
     }
 
-    // ===== BIND VIEWS =====
     private void bindViews() {
-        playerView       = findViewById(R.id.player_view);
-        videoLoading     = findViewById(R.id.video_loading);
-        blackFlash       = findViewById(R.id.black_flash);
-        bar1             = findViewById(R.id.bar1);
-        bar2             = findViewById(R.id.bar2);
-        bar3             = findViewById(R.id.bar3);
-        tvLoadingMsg     = findViewById(R.id.tv_loading_msg);
-        tvClock          = findViewById(R.id.tv_clock);
-        tvPanelClock     = findViewById(R.id.tv_panel_clock);
+        playerView        = findViewById(R.id.player_view);
+        videoLoading      = findViewById(R.id.video_loading);
+        blackFlash        = findViewById(R.id.black_flash);
+        bar1              = findViewById(R.id.bar1);
+        bar2              = findViewById(R.id.bar2);
+        bar3              = findViewById(R.id.bar3);
+        tvLoadingMsg      = findViewById(R.id.tv_loading_msg);
+        tvClock           = findViewById(R.id.tv_clock);
+        tvPanelClock      = findViewById(R.id.tv_panel_clock);
 
-        channelInfo      = findViewById(R.id.channel_info);
-        tvChNum          = findViewById(R.id.tv_ch_num);
-        tvChName         = findViewById(R.id.tv_ch_name);
-        tvChEpg          = findViewById(R.id.tv_ch_epg);
-        tvChGroup        = findViewById(R.id.tv_ch_group);
-        tvChPlaylistName = findViewById(R.id.tv_ch_playlist_name);
-        ivChLogo         = findViewById(R.id.iv_ch_logo);
-        tvChLogoFallback = findViewById(R.id.tv_ch_logo_fallback);
+        channelInfo       = findViewById(R.id.channel_info);
+        tvChNum           = findViewById(R.id.tv_ch_num);
+        tvChName          = findViewById(R.id.tv_ch_name);
+        tvChEpg           = findViewById(R.id.tv_ch_epg);
+        tvChGroup         = findViewById(R.id.tv_ch_group);
+        tvChPlaylistName  = findViewById(R.id.tv_ch_playlist_name);
+        ivChLogo          = findViewById(R.id.iv_ch_logo);
+        tvChLogoFallback  = findViewById(R.id.tv_ch_logo_fallback);
 
-        remoteGuide      = findViewById(R.id.remote_guide);
-        numOverlay       = findViewById(R.id.num_overlay);
-        chListBackdrop   = findViewById(R.id.ch_list_backdrop);
+        remoteGuide       = findViewById(R.id.remote_guide);
+        numOverlay        = findViewById(R.id.num_overlay);
+        chListBackdrop    = findViewById(R.id.ch_list_backdrop);
 
-        categorySidebar  = findViewById(R.id.category_sidebar);
-        catAll           = findViewById(R.id.cat_all);
-        catTv            = findViewById(R.id.cat_tv);
-        catRadio         = findViewById(R.id.cat_radio);
-        catMovie         = findViewById(R.id.cat_movie);
-        catSettings      = findViewById(R.id.cat_settings);
-        icCatAll         = findViewById(R.id.ic_cat_all);
-        icCatTv          = findViewById(R.id.ic_cat_tv);
-        icCatRadio       = findViewById(R.id.ic_cat_radio);
-        icCatMovie       = findViewById(R.id.ic_cat_movie);
-        icCatSettings    = findViewById(R.id.ic_cat_settings);
-        tvCatAll         = findViewById(R.id.tv_cat_all);
-        tvCatTv          = findViewById(R.id.tv_cat_tv);
-        tvCatRadio       = findViewById(R.id.tv_cat_radio);
-        tvCatMovie       = findViewById(R.id.tv_cat_movie);
-        tvCatSettings    = findViewById(R.id.tv_cat_settings);
+        categorySidebar   = findViewById(R.id.category_sidebar);
+        catAll            = findViewById(R.id.cat_all);
+        catTv             = findViewById(R.id.cat_tv);
+        catRadio          = findViewById(R.id.cat_radio);
+        catMovie          = findViewById(R.id.cat_movie);
+        catSettings       = findViewById(R.id.cat_settings);
+        icCatAll          = findViewById(R.id.ic_cat_all);
+        icCatTv           = findViewById(R.id.ic_cat_tv);
+        icCatRadio        = findViewById(R.id.ic_cat_radio);
+        icCatMovie        = findViewById(R.id.ic_cat_movie);
+        icCatSettings     = findViewById(R.id.ic_cat_settings);
 
-        chListPanel      = findViewById(R.id.ch_list_panel);
-        tvPanelTitle     = findViewById(R.id.tv_panel_title);
-        tvResolution     = findViewById(R.id.tv_resolution);
-        tvBitrate        = findViewById(R.id.tv_bitrate);
-        rvChList         = findViewById(R.id.rv_ch_list);
+        chListPanel       = findViewById(R.id.ch_list_panel);
+        tvPanelTitle      = findViewById(R.id.tv_panel_title);
+        tvResolution      = findViewById(R.id.tv_resolution);
+        tvBitrate         = findViewById(R.id.tv_bitrate);
+        rvChList          = findViewById(R.id.rv_ch_list);
 
-        swipeHint        = findViewById(R.id.swipe_hint);
-        swipeFbUp        = findViewById(R.id.swipe_fb_up);
-        swipeFbDown      = findViewById(R.id.swipe_fb_down);
+        categoryPanelFull    = findViewById(R.id.category_panel_full);
+        catFullAll           = findViewById(R.id.cat_full_all);
+        catFullTv            = findViewById(R.id.cat_full_tv);
+        catFullRadio         = findViewById(R.id.cat_full_radio);
+        catFullMovie         = findViewById(R.id.cat_full_movie);
+        catFullSettings      = findViewById(R.id.cat_full_settings);
+        catFullAllIcon       = findViewById(R.id.cat_full_all_icon);
+        catFullTvIcon        = findViewById(R.id.cat_full_tv_icon);
+        catFullRadioIcon     = findViewById(R.id.cat_full_radio_icon);
+        catFullMovieIcon     = findViewById(R.id.cat_full_movie_icon);
+        catFullSettingsIcon  = findViewById(R.id.cat_full_settings_icon);
+        catFullAllText       = findViewById(R.id.cat_full_all_text);
+        catFullTvText        = findViewById(R.id.cat_full_tv_text);
+        catFullRadioText     = findViewById(R.id.cat_full_radio_text);
+        catFullMovieText     = findViewById(R.id.cat_full_movie_text);
+        catFullSettingsText  = findViewById(R.id.cat_full_settings_text);
+
+        swipeHint         = findViewById(R.id.swipe_hint);
+        swipeFbUp         = findViewById(R.id.swipe_fb_up);
+        swipeFbDown       = findViewById(R.id.swipe_fb_down);
     }
 
     // ===== CLOCK =====
@@ -276,7 +282,7 @@ public class PlayerActivity extends Activity {
             if (vf != null) {
                 if (tvResolution != null) tvResolution.setText(vf.width + "x" + vf.height);
                 if (tvBitrate != null && vf.bitrate > 0)
-                    tvBitrate.setText("  " + (vf.bitrate / 1000) + " kb/s");
+                    tvBitrate.setText("  " + (vf.bitrate/1000) + " kb/s");
             }
         } catch (Exception ignored) {}
     }
@@ -292,10 +298,7 @@ public class PlayerActivity extends Activity {
     // ===== CHANNEL ADAPTER =====
     private void setupChannelAdapter() {
         tvPanelTitle.setText(playlistName.isEmpty() ? "SEMUA SALURAN" : playlistName.toUpperCase());
-        channelAdapter = new ChannelAdapter(idx -> {
-            playChannel(idx, true);
-            hidePanel();
-        });
+        channelAdapter = new ChannelAdapter(idx -> { playChannel(idx, true); hidePanel(); });
         channelAdapter.setChannels(channels);
         channelAdapter.setActiveIndex(currentChannelIdx);
         rvChList.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
@@ -312,12 +315,14 @@ public class PlayerActivity extends Activity {
                 float dY = e2.getY() - e1.getY();
                 if (Math.abs(dX) > Math.abs(dY)) {
                     if (dX > 80 && Math.abs(vX) > 100) {
-                        // Swipe KANAN
-                        if (!panelOpen && !categoryFullOpen)  openPanel();
-                        else if (panelOpen && !categoryFullOpen) openCategoryFull();
+                        // Swipe KANAN:
+                        // - Belum ada panel → buka daftar channel
+                        // - Daftar channel sudah terbuka → buka kategori
+                        if (!panelOpen && !categoryFullOpen)       openPanel();
+                        else if (panelOpen && !categoryFullOpen)   openCategoryFull();
                         return true;
                     } else if (dX < -80 && Math.abs(vX) > 100) {
-                        // Swipe KIRI = tutup/kembali
+                        // Swipe KIRI = kembali/tutup
                         if (categoryFullOpen) closeCategoryFull();
                         else if (panelOpen)   hidePanel();
                         return true;
@@ -342,9 +347,9 @@ public class PlayerActivity extends Activity {
                     handler.postDelayed(() -> {
                         if (lastTapTime != 0) {
                             lastTapTime = 0;
-                            if (categoryFullOpen) closeCategoryFull();
-                            else if (panelOpen)   hidePanel();
-                            else toggleChInfo();
+                            if (categoryFullOpen)      closeCategoryFull();
+                            else if (panelOpen)        hidePanel();
+                            else                       toggleChInfo();
                         }
                     }, 420);
                 }
@@ -352,77 +357,128 @@ public class PlayerActivity extends Activity {
             }
         });
         playerView.setOnTouchListener((v, e) -> { gestureDetector.onTouchEvent(e); return true; });
+
+        // Swipe di backdrop → tutup panel
         chListBackdrop.setOnTouchListener((v, e) -> {
             if (e.getAction() == MotionEvent.ACTION_DOWN) {
                 if (categoryFullOpen) closeCategoryFull(); else if (panelOpen) hidePanel();
             }
             return true;
         });
+
+        // Swipe KANAN di panel daftar channel → buka kategori
+        // Swipe KIRI di panel daftar channel → tutup panel
+        GestureDetector panelSwipe = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float vX, float vY) {
+                if (e1 == null || e2 == null) return false;
+                float dX = e2.getX() - e1.getX();
+                if (Math.abs(dX) > 80 && Math.abs(vX) > 100) {
+                    if (dX > 0) {
+                        // Swipe kanan di daftar channel → buka panel kategori
+                        if (!categoryFullOpen) openCategoryFull();
+                    } else {
+                        // Swipe kiri → tutup panel
+                        if (categoryFullOpen) closeCategoryFull();
+                        else hidePanel();
+                    }
+                    return true;
+                }
+                return false;
+            }
+        });
+        chListPanel.setOnTouchListener((v, e) -> { panelSwipe.onTouchEvent(e); return false; });
+
+        // Swipe KIRI di panel kategori → kembali ke daftar channel
+        GestureDetector catSwipe = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float vX, float vY) {
+                if (e1 == null || e2 == null) return false;
+                float dX = e2.getX() - e1.getX();
+                if (dX < -80 && Math.abs(vX) > 100) {
+                    closeCategoryFull();
+                    return true;
+                }
+                return false;
+            }
+        });
+        categoryPanelFull.setOnTouchListener((v, e) -> { catSwipe.onTouchEvent(e); return false; });
     }
 
     // ===== KATEGORI =====
     private void setupCategoryListeners() {
-        // Setiap item sidebar: pilih kategori → tutup mode expanded → tampilkan ch_list_panel
-        catAll.setOnClickListener(v -> selectCategory("ALL"));
-        catTv.setOnClickListener(v -> selectCategory("TV"));
-        catRadio.setOnClickListener(v -> selectCategory("RADIO"));
-        catMovie.setOnClickListener(v -> selectCategory("FILM"));
-        catSettings.setOnClickListener(v -> finish()); // kembali ke settings
+        // Icon sidebar → buka kategori expanded (jika panel sudah terbuka)
+        catAll.setOnClickListener(v -> { if (panelOpen) openCategoryFull(); });
+        catTv.setOnClickListener(v -> { if (panelOpen) openCategoryFull(); });
+        catRadio.setOnClickListener(v -> { if (panelOpen) openCategoryFull(); });
+        catMovie.setOnClickListener(v -> { if (panelOpen) openCategoryFull(); });
+        catSettings.setOnClickListener(v -> finish());
+
+        // Item di panel kategori expanded → pilih dan kembali ke daftar channel
+        catFullAll.setOnClickListener(v -> selectCategory("ALL"));
+        catFullTv.setOnClickListener(v -> selectCategory("TV"));
+        catFullRadio.setOnClickListener(v -> selectCategory("RADIO"));
+        catFullMovie.setOnClickListener(v -> selectCategory("FILM"));
+        catFullSettings.setOnClickListener(v -> finish());
     }
 
+    /** Pilih kategori, update styling, filter channel, tutup panel kategori */
     private void selectCategory(String cat) {
         activeCategoryFilter = cat;
 
-        // Update icon opacity
+        // Update sidebar icon opacity
         icCatAll.setAlpha(cat.equals("ALL") ? 1.0f : 0.5f);
         icCatTv.setAlpha(cat.equals("TV") ? 1.0f : 0.5f);
         icCatRadio.setAlpha(cat.equals("RADIO") ? 1.0f : 0.5f);
         icCatMovie.setAlpha(cat.equals("FILM") ? 1.0f : 0.5f);
         icCatSettings.setAlpha(0.5f);
 
-        // Update background item aktif (putih rounded)
-        catAll.setBackground(cat.equals("ALL") ? getDrawable(R.drawable.bg_category_item_active) : null);
-        catTv.setBackground(cat.equals("TV") ? getDrawable(R.drawable.bg_category_item_active) : null);
-        catRadio.setBackground(cat.equals("RADIO") ? getDrawable(R.drawable.bg_category_item_active) : null);
-        catMovie.setBackground(cat.equals("FILM") ? getDrawable(R.drawable.bg_category_item_active) : null);
-        catSettings.setBackground(null);
-
-        // Update warna teks label (item aktif = hitam karena bg putih)
-        tvCatAll.setTextColor(cat.equals("ALL") ? 0xFF000000 : 0xCCFFFFFF);
-        tvCatTv.setTextColor(cat.equals("TV") ? 0xFF000000 : 0xCCFFFFFF);
-        tvCatRadio.setTextColor(cat.equals("RADIO") ? 0xFF000000 : 0xCCFFFFFF);
-        tvCatMovie.setTextColor(cat.equals("FILM") ? 0xFF000000 : 0xCCFFFFFF);
-        tvCatSettings.setTextColor(0xCCFFFFFF);
+        // Update styling panel kategori
+        updateCategoryItemStyle(catFullAll, catFullAllIcon, catFullAllText, cat.equals("ALL"));
+        updateCategoryItemStyle(catFullTv,  catFullTvIcon,  catFullTvText,  cat.equals("TV"));
+        updateCategoryItemStyle(catFullRadio, catFullRadioIcon, catFullRadioText, cat.equals("RADIO"));
+        updateCategoryItemStyle(catFullMovie, catFullMovieIcon, catFullMovieText, cat.equals("FILM"));
+        updateCategoryItemStyle(catFullSettings, catFullSettingsIcon, catFullSettingsText, false);
 
         // Filter daftar channel
         channelAdapter.applyGroupFilter(cat);
 
-        // Tutup mode kategori, kembali tampilkan ch_list_panel
-        if (categoryFullOpen) closeCategoryFull();
-        else if (!panelOpen) openPanel();
+        // Tutup panel kategori → kembali tampilkan daftar channel
+        closeCategoryFull();
+    }
+
+    private void updateCategoryItemStyle(LinearLayout item, ImageView icon, TextView text, boolean active) {
+        if (active) {
+            item.setBackground(getDrawable(R.drawable.bg_category_item_active));
+            icon.setAlpha(1.0f);
+            text.setTextColor(0xFF000000);
+        } else {
+            item.setBackground(null);
+            icon.setAlpha(0.5f);
+            text.setTextColor(0xCCFFFFFF);
+        }
     }
 
     // ===== PANEL DAFTAR CHANNEL =====
-    private float dp(float v) { return v * getResources().getDisplayMetrics().density; }
-
     private void openPanel() {
         if (panelOpen) return;
         panelOpen = true;
 
+        float dp = getResources().getDisplayMetrics().density;
+
         chListBackdrop.setVisibility(View.VISIBLE);
         chListBackdrop.animate().alpha(1f).setDuration(250).start();
 
-        // Sidebar masuk dari kiri, berhenti di posisi icon-only (-172dp)
+        // Sidebar icon masuk dari kiri: reset posisi ke -68dp lalu animasi ke 0
         categorySidebar.setVisibility(View.VISIBLE);
-        categorySidebar.setTranslationX(dp(-SIDEBAR_FULL_DP));
-        categorySidebar.animate()
-                .translationX(dp(SIDEBAR_ICON_OFFSET_DP))
-                .setDuration(280)
+        categorySidebar.setTranslationX(-68f * dp);
+        categorySidebar.animate().translationX(0f).setDuration(280)
                 .setInterpolator(new DecelerateInterpolator()).start();
 
-        // Panel daftar channel masuk dari kiri
+        // Panel daftar channel masuk dari kiri: reset ke -448dp lalu animasi ke 0
         chListPanel.setVisibility(View.VISIBLE);
         chListPanel.setAlpha(1f);
+        chListPanel.setTranslationX(-448f * dp);
         chListPanel.animate().translationX(0f).setDuration(300)
                 .setInterpolator(new DecelerateInterpolator()).start();
 
@@ -434,49 +490,40 @@ public class PlayerActivity extends Activity {
         panelOpen = false;
         categoryFullOpen = false;
 
-        // Sidebar keluar ke kiri
-        categorySidebar.animate()
-                .translationX(dp(-SIDEBAR_FULL_DP))
-                .setDuration(280)
+        float dp = getResources().getDisplayMetrics().density;
+
+        categorySidebar.animate().translationX(-68f * dp).setDuration(280)
                 .withEndAction(() -> categorySidebar.setVisibility(View.INVISIBLE)).start();
 
-        // Panel daftar channel keluar ke kiri
-        chListPanel.animate()
-                .translationX(dp(-(SIDEBAR_ICON_DP + 380)))
-                .setDuration(300)
+        chListPanel.animate().translationX(-448f * dp).setDuration(300)
                 .withEndAction(() -> chListPanel.setVisibility(View.INVISIBLE)).start();
+
+        // Tutup panel kategori jika sedang terbuka
+        if (categoryPanelFull.getVisibility() == View.VISIBLE) {
+            categoryPanelFull.animate().translationX(-240f * dp).setDuration(250)
+                    .withEndAction(() -> categoryPanelFull.setVisibility(View.INVISIBLE)).start();
+        }
 
         chListBackdrop.animate().alpha(0f).setDuration(250)
                 .withEndAction(() -> chListBackdrop.setVisibility(View.INVISIBLE)).start();
-
-        // Pastikan label tersembunyi
-        setCategoryLabelsVisible(false);
     }
 
-    // ===== PANEL KATEGORI (sidebar expanded) =====
+    // ===== PANEL KATEGORI EXPANDED =====
     private void openCategoryFull() {
+        if (categoryFullOpen) return;
         categoryFullOpen = true;
 
-        // Pastikan sidebar sudah terlihat
-        if (!panelOpen) {
-            panelOpen = true;
-            chListBackdrop.setVisibility(View.VISIBLE);
-            chListBackdrop.animate().alpha(1f).setDuration(200).start();
-            categorySidebar.setVisibility(View.VISIBLE);
-            categorySidebar.setTranslationX(dp(-SIDEBAR_FULL_DP));
-        }
+        // Jika panel belum terbuka, buka dulu
+        if (!panelOpen) openPanel();
 
-        // Sembunyikan ch_list_panel
-        chListPanel.animate().alpha(0f).setDuration(180)
-                .withEndAction(() -> chListPanel.setVisibility(View.INVISIBLE)).start();
+        float dp = getResources().getDisplayMetrics().density;
 
-        // Tampilkan label teks
-        setCategoryLabelsVisible(true);
-
-        // Animasikan sidebar expand: -172dp → 0 (seluruh 240dp tampil)
-        categorySidebar.animate()
-                .translationX(0f)
-                .setDuration(280)
+        // Panel kategori slide masuk dari kiri (mulai dari -240dp → 0)
+        // Ini menimpa ch_list_panel karena elevation lebih tinggi
+        categoryPanelFull.setVisibility(View.VISIBLE);
+        categoryPanelFull.setAlpha(1f);
+        categoryPanelFull.setTranslationX(-240f * dp);
+        categoryPanelFull.animate().translationX(0f).setDuration(280)
                 .setInterpolator(new DecelerateInterpolator()).start();
     }
 
@@ -484,28 +531,12 @@ public class PlayerActivity extends Activity {
         if (!categoryFullOpen) return;
         categoryFullOpen = false;
 
-        // Sembunyikan label teks
-        setCategoryLabelsVisible(false);
+        float dp = getResources().getDisplayMetrics().density;
 
-        // Sidebar kembali ke mode icon: 0 → -172dp
-        categorySidebar.animate()
-                .translationX(dp(SIDEBAR_ICON_OFFSET_DP))
-                .setDuration(250)
-                .setInterpolator(new DecelerateInterpolator()).start();
-
-        // Tampilkan kembali ch_list_panel
-        chListPanel.setVisibility(View.VISIBLE);
-        chListPanel.setAlpha(0f);
-        chListPanel.animate().alpha(1f).setDuration(280).start();
-    }
-
-    private void setCategoryLabelsVisible(boolean visible) {
-        int v = visible ? View.VISIBLE : View.GONE;
-        tvCatAll.setVisibility(v);
-        tvCatTv.setVisibility(v);
-        tvCatRadio.setVisibility(v);
-        tvCatMovie.setVisibility(v);
-        tvCatSettings.setVisibility(v);
+        // Panel kategori slide keluar ke kiri
+        categoryPanelFull.animate().translationX(-240f * dp).setDuration(250)
+                .setInterpolator(new DecelerateInterpolator())
+                .withEndAction(() -> categoryPanelFull.setVisibility(View.INVISIBLE)).start();
     }
 
     // ===== PLAY CHANNEL =====
@@ -540,12 +571,12 @@ public class PlayerActivity extends Activity {
             MediaSource mediaSource;
             if ("clearkey".equals(ch.drmType) && ch.drmKey != null && ch.drmKey.contains(":")) {
                 String[] parts = ch.drmKey.split(":");
-                String clearKeyJsonStr = "{\"keys\":[{\"kty\":\"oct\",\"kid\":\""
+                String ckJson = "{\"keys\":[{\"kty\":\"oct\",\"kid\":\""
                         + toBase64Url(hexToBytes(parts[0].trim())) + "\",\"k\":\""
                         + toBase64Url(hexToBytes(parts[1].trim())) + "\"}],\"type\":\"temporary\"}";
                 DefaultDrmSessionManager drm = new DefaultDrmSessionManager.Builder()
                         .setUuidAndExoMediaDrmProvider(C.CLEARKEY_UUID, FrameworkMediaDrm.DEFAULT_PROVIDER)
-                        .build(new LocalMediaDrmCallback(clearKeyJsonStr.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+                        .build(new LocalMediaDrmCallback(ckJson.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
                 mediaSource = new DashMediaSource.Factory(dsFactory)
                         .setDrmSessionManagerProvider(u -> drm)
                         .createMediaSource(MediaItem.fromUri(ch.url));
@@ -576,18 +607,21 @@ public class PlayerActivity extends Activity {
             ivChLogo.setVisibility(View.VISIBLE);
             tvChLogoFallback.setVisibility(View.GONE);
             Glide.with(this).load(ch.logoUrl).diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .placeholder(R.drawable.bg_ch_logo).error((android.graphics.drawable.Drawable)null).into(ivChLogo);
+                    .placeholder(R.drawable.bg_ch_logo)
+                    .error((android.graphics.drawable.Drawable)null).into(ivChLogo);
         } else {
             ivChLogo.setVisibility(View.GONE);
             tvChLogoFallback.setVisibility(View.VISIBLE);
-            tvChLogoFallback.setText(ch.name.isEmpty() ? "TV" : ch.name.substring(0, Math.min(2, ch.name.length())).toUpperCase());
+            tvChLogoFallback.setText(ch.name.isEmpty() ? "TV"
+                    : ch.name.substring(0, Math.min(2, ch.name.length())).toUpperCase());
         }
     }
     private void showChInfo() {
         channelInfo.setTranslationX(-700f);
         channelInfo.setAlpha(1f);
         channelInfo.setVisibility(View.VISIBLE);
-        channelInfo.animate().translationX(20f).setDuration(400).setInterpolator(new DecelerateInterpolator()).start();
+        channelInfo.animate().translationX(20f).setDuration(400)
+                .setInterpolator(new DecelerateInterpolator()).start();
         if (chInfoHideRunnable != null) handler.removeCallbacks(chInfoHideRunnable);
         chInfoHideRunnable = this::hideChInfo;
         handler.postDelayed(chInfoHideRunnable, 4000);
@@ -603,7 +637,8 @@ public class PlayerActivity extends Activity {
     // ===== SWIPE =====
     private void showSwipeFeedback(boolean up) {
         TextView fb = up ? swipeFbUp : swipeFbDown;
-        fb.animate().alpha(1f).setDuration(150).withEndAction(() -> fb.animate().alpha(0f).setDuration(300).start()).start();
+        fb.animate().alpha(1f).setDuration(150)
+                .withEndAction(() -> fb.animate().alpha(0f).setDuration(300).start()).start();
     }
     private void showSwipeHint() {
         swipeHint.animate().alpha(1f).setDuration(500).start();
@@ -613,7 +648,8 @@ public class PlayerActivity extends Activity {
     }
     private void blackFlash() {
         blackFlash.setVisibility(View.VISIBLE); blackFlash.setAlpha(1f);
-        blackFlash.animate().alpha(0f).setDuration(150).withEndAction(() -> blackFlash.setVisibility(View.INVISIBLE)).start();
+        blackFlash.animate().alpha(0f).setDuration(150)
+                .withEndAction(() -> blackFlash.setVisibility(View.INVISIBLE)).start();
     }
 
     // ===== TV REMOTE =====
@@ -622,20 +658,24 @@ public class PlayerActivity extends Activity {
         switch (keyCode) {
             case KeyEvent.KEYCODE_DPAD_UP:
             case KeyEvent.KEYCODE_PAGE_UP:
-                if (!panelOpen && !categoryFullOpen) { showSwipeFeedback(true); playChannel(currentChannelIdx + 1, true); }
+                if (!panelOpen && !categoryFullOpen) {
+                    showSwipeFeedback(true); playChannel(currentChannelIdx + 1, true);
+                }
                 return true;
             case KeyEvent.KEYCODE_DPAD_DOWN:
             case KeyEvent.KEYCODE_PAGE_DOWN:
-                if (!panelOpen && !categoryFullOpen) { showSwipeFeedback(false); playChannel(currentChannelIdx - 1, true); }
+                if (!panelOpen && !categoryFullOpen) {
+                    showSwipeFeedback(false); playChannel(currentChannelIdx - 1, true);
+                }
                 return true;
             case KeyEvent.KEYCODE_DPAD_LEFT:
                 // Tekan 1x → buka daftar channel
-                // Tekan 2x (panel sudah terbuka) → expand kategori
-                if (!panelOpen && !categoryFullOpen)   openPanel();
-                else if (panelOpen && !categoryFullOpen) openCategoryFull();
+                // Tekan 2x (panel sudah buka) → buka kategori
+                if (!panelOpen && !categoryFullOpen)      openPanel();
+                else if (panelOpen && !categoryFullOpen)  openCategoryFull();
                 return true;
             case KeyEvent.KEYCODE_DPAD_RIGHT:
-                // Kanan = kembali/tutup
+                // Kanan = tutup/kembali
                 if (categoryFullOpen) closeCategoryFull();
                 else if (panelOpen)   hidePanel();
                 return true;
@@ -663,8 +703,7 @@ public class PlayerActivity extends Activity {
         if (numClearRunnable != null) handler.removeCallbacks(numClearRunnable);
         numClearRunnable = () -> {
             int t = Integer.parseInt(numBuffer) - 1;
-            numBuffer = "";
-            numOverlay.setVisibility(View.GONE);
+            numBuffer = ""; numOverlay.setVisibility(View.GONE);
             if (t >= 0 && t < channels.size()) playChannel(t, true);
         };
         handler.postDelayed(numClearRunnable, 1500);
@@ -672,7 +711,7 @@ public class PlayerActivity extends Activity {
 
     // ===== DRM =====
     private static byte[] hexToBytes(String hex) {
-        int len = hex.length(); byte[] data = new byte[len / 2];
+        int len = hex.length(); byte[] data = new byte[len/2];
         for (int i = 0; i < len; i += 2)
             data[i/2] = (byte)((Character.digit(hex.charAt(i),16)<<4)+Character.digit(hex.charAt(i+1),16));
         return data;
@@ -692,7 +731,8 @@ public class PlayerActivity extends Activity {
                 View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
     }
     @Override protected void onDestroy() {
-        super.onDestroy(); if (player != null) { player.release(); player = null; }
+        super.onDestroy();
+        if (player != null) { player.release(); player = null; }
         handler.removeCallbacksAndMessages(null);
     }
     @Override public void onBackPressed() {
