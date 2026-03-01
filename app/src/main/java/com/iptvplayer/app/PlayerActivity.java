@@ -217,19 +217,29 @@ public class PlayerActivity extends Activity {
     }
 
     // ===== BITRATE REAL-TIME =====
+    private long lastBitrateEstimate = 0;
+
     private void startBitrateUpdater() {
+        // Tangkap bitrate real dari AnalyticsListener
+        player.addAnalyticsListener(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
+            @Override
+            public void onBandwidthEstimate(
+                    androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime eventTime,
+                    int totalLoadTimeMs, long totalBytesLoaded, long bitrateEstimate) {
+                lastBitrateEstimate = bitrateEstimate;
+            }
+        });
+
+        // Update UI setiap 1 detik
         bitrateRunnable = new Runnable() {
             @Override public void run() {
                 try {
-                    if (player != null && player.isPlaying()) {
-                        long bitsPerSecond = player.getBandwidthMeter().getBitrateEstimate();
-                        if (tvBitrate != null) {
-                            if (bitsPerSecond > 0) {
-                                long kbps = bitsPerSecond / 1000;
-                                tvBitrate.setText(kbps + " kb/s");
-                            }
-                        }
-                        // Update resolusi juga
+                    if (tvBitrate != null && lastBitrateEstimate > 0) {
+                        long kbps = lastBitrateEstimate / 1000;
+                        tvBitrate.setText(kbps + " kb/s");
+                    }
+                    // Update resolusi juga
+                    if (player != null) {
                         Format vf = player.getVideoFormat();
                         if (vf != null && tvResolution != null) {
                             tvResolution.setText(vf.width + "x" + vf.height);
