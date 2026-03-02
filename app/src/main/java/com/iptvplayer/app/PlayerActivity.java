@@ -86,6 +86,7 @@ public class PlayerActivity extends Activity {
     // Panel kategori expanded (icon + teks, muncul di atas ch_list_panel)
     private LinearLayout categoryPanelFull;
     private LinearLayout catFullAll, catFullTv, catFullRadio, catFullMovie, catFullSettings;
+    private ImageView catFullAllIcon, catFullTvIcon, catFullRadioIcon, catFullMovieIcon, catFullSettingsIcon;
     // icon di category_panel_full dihapus dari layout, hanya teks
     private TextView catFullAllText, catFullTvText, catFullRadioText, catFullMovieText, catFullSettingsText;
 
@@ -196,6 +197,12 @@ public class PlayerActivity extends Activity {
         catFullRadio         = findViewById(R.id.cat_full_radio);
         catFullMovie         = findViewById(R.id.cat_full_movie);
         catFullSettings      = findViewById(R.id.cat_full_settings);
+
+        catFullAllIcon       = findViewById(R.id.cat_full_all_icon);
+        catFullTvIcon        = findViewById(R.id.cat_full_tv_icon);
+        catFullRadioIcon     = findViewById(R.id.cat_full_radio_icon);
+        catFullMovieIcon     = findViewById(R.id.cat_full_movie_icon);
+        catFullSettingsIcon  = findViewById(R.id.cat_full_settings_icon);
         // icon di category_panel_full sudah dihapus dari layout XML
         catFullAllText       = findViewById(R.id.cat_full_all_text);
         catFullTvText        = findViewById(R.id.cat_full_tv_text);
@@ -494,11 +501,11 @@ public class PlayerActivity extends Activity {
         updateSidebarItemStyle(catSettings, icCatSettings, false);
 
         // Update styling panel kategori
-        updateCategoryItemStyle(catFullAll, catFullAllText, cat.equals("ALL"));
-        updateCategoryItemStyle(catFullTv,  catFullTvText,  cat.equals("TV"));
-        updateCategoryItemStyle(catFullRadio, catFullRadioText, cat.equals("RADIO"));
-        updateCategoryItemStyle(catFullMovie, catFullMovieText, cat.equals("FILM"));
-        updateCategoryItemStyle(catFullSettings, catFullSettingsText, false);
+        updateCategoryItemStyle(catFullAll,      catFullAllIcon,      catFullAllText,      cat.equals("ALL"));
+        updateCategoryItemStyle(catFullTv,       catFullTvIcon,       catFullTvText,       cat.equals("TV"));
+        updateCategoryItemStyle(catFullRadio,    catFullRadioIcon,    catFullRadioText,    cat.equals("RADIO"));
+        updateCategoryItemStyle(catFullMovie,    catFullMovieIcon,    catFullMovieText,    cat.equals("FILM"));
+        updateCategoryItemStyle(catFullSettings, catFullSettingsIcon, catFullSettingsText, false);
 
         // Filter daftar channel
         channelAdapter.applyGroupFilter(cat);
@@ -507,13 +514,21 @@ public class PlayerActivity extends Activity {
         closeCategoryFull();
     }
 
-    private void updateCategoryItemStyle(LinearLayout item, TextView text, boolean active) {
+    private void updateCategoryItemStyle(LinearLayout item, ImageView icon, TextView text, boolean active) {
         if (active) {
             item.setBackground(getDrawable(R.drawable.bg_category_item_active));
             text.setTextColor(0xFF000000);
+            if (icon != null) {
+                icon.setAlpha(1.0f);
+                icon.setColorFilter(0xFF000000, android.graphics.PorterDuff.Mode.SRC_IN);
+            }
         } else {
             item.setBackground(null);
             text.setTextColor(0xCCFFFFFF);
+            if (icon != null) {
+                icon.setAlpha(0.5f);
+                icon.clearColorFilter();
+            }
         }
     }
 
@@ -576,7 +591,7 @@ public class PlayerActivity extends Activity {
 
         // Tutup panel kategori jika sedang terbuka
         if (categoryPanelFull.getVisibility() == View.VISIBLE) {
-            categoryPanelFull.animate().translationX(-240f * dp).setDuration(250)
+            categoryPanelFull.animate().translationX(-308f * dp).setDuration(250)
                     .withEndAction(() -> categoryPanelFull.setVisibility(View.INVISIBLE)).start();
         }
 
@@ -600,7 +615,7 @@ public class PlayerActivity extends Activity {
         // category_panel_full sudah punya layout_marginLeft="68dp" jadi posisi sudah benar
         categoryPanelFull.setVisibility(View.VISIBLE);
         categoryPanelFull.setAlpha(1f);
-        categoryPanelFull.setTranslationX(-240f * dp);
+        categoryPanelFull.setTranslationX(-308f * dp);
         categoryPanelFull.animate().translationX(0f).setDuration(280)
                 .setInterpolator(new DecelerateInterpolator()).start();
 
@@ -616,7 +631,7 @@ public class PlayerActivity extends Activity {
         float dp = getResources().getDisplayMetrics().density;
 
         // Panel kategori slide keluar ke kiri
-        categoryPanelFull.animate().translationX(-240f * dp).setDuration(250)
+        categoryPanelFull.animate().translationX(-308f * dp).setDuration(250)
                 .setInterpolator(new DecelerateInterpolator())
                 .withEndAction(() -> categoryPanelFull.setVisibility(View.INVISIBLE)).start();
 
