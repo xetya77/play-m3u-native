@@ -609,10 +609,9 @@ public class PlayerActivity extends Activity {
 
         float dp = getResources().getDisplayMetrics().density;
 
-        // Sidebar tetap terlihat di posisinya — tidak disembunyikan
-        // Panel kategori expanded slide masuk dari kiri (mulai dari -240dp → 0)
-        // Layout: sidebar(68dp) | category_panel_full(240dp) | ch_list_panel
-        // category_panel_full sudah punya layout_marginLeft="68dp" jadi posisi sudah benar
+        // Sembunyikan sidebar — panel full menutupi area sidebar sepenuhnya
+        categorySidebar.setVisibility(View.INVISIBLE);
+
         categoryPanelFull.setVisibility(View.VISIBLE);
         categoryPanelFull.setAlpha(1f);
         categoryPanelFull.setTranslationX(-308f * dp);
@@ -630,10 +629,13 @@ public class PlayerActivity extends Activity {
 
         float dp = getResources().getDisplayMetrics().density;
 
-        // Panel kategori slide keluar ke kiri
+        // Panel kategori slide keluar ke kiri, lalu tampilkan kembali sidebar
         categoryPanelFull.animate().translationX(-308f * dp).setDuration(250)
                 .setInterpolator(new DecelerateInterpolator())
-                .withEndAction(() -> categoryPanelFull.setVisibility(View.INVISIBLE)).start();
+                .withEndAction(() -> {
+                    categoryPanelFull.setVisibility(View.INVISIBLE);
+                    categorySidebar.setVisibility(View.VISIBLE);
+                }).start();
 
         // Kembalikan ch_list_panel ke posisi semula (translationX = 0)
         chListPanel.animate().translationX(0f).setDuration(280)
