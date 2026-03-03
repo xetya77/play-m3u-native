@@ -25,10 +25,10 @@
 
             <ImageView
                 android:layout_width="70dp"
-                android:layout_height="77dp"
+                android:layout_height="70dp"
                 android:src="@drawable/ic_app_logo"
                 android:layout_marginBottom="28dp"
-                android:tint="@color/welcome_dark"/>
+                android:scaleType="fitCenter"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -37,6 +37,7 @@
                 android:textColor="#40163A2A"
                 android:textSize="13sp"
                 android:textStyle="bold"
+                android:fontFamily="@font/inter_bold"
                 android:layout_marginBottom="4dp"/>
 
             <TextView
@@ -46,6 +47,7 @@
                 android:textColor="@color/welcome_dark"
                 android:textSize="24sp"
                 android:textStyle="bold"
+                android:fontFamily="@font/inter_bold"
                 android:layout_marginBottom="40dp"/>
 
             <TextView
@@ -57,6 +59,7 @@ in one place."
                 android:textSize="12sp"
                 android:gravity="center"
                 android:lineSpacingMultiplier="1.5"
+                android:fontFamily="@font/inter_medium"
                 android:alpha="0.65"/>
         </LinearLayout>
 
@@ -78,6 +81,7 @@ in one place."
                 android:text="Get Started"
                 android:textColor="@color/welcome_bg"
                 android:textSize="17sp"
+                android:fontFamily="@font/inter_medium"
                 android:background="@drawable/bg_welcome_btn"
                 android:focusable="true"
                 android:clickable="true"
@@ -90,6 +94,7 @@ in one place."
                 android:textColor="@color/welcome_dark"
                 android:textSize="9sp"
                 android:textStyle="italic"
+                android:fontFamily="@font/inter_medium"
                 android:alpha="0.6"/>
         </LinearLayout>
     </LinearLayout>

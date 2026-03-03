@@ -7,10 +7,9 @@
     <ImageView
         android:id="@+id/iv_splash_logo"
         android:layout_width="70dp"
-        android:layout_height="77dp"
+        android:layout_height="70dp"
         android:layout_gravity="center"
         android:src="@drawable/ic_app_logo"
-        android:tint="#16232A"
         android:alpha="0"
         android:scaleType="fitCenter"/>
 
