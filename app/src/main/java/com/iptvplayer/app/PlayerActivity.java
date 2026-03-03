@@ -723,19 +723,46 @@ public class PlayerActivity extends Activity {
                     : ch.name.substring(0, Math.min(2, ch.name.length())).toUpperCase());
         }
     }
+    /** Hitung seberapa jauh OSD harus digeser ke kiri agar benar-benar keluar layar.
+     *  Menggunakan lebar aktual box + margin kiri + sedikit ekstra, dalam pixel. */
+    private float osdHideOffset() {
+        // getWidth() mengembalikan pixel, sudah benar untuk translationX
+        int w = channelInfo.getWidth();
+        if (w == 0) {
+            // Fallback sebelum first layout: gunakan screenWidth sebagai batas aman
+            return -(getResources().getDisplayMetrics().widthPixels + 100f);
+        }
+        // Geser sejauh lebar box + margin kirinya + 50px ekstra biar benar-benar hilang
+        return -(w + channelInfo.getLeft() + 50f);
+    }
+
     private void showChInfo() {
-        channelInfo.setTranslationX(-700f);
         channelInfo.setAlpha(1f);
         channelInfo.setVisibility(View.VISIBLE);
-        channelInfo.animate().translationX(20f).setDuration(400)
-                .setInterpolator(new DecelerateInterpolator()).start();
+        // Set posisi awal ke luar layar kiri sebelum animasi masuk
+        // Gunakan post agar layout sudah selesai sehingga getWidth() akurat
+        channelInfo.post(() -> {
+            channelInfo.setTranslationX(osdHideOffset());
+            channelInfo.animate().translationX(20f).setDuration(400)
+                    .setInterpolator(new DecelerateInterpolator()).start();
+        });
         if (chInfoHideRunnable != null) handler.removeCallbacks(chInfoHideRunnable);
         chInfoHideRunnable = this::hideChInfo;
         handler.postDelayed(chInfoHideRunnable, 4000);
     }
+
     private void hideChInfo() {
-        channelInfo.animate().translationX(-700f).alpha(0.8f).setDuration(500)
-                .withEndAction(() -> { channelInfo.setVisibility(View.GONE); channelInfo.setAlpha(1f); }).start();
+        // Geser sejauh lebar aktual box agar keluar layar tanpa patah
+        float target = osdHideOffset();
+        channelInfo.animate()
+                .translationX(target)
+                .alpha(0.9f)
+                .setDuration(450)
+                .setInterpolator(new android.view.animation.AccelerateInterpolator(1.5f))
+                .withEndAction(() -> {
+                    channelInfo.setVisibility(View.GONE);
+                    channelInfo.setAlpha(1f);
+                }).start();
     }
     private void toggleChInfo() {
         if (channelInfo.getVisibility() == View.VISIBLE) hideChInfo(); else showChInfo();
