@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
@@ -17,7 +16,6 @@ public class SplashActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Fullscreen tanpa status bar
         getWindow().setFlags(
             WindowManager.LayoutParams.FLAG_FULLSCREEN,
             WindowManager.LayoutParams.FLAG_FULLSCREEN
@@ -27,33 +25,38 @@ public class SplashActivity extends Activity {
 
         ImageView logo = findViewById(R.id.iv_splash_logo);
 
-        // Animasi: fade in 800ms → tahan 600ms → fade out 800ms → pindah
-        AlphaAnimation fadeIn = new AlphaAnimation(0f, 1f);
-        fadeIn.setDuration(800);
-        fadeIn.setFillAfter(true);
+        // Set alpha 0 via Java — lebih reliable daripada android:alpha di XML
+        logo.setAlpha(0f);
 
-        fadeIn.setAnimationListener(new Animation.AnimationListener() {
-            @Override public void onAnimationStart(Animation a) {}
-            @Override public void onAnimationRepeat(Animation a) {}
-            @Override public void onAnimationEnd(Animation a) {
-                // Tahan sebentar lalu fade out
-                new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    AlphaAnimation fadeOut = new AlphaAnimation(1f, 0f);
-                    fadeOut.setDuration(700);
-                    fadeOut.setFillAfter(true);
-                    fadeOut.setAnimationListener(new Animation.AnimationListener() {
-                        @Override public void onAnimationStart(Animation a) {}
-                        @Override public void onAnimationRepeat(Animation a) {}
-                        @Override public void onAnimationEnd(Animation a) {
-                            goToMain();
-                        }
-                    });
-                    logo.startAnimation(fadeOut);
-                }, 600);
-            }
-        });
+        // Delay sedikit agar layout selesai inflate sebelum animasi mulai
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            AlphaAnimation fadeIn = new AlphaAnimation(0f, 1f);
+            fadeIn.setDuration(900);
+            fadeIn.setFillAfter(true);
 
-        logo.startAnimation(fadeIn);
+            fadeIn.setAnimationListener(new Animation.AnimationListener() {
+                @Override public void onAnimationStart(Animation a) {}
+                @Override public void onAnimationRepeat(Animation a) {}
+                @Override public void onAnimationEnd(Animation a) {
+                    logo.setAlpha(1f); // pastikan visible setelah fade in
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        AlphaAnimation fadeOut = new AlphaAnimation(1f, 0f);
+                        fadeOut.setDuration(700);
+                        fadeOut.setFillAfter(true);
+                        fadeOut.setAnimationListener(new Animation.AnimationListener() {
+                            @Override public void onAnimationStart(Animation a) {}
+                            @Override public void onAnimationRepeat(Animation a) {}
+                            @Override public void onAnimationEnd(Animation a) {
+                                goToMain();
+                            }
+                        });
+                        logo.startAnimation(fadeOut);
+                    }, 700);
+                }
+            });
+
+            logo.startAnimation(fadeIn);
+        }, 100);
     }
 
     private void goToMain() {
