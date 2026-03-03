@@ -4,56 +4,93 @@
     android:layout_height="match_parent"
     android:background="@color/bg_dark">
 
-    <!-- ===== PAGE WELCOME ===== -->
+    <!-- ===== PAGE WELCOME (new design) ===== -->
     <LinearLayout
         android:id="@+id/page_welcome"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:gravity="center"
-        android:padding="20dp"
+        android:gravity="center_horizontal"
+        android:background="@color/welcome_bg"
         android:visibility="gone">
 
+        <!-- Top: logo + teks -->
         <LinearLayout
-            android:layout_width="330dp"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingBottom="20dp">
+
+            <ImageView
+                android:layout_width="70dp"
+                android:layout_height="77dp"
+                android:src="@drawable/ic_app_logo"
+                android:layout_marginBottom="28dp"
+                android:colorFilter="@color/welcome_dark"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Welcome to"
+                android:textColor="#40163A2A"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PlayM3U"
+                android:textColor="@color/welcome_dark"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="40dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Stream your M3U playlists
+in one place."
+                android:textColor="@color/welcome_dark"
+                android:textSize="12sp"
+                android:gravity="center"
+                android:lineSpacingMultiplier="1.5"
+                android:alpha="0.65"/>
+        </LinearLayout>
+
+        <!-- Bottom: button + hint -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
-            android:background="@drawable/bg_card"
-            android:padding="36dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="PLAY M3U."
-                android:textColor="@color/text_white"
-                android:textSize="28sp"
-                android:letterSpacing="0.03"
-                android:layout_marginBottom="14dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Aplikasi ini hanya untuk memutar siaran IPTV.\nBelum ada channel di dalamnya.\nTambahkan playlist M3U Anda untuk mulai menonton."
-                android:textColor="@color/text_desc"
-                android:textSize="11sp"
-                android:lineSpacingMultiplier="1.7"
-                android:gravity="center"
-                android:layout_marginBottom="28dp"/>
+            android:paddingBottom="48dp"
+            android:paddingLeft="24dp"
+            android:paddingRight="24dp">
 
             <TextView
                 android:id="@+id/btn_welcome_add"
-                android:layout_width="230dp"
+                android:layout_width="241dp"
                 android:layout_height="90dp"
                 android:gravity="center"
-                android:text="Tambah\nPlaylist M3U"
-                android:textColor="@color/text_white"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:lineSpacingMultiplier="1.3"
+                android:text="Get Started"
+                android:textColor="@color/welcome_bg"
+                android:textSize="17sp"
                 android:background="@drawable/bg_welcome_btn"
                 android:focusable="true"
-                android:clickable="true"/>
+                android:clickable="true"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Press OK to start"
+                android:textColor="@color/welcome_dark"
+                android:textSize="9sp"
+                android:textStyle="italic"
+                android:alpha="0.6"/>
         </LinearLayout>
     </LinearLayout>
 
