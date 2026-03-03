@@ -40,7 +40,8 @@
             android:exported="false"
             android:screenOrientation="unspecified"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.PlayM3U.Main">
         </activity>
 
         <!-- PlayerActivity: Fullscreen ExoPlayer -->
