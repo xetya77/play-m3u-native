@@ -11,4 +11,10 @@
     <color name="divider">#14ffffff</color>
     <color name="black">#000000</color>
     <color name="transparent">#00000000</color>
+
+    <!-- Welcome screen baru -->
+    <color name="welcome_bg">#E4EEF0</color>
+    <color name="welcome_dark">#16232A</color>
+    <color name="welcome_btn">#075056</color>
+    <color name="welcome_btn_pressed">#FF5B04</color>
 </resources>

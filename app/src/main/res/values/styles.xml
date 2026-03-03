@@ -15,4 +15,10 @@
         <item name="android:statusBarColor">@color/transparent</item>
         <item name="android:navigationBarColor">@color/transparent</item>
     </style>
+    <style name="Theme.PlayM3U.Splash" parent="android:Theme.NoTitleBar.Fullscreen">
+        <item name="android:windowBackground">#E4EEF0</item>
+        <item name="android:statusBarColor">#E4EEF0</item>
+        <item name="android:navigationBarColor">#E4EEF0</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
 </resources>
