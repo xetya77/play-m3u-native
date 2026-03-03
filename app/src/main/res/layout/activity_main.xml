@@ -28,7 +28,7 @@
                 android:layout_height="77dp"
                 android:src="@drawable/ic_app_logo"
                 android:layout_marginBottom="28dp"
-                android:colorFilter="@color/welcome_dark"/>
+                android:tint="@color/welcome_dark"/>
 
             <TextView
                 android:layout_width="wrap_content"

@@ -10,7 +10,7 @@
         android:layout_height="77dp"
         android:layout_gravity="center"
         android:src="@drawable/ic_app_logo"
-        android:colorFilter="#16232A"
+        android:tint="#16232A"
         android:alpha="0"
         android:scaleType="fitCenter"/>
 
