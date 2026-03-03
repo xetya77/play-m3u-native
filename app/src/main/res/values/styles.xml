@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Theme dasar app -->
     <style name="Theme.PlayM3U" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">@color/bg_dark</item>
         <item name="android:statusBarColor">@color/bg_dark</item>
@@ -9,12 +10,23 @@
         <item name="android:textColor">@color/text_white</item>
     </style>
 
+    <!-- MainActivity: fullscreen, semua halaman welcome/playlist -->
+    <style name="Theme.PlayM3U.Main" parent="Theme.PlayM3U">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowBackground">@color/bg_dark</item>
+        <item name="android:statusBarColor">@color/transparent</item>
+        <item name="android:navigationBarColor">@color/transparent</item>
+    </style>
+
+    <!-- PlayerActivity: fullscreen, background hitam -->
     <style name="Theme.PlayM3U.Player" parent="Theme.PlayM3U">
         <item name="android:windowBackground">@color/black</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:statusBarColor">@color/transparent</item>
         <item name="android:navigationBarColor">@color/transparent</item>
     </style>
+
+    <!-- SplashActivity: fullscreen, background #E4EEF0 -->
     <style name="Theme.PlayM3U.Splash" parent="android:Theme.NoTitleBar.Fullscreen">
         <item name="android:windowBackground">#E4EEF0</item>
         <item name="android:statusBarColor">#E4EEF0</item>
