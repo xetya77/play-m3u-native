@@ -10,25 +10,29 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:gravity="center_horizontal"
         android:background="@color/welcome_bg"
         android:visibility="gone">
 
-        <!-- Top: logo + teks -->
+        <!-- Spacer atas: mendorong icon ke posisi y=111dp -->
+        <View android:layout_width="match_parent" android:layout_height="111dp"/>
+
+        <!-- Icon logo: 70x70dp, centered -->
+        <ImageView
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:layout_gravity="center_horizontal"
+            android:src="@drawable/ic_app_logo"
+            android:scaleType="fitCenter"/>
+
+        <!-- Gap icon → teks: 38dp -->
+        <View android:layout_width="match_parent" android:layout_height="38dp"/>
+
+        <!-- Welcome to + PlayM3U -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:gravity="center"
-            android:paddingBottom="20dp">
-
-            <ImageView
-                android:layout_width="70dp"
-                android:layout_height="70dp"
-                android:src="@drawable/ic_app_logo"
-                android:layout_marginBottom="28dp"
-                android:scaleType="fitCenter"/>
+            android:gravity="center_horizontal">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -36,70 +40,78 @@
                 android:text="Welcome to"
                 android:textColor="#40163A2A"
                 android:textSize="13sp"
-                android:textStyle="bold"
                 android:fontFamily="@font/inter_bold"
-                android:layout_marginBottom="4dp"/>
+                android:textStyle="bold"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="PlayM3U"
                 android:textColor="@color/welcome_dark"
-                android:textSize="24sp"
-                android:textStyle="bold"
+                android:textSize="26sp"
                 android:fontFamily="@font/inter_bold"
-                android:layout_marginBottom="40dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Stream your M3U playlists
-in one place."
-                android:textColor="@color/welcome_dark"
-                android:textSize="12sp"
-                android:gravity="center"
-                android:lineSpacingMultiplier="1.5"
-                android:fontFamily="@font/inter_medium"
-                android:alpha="0.65"/>
+                android:textStyle="bold"/>
         </LinearLayout>
 
-        <!-- Bottom: button + hint -->
-        <LinearLayout
-            android:layout_width="match_parent"
+        <!-- Gap teks → tagline: 66dp -->
+        <View android:layout_width="match_parent" android:layout_height="66dp"/>
+
+        <!-- Tagline -->
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:layout_gravity="center_horizontal"
+            android:text="Stream your M3U playlists
+in one place."
+            android:textColor="@color/welcome_dark"
+            android:textSize="13sp"
             android:gravity="center"
-            android:paddingBottom="48dp"
-            android:paddingLeft="24dp"
-            android:paddingRight="24dp">
+            android:lineSpacingMultiplier="1.5"
+            android:fontFamily="@font/inter_medium"
+            android:alpha="0.55"/>
 
-            <TextView
-                android:id="@+id/btn_welcome_add"
-                android:layout_width="241dp"
-                android:layout_height="90dp"
-                android:gravity="center"
-                android:text="Get Started"
-                android:textColor="@color/welcome_bg"
-                android:textSize="17sp"
-                android:fontFamily="@font/inter_medium"
-                android:background="@drawable/bg_welcome_btn"
-                android:focusable="true"
-                android:clickable="true"
-                android:layout_marginBottom="16dp"/>
+        <!-- Flexible space: mendorong button ke bawah -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Press OK to start"
-                android:textColor="@color/welcome_dark"
-                android:textSize="9sp"
-                android:textStyle="italic"
-                android:fontFamily="@font/inter_medium"
-                android:alpha="0.6"/>
-        </LinearLayout>
+        <!-- Button Get Started: 241x107dp -->
+        <TextView
+            android:id="@+id/btn_welcome_add"
+            android:layout_width="241dp"
+            android:layout_height="107dp"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center"
+            android:text="Get Started"
+            android:textColor="@color/welcome_bg"
+            android:textSize="18sp"
+            android:fontFamily="@font/inter_medium"
+            android:background="@drawable/bg_welcome_btn"
+            android:focusable="true"
+            android:clickable="true"/>
+
+        <!-- Gap button → Press OK: 35dp -->
+        <View android:layout_width="match_parent" android:layout_height="35dp"/>
+
+        <!-- Press OK to start -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Press OK to start"
+            android:textColor="@color/welcome_dark"
+            android:textSize="10sp"
+            android:textStyle="italic"
+            android:fontFamily="@font/inter_medium"
+            android:alpha="0.5"/>
+
+        <!-- Bottom margin: 84dp -->
+        <View android:layout_width="match_parent" android:layout_height="84dp"/>
+
     </LinearLayout>
 
-    <!-- ===== PAGE SOURCE ===== -->
+        <!-- ===== PAGE SOURCE ===== -->
     <LinearLayout
         android:id="@+id/page_source"
         android:layout_width="match_parent"

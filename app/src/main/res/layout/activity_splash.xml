@@ -4,13 +4,13 @@
     android:layout_height="match_parent"
     android:background="#E4EEF0">
 
+    <!-- alpha TIDAK di-set di XML — diatur via Java sebelum animasi -->
     <ImageView
         android:id="@+id/iv_splash_logo"
         android:layout_width="70dp"
         android:layout_height="70dp"
         android:layout_gravity="center"
         android:src="@drawable/ic_app_logo"
-        android:alpha="0"
         android:scaleType="fitCenter"/>
 
 </FrameLayout>
