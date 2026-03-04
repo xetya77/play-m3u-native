@@ -1,10 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="20dp"
-    android:height="20dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
+    android:width="19dp"
+    android:height="22dp"
+    android:viewportWidth="19"
+    android:viewportHeight="22">
+    <!--
+        Segitiga play dengan cekungan di sisi kiri (concave)
+        Titik-titik: kiri-atas, kanan-tengah, kiri-bawah
+        Sisi kiri dibuat cekung ke dalam dengan cubic bezier
+    -->
     <path
         android:fillColor="#E4EEF0"
-        android:pathData="M6,4 C5,4 5,5 5.5,5.5 L18.5,12 L5.5,18.5 C5,19 5,20 6,20 L6,20 C6.3,20 6.6,19.85 6.8,19.6 L20.8,12.7 C21.4,12.35 21.4,11.65 20.8,11.3 L6.8,4.4 C6.6,4.15 6.3,4 6,4 Z"/>
+        android:pathData="
+            M2,1
+            C2,1 3.5,1.5 4,2
+            L17,10
+            C18.2,10.7 18.2,11.3 17,12
+            L4,20
+            C3.5,20.5 2,21 2,21
+            C0.5,21 0,20 0.5,19
+            C1,18 1.5,12.5 1.5,11
+            C1.5,9.5 1,5 0.5,3
+            C0,2 0.5,1 2,1
+            Z"/>
 </vector>
