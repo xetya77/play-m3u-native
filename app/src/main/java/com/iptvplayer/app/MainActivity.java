@@ -10,6 +10,10 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -39,9 +43,10 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     // ===== WELCOME =====
     private View btnWelcomeAdd;
+    private android.widget.TextView checkboxUrlIcon, checkboxFileIcon;
 
     // ===== SOURCE =====
-    private View btnSourceBack, sourceUrlItem, sourceFileItem;
+    private View btnSourceBack, btnSourceNext, sourceUrlItem, sourceFileItem;
     private View checkboxUrl, checkboxFile;
     private TextView tvSourceNote;
     private String selectedSource = null; // "url" or "file"
@@ -119,16 +124,24 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     }
 
     // Sembunyikan status bar + navigation bar (truly fullscreen, immersive sticky)
-    @SuppressWarnings("deprecation")
     private void hideSystemUI() {
-        getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        getWindow().getDecorView().setSystemUiVisibility(
-            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-            | View.SYSTEM_UI_FLAG_FULLSCREEN
-            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            getWindow().setDecorFitsSystemWindows(false);
+            WindowInsetsController controller = getWindow().getInsetsController();
+            if (controller != null) {
+                controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+                controller.setSystemBarsBehavior(
+                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        }
     }
 
     // Pastikan fullscreen tetap aktif saat window mendapat fokus kembali
@@ -152,6 +165,9 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
         // Source
         btnSourceBack = findViewById(R.id.btn_source_back);
+        btnSourceNext = findViewById(R.id.btn_source_next);
+        checkboxUrlIcon = findViewById(R.id.checkbox_url);
+        checkboxFileIcon = findViewById(R.id.checkbox_file);
         sourceUrlItem = findViewById(R.id.source_url_item);
         sourceFileItem = findViewById(R.id.source_file_item);
         checkboxUrl = findViewById(R.id.checkbox_url);
@@ -202,10 +218,19 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     private void setupListeners() {
         // Welcome
-        btnWelcomeAdd.setOnClickListener(v -> showPage("source"));
+        btnWelcomeAdd.setOnClickListener(v -> showPageWithTransition("source"));
 
         // Source
         btnSourceBack.setOnClickListener(v -> goBack());
+        btnSourceNext.setOnClickListener(v -> {
+            if (selectedSource == null) {
+                android.widget.Toast.makeText(this, "Pilih sumber terlebih dahulu", android.widget.Toast.LENGTH_SHORT).show();
+            } else if ("url".equals(selectedSource)) {
+                showPageWithTransition("url");
+            } else if ("file".equals(selectedSource)) {
+                filePickerLauncher.launch("*/*");
+            }
+        });
         sourceUrlItem.setOnClickListener(v -> selectSource("url"));
         sourceFileItem.setOnClickListener(v -> selectSource("file"));
 
@@ -267,6 +292,35 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     }
 
     // ===== PAGE NAVIGATION =====
+
+    private void showPageWithTransition(String page) {
+        android.view.View currentVisible = null;
+        for (android.view.View v : new android.view.View[]{pageWelcome, pageSource, pageUrl, pageName, pageSettings, pagePlaylists}) {
+            if (v != null && v.getVisibility() == android.view.View.VISIBLE) { currentVisible = v; break; }
+        }
+        final android.view.View outView = currentVisible;
+        if (outView != null) {
+            outView.animate().alpha(0f).translationX(-40f).setDuration(200).withEndAction(() -> {
+                outView.setAlpha(1f);
+                outView.setTranslationX(0f);
+                showPage(page);
+                // Animate page masuk dari kanan
+                android.view.View inView = null;
+                if ("source".equals(page)) inView = pageSource;
+                else if ("url".equals(page)) inView = pageUrl;
+                else if ("name".equals(page)) inView = pageName;
+                else if ("settings".equals(page)) inView = pageSettings;
+                else if ("welcome".equals(page)) inView = pageWelcome;
+                if (inView != null) {
+                    inView.setAlpha(0f);
+                    inView.setTranslationX(40f);
+                    inView.animate().alpha(1f).translationX(0f).setDuration(220).start();
+                }
+            }).start();
+        } else {
+            showPage(page);
+        }
+    }
 
     private void showPage(String page) {
         pageWelcome.setVisibility(View.GONE);
@@ -363,19 +417,28 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     private void selectSource(String source) {
         selectedSource = source;
-        checkboxUrl.setBackgroundResource(
-                "url".equals(source) ? R.drawable.bg_checkbox_checked : R.drawable.bg_checkbox_empty);
-        checkboxFile.setBackgroundResource(
-                "file".equals(source) ? R.drawable.bg_checkbox_checked : R.drawable.bg_checkbox_empty);
 
-        if ("url".equals(source)) {
-            tvSourceNote.setText("Masukkan URL playlist M3U/M3U8 dari internet.\nPastikan link aktif dan dapat diakses.");
-            showPage("url");
+        // Tampilkan segitiga di option yang dipilih, sembunyikan yang lain
+        if (checkboxUrlIcon != null) {
+            checkboxUrlIcon.setVisibility("url".equals(source) ? android.view.View.VISIBLE : android.view.View.GONE);
+        }
+        if (checkboxFileIcon != null) {
+            checkboxFileIcon.setVisibility("file".equals(source) ? android.view.View.VISIBLE : android.view.View.GONE);
+        }
+
+        // Update selected state pada button (untuk selector drawable)
+        if (sourceUrlItem != null) sourceUrlItem.setSelected("url".equals(source));
+        if (sourceFileItem != null) sourceFileItem.setSelected("file".equals(source));
+
+        // Update hint text
+        if (source == null) {
+            if (tvSourceNote != null) tvSourceNote.setText("Choose one to continue");
+        } else if ("url".equals(source)) {
+            if (tvSourceNote != null) tvSourceNote.setText("Choose one to continue
+and press next step");
         } else if ("file".equals(source)) {
-            tvSourceNote.setText("Pilih file M3U dari penyimpanan perangkat atau USB.");
-            filePickerLauncher.launch("*/*");
-        } else {
-            tvSourceNote.setText("Pilih sumber playlist M3U Anda.");
+            if (tvSourceNote != null) tvSourceNote.setText("Choose one to continue
+and press next step");
         }
     }
 
