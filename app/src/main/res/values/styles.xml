@@ -16,6 +16,9 @@
         <item name="android:windowBackground">#E4EEF0</item>
         <item name="android:statusBarColor">#E4EEF0</item>
         <item name="android:navigationBarColor">#E4EEF0</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
         <item name="colorPrimary">@color/accent</item>
         <item name="colorPrimaryDark">#E4EEF0</item>
         <item name="android:textColor">@color/text_white</item>
