@@ -43,7 +43,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     // ===== WELCOME =====
     private View btnWelcomeAdd;
-    private android.widget.ImageView checkboxUrlIcon, checkboxFileIcon;
+    private android.widget.TextView checkboxUrlIcon, checkboxFileIcon;
 
     // ===== SOURCE =====
     private View btnSourceNext, sourceUrlItem, sourceFileItem;
@@ -165,8 +165,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
         // Source
         btnSourceNext = findViewById(R.id.btn_source_next);
-        checkboxUrlIcon = (android.widget.ImageView) findViewById(R.id.checkbox_url);
-        checkboxFileIcon = (android.widget.ImageView) findViewById(R.id.checkbox_file);
+        checkboxUrlIcon = findViewById(R.id.checkbox_url);
+        checkboxFileIcon = findViewById(R.id.checkbox_file);
         sourceUrlItem = findViewById(R.id.source_url_item);
         sourceFileItem = findViewById(R.id.source_file_item);
         checkboxUrl = findViewById(R.id.checkbox_url);
@@ -298,21 +298,21 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         }
         final android.view.View outView = currentVisible;
         if (outView != null) {
-            // Fade out halaman lama
-            outView.animate().alpha(0f).setDuration(180).withEndAction(() -> {
+            outView.animate().alpha(0f).translationX(-40f).setDuration(200).withEndAction(() -> {
                 outView.setAlpha(1f);
+                outView.setTranslationX(0f);
                 showPage(page);
-                // Fade in halaman baru
+                // Animate page masuk dari kanan
                 android.view.View inView = null;
                 if ("source".equals(page)) inView = pageSource;
                 else if ("url".equals(page)) inView = pageUrl;
                 else if ("name".equals(page)) inView = pageName;
                 else if ("settings".equals(page)) inView = pageSettings;
                 else if ("welcome".equals(page)) inView = pageWelcome;
-                else if ("playlists".equals(page)) inView = pagePlaylists;
                 if (inView != null) {
                     inView.setAlpha(0f);
-                    inView.animate().alpha(1f).setDuration(200).start();
+                    inView.setTranslationX(40f);
+                    inView.animate().alpha(1f).translationX(0f).setDuration(220).start();
                 }
             }).start();
         } else {
@@ -399,7 +399,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         }
         pageHistory.remove(pageHistory.size() - 1);
         String prev = pageHistory.remove(pageHistory.size() - 1);
-        showPage(prev);
+        showPageWithTransition(prev);
     }
 
     @Override
