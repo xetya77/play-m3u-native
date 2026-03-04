@@ -434,11 +434,9 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         if (source == null) {
             if (tvSourceNote != null) tvSourceNote.setText("Choose one to continue");
         } else if ("url".equals(source)) {
-            if (tvSourceNote != null) tvSourceNote.setText("Choose one to continue
-and press next step");
+            if (tvSourceNote != null) tvSourceNote.setText("Choose one to continue\nand press next step");
         } else if ("file".equals(source)) {
-            if (tvSourceNote != null) tvSourceNote.setText("Choose one to continue
-and press next step");
+            if (tvSourceNote != null) tvSourceNote.setText("Choose one to continue\nand press next step");
         }
     }
 
