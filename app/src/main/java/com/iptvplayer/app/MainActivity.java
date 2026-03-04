@@ -46,7 +46,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private android.widget.TextView checkboxUrlIcon, checkboxFileIcon;
 
     // ===== SOURCE =====
-    private View btnSourceBack, btnSourceNext, sourceUrlItem, sourceFileItem;
+    private View btnSourceNext, sourceUrlItem, sourceFileItem;
     private View checkboxUrl, checkboxFile;
     private TextView tvSourceNote;
     private String selectedSource = null; // "url" or "file"
@@ -164,7 +164,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnWelcomeAdd = findViewById(R.id.btn_welcome_add);
 
         // Source
-        btnSourceBack = findViewById(R.id.btn_source_back);
         btnSourceNext = findViewById(R.id.btn_source_next);
         checkboxUrlIcon = findViewById(R.id.checkbox_url);
         checkboxFileIcon = findViewById(R.id.checkbox_file);
@@ -221,7 +220,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnWelcomeAdd.setOnClickListener(v -> showPageWithTransition("source"));
 
         // Source
-        btnSourceBack.setOnClickListener(v -> goBack());
         btnSourceNext.setOnClickListener(v -> {
             if (selectedSource == null) {
                 android.widget.Toast.makeText(this, "Pilih sumber terlebih dahulu", android.widget.Toast.LENGTH_SHORT).show();
