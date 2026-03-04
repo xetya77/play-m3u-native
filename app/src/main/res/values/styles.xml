@@ -11,11 +11,14 @@
     </style>
 
     <!-- MainActivity: fullscreen, semua halaman welcome/playlist -->
-    <style name="Theme.PlayM3U.Main" parent="Theme.PlayM3U">
+    <style name="Theme.PlayM3U.Main" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowFullscreen">true</item>
-        <item name="android:windowBackground">@color/bg_dark</item>
-        <item name="android:statusBarColor">@color/transparent</item>
-        <item name="android:navigationBarColor">@color/transparent</item>
+        <item name="android:windowBackground">#E4EEF0</item>
+        <item name="android:statusBarColor">#E4EEF0</item>
+        <item name="android:navigationBarColor">#E4EEF0</item>
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorPrimaryDark">#E4EEF0</item>
+        <item name="android:textColor">@color/text_white</item>
     </style>
 
     <!-- PlayerActivity: fullscreen, background hitam -->
