@@ -43,7 +43,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     // ===== WELCOME =====
     private View btnWelcomeAdd;
-    private android.widget.TextView checkboxUrlIcon, checkboxFileIcon;
+    private android.widget.ImageView checkboxUrlIcon, checkboxFileIcon;
 
     // ===== SOURCE =====
     private View btnSourceNext, sourceUrlItem, sourceFileItem;
@@ -165,8 +165,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
         // Source
         btnSourceNext = findViewById(R.id.btn_source_next);
-        checkboxUrlIcon = findViewById(R.id.checkbox_url);
-        checkboxFileIcon = findViewById(R.id.checkbox_file);
+        checkboxUrlIcon = (android.widget.ImageView) findViewById(R.id.checkbox_url);
+        checkboxFileIcon = (android.widget.ImageView) findViewById(R.id.checkbox_file);
         sourceUrlItem = findViewById(R.id.source_url_item);
         sourceFileItem = findViewById(R.id.source_file_item);
         checkboxUrl = findViewById(R.id.checkbox_url);
