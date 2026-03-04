@@ -41,11 +41,10 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     // ===== WELCOME =====
     private View btnWelcomeAdd;
-    private android.widget.TextView checkboxUrlIcon, checkboxFileIcon;
+    private android.widget.ImageView checkboxUrlIcon, checkboxFileIcon;
 
     // ===== SOURCE =====
     private View btnSourceNext, sourceUrlItem, sourceFileItem;
-    private View checkboxUrl, checkboxFile;
     private TextView tvSourceNote;
     private String selectedSource = null; // "url" or "file"
 
@@ -155,12 +154,10 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
         // Source
         btnSourceNext = findViewById(R.id.btn_source_next);
-        checkboxUrlIcon = findViewById(R.id.checkbox_url);
-        checkboxFileIcon = findViewById(R.id.checkbox_file);
+        checkboxUrlIcon = (android.widget.ImageView) findViewById(R.id.checkbox_url);
+        checkboxFileIcon = (android.widget.ImageView) findViewById(R.id.checkbox_file);
         sourceUrlItem = findViewById(R.id.source_url_item);
         sourceFileItem = findViewById(R.id.source_file_item);
-        checkboxUrl = findViewById(R.id.checkbox_url);
-        checkboxFile = findViewById(R.id.checkbox_file);
         tvSourceNote = findViewById(R.id.tv_source_note);
 
         // URL
