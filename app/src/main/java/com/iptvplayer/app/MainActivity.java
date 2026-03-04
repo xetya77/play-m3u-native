@@ -92,9 +92,16 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Sembunyikan status bar + nav bar SEBELUM layout di-render — cegah flicker hitam
+        getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        getWindow().setStatusBarColor(0xFFE4EEF0);
+        getWindow().setNavigationBarColor(0xFFE4EEF0);
+
         setContentView(R.layout.activity_main);
 
-        // Sembunyikan navigation bar bawah — truly fullscreen
+        // Immersive sticky fullscreen setelah layout siap
         hideSystemUI();
 
         prefs = new PrefsManager(this);
