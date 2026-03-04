@@ -5,9 +5,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.View;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.WindowManager;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
 import android.widget.ImageView;
 
 public class SplashActivity extends Activity {
@@ -16,47 +17,56 @@ public class SplashActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        getWindow().setFlags(
-            WindowManager.LayoutParams.FLAG_FULLSCREEN,
-            WindowManager.LayoutParams.FLAG_FULLSCREEN
-        );
+        // Fullscreen — sembunyikan status bar dan navigation bar
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            getWindow().setDecorFitsSystemWindows(false);
+            WindowInsetsController c = getWindow().getInsetsController();
+            if (c != null) {
+                c.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+                c.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
+        } else {
+            getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        }
 
         setContentView(R.layout.activity_splash);
 
         ImageView logo = findViewById(R.id.iv_splash_logo);
-
-        // Set alpha 0 via Java — lebih reliable daripada android:alpha di XML
         logo.setAlpha(0f);
 
-        // Delay sedikit agar layout selesai inflate sebelum animasi mulai
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            AlphaAnimation fadeIn = new AlphaAnimation(0f, 1f);
-            fadeIn.setDuration(900);
-            fadeIn.setFillAfter(true);
+        // ViewPropertyAnimator lebih reliable dari AlphaAnimation
+        logo.animate()
+            .alpha(1f)
+            .setDuration(900)
+            .setStartDelay(150)
+            .withEndAction(() -> {
+                // Tahan 700ms lalu fade out
+                new Handler(Looper.getMainLooper()).postDelayed(() ->
+                    logo.animate()
+                        .alpha(0f)
+                        .setDuration(700)
+                        .withEndAction(this::goToMain)
+                        .start(),
+                700);
+            })
+            .start();
+    }
 
-            fadeIn.setAnimationListener(new Animation.AnimationListener() {
-                @Override public void onAnimationStart(Animation a) {}
-                @Override public void onAnimationRepeat(Animation a) {}
-                @Override public void onAnimationEnd(Animation a) {
-                    logo.setAlpha(1f); // pastikan visible setelah fade in
-                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                        AlphaAnimation fadeOut = new AlphaAnimation(1f, 0f);
-                        fadeOut.setDuration(700);
-                        fadeOut.setFillAfter(true);
-                        fadeOut.setAnimationListener(new Animation.AnimationListener() {
-                            @Override public void onAnimationStart(Animation a) {}
-                            @Override public void onAnimationRepeat(Animation a) {}
-                            @Override public void onAnimationEnd(Animation a) {
-                                goToMain();
-                            }
-                        });
-                        logo.startAnimation(fadeOut);
-                    }, 700);
-                }
-            });
-
-            logo.startAnimation(fadeIn);
-        }, 100);
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus && android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.R) {
+            getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        }
     }
 
     private void goToMain() {
