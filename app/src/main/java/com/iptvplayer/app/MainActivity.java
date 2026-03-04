@@ -11,8 +11,6 @@ import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowInsets;
-import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
@@ -43,7 +41,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     // ===== WELCOME =====
     private View btnWelcomeAdd;
-    private android.widget.ImageView checkboxUrlIcon, checkboxFileIcon;
+    private android.widget.TextView checkboxUrlIcon, checkboxFileIcon;
 
     // ===== SOURCE =====
     private View btnSourceNext, sourceUrlItem, sourceFileItem;
@@ -124,24 +122,16 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     }
 
     // Sembunyikan status bar + navigation bar (truly fullscreen, immersive sticky)
+    @SuppressWarnings("deprecation")
     private void hideSystemUI() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-            getWindow().setDecorFitsSystemWindows(false);
-            WindowInsetsController controller = getWindow().getInsetsController();
-            if (controller != null) {
-                controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-                controller.setSystemBarsBehavior(
-                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-            }
-        } else {
-            getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                | View.SYSTEM_UI_FLAG_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-        }
+        getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().getDecorView().setSystemUiVisibility(
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            | View.SYSTEM_UI_FLAG_FULLSCREEN
+            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
     }
 
     // Pastikan fullscreen tetap aktif saat window mendapat fokus kembali
@@ -165,8 +155,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
         // Source
         btnSourceNext = findViewById(R.id.btn_source_next);
-        checkboxUrlIcon = (android.widget.ImageView) findViewById(R.id.checkbox_url);
-        checkboxFileIcon = (android.widget.ImageView) findViewById(R.id.checkbox_file);
+        checkboxUrlIcon = findViewById(R.id.checkbox_url);
+        checkboxFileIcon = findViewById(R.id.checkbox_file);
         sourceUrlItem = findViewById(R.id.source_url_item);
         sourceFileItem = findViewById(R.id.source_file_item);
         checkboxUrl = findViewById(R.id.checkbox_url);
@@ -298,21 +288,21 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         }
         final android.view.View outView = currentVisible;
         if (outView != null) {
-            outView.animate().alpha(0f).translationX(-40f).setDuration(200).withEndAction(() -> {
+            // Pure fade out — tanpa slide
+            outView.animate().alpha(0f).setDuration(180).withEndAction(() -> {
                 outView.setAlpha(1f);
-                outView.setTranslationX(0f);
                 showPage(page);
-                // Animate page masuk dari kanan
+                // Pure fade in halaman baru
                 android.view.View inView = null;
                 if ("source".equals(page)) inView = pageSource;
                 else if ("url".equals(page)) inView = pageUrl;
                 else if ("name".equals(page)) inView = pageName;
                 else if ("settings".equals(page)) inView = pageSettings;
                 else if ("welcome".equals(page)) inView = pageWelcome;
+                else if ("playlists".equals(page)) inView = pagePlaylists;
                 if (inView != null) {
                     inView.setAlpha(0f);
-                    inView.setTranslationX(40f);
-                    inView.animate().alpha(1f).translationX(0f).setDuration(220).start();
+                    inView.animate().alpha(1f).setDuration(200).start();
                 }
             }).start();
         } else {
