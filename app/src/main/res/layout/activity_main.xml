@@ -133,36 +133,33 @@ in one place."
         android:background="@color/welcome_bg"
         android:visibility="gone">
 
-        <!-- Stepper indicator: y=36dp dari atas -->
+        <!-- Stepper indicator: y=36dp, 3 bars rounded, gap 8dp -->
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="36dp"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:paddingTop="20dp">
-            <!-- Step 1 aktif: oranye -->
+            android:layout_width="wrap_content"
+            android:layout_height="6dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="30dp"
+            android:orientation="horizontal">
             <View
                 android:layout_width="54dp"
-                android:layout_height="4dp"
-                android:background="#FF5B04"
-                android:layout_marginRight="6dp"/>
-            <!-- Step 2 belum: #16232A 25% -->
+                android:layout_height="6dp"
+                android:background="@drawable/bg_stepper_active"
+                android:layout_marginEnd="8dp"/>
             <View
                 android:layout_width="54dp"
-                android:layout_height="4dp"
-                android:background="#4016232A"
-                android:layout_marginRight="6dp"/>
-            <!-- Step 3 belum: #16232A 25% -->
+                android:layout_height="6dp"
+                android:background="@drawable/bg_stepper_inactive"
+                android:layout_marginEnd="8dp"/>
             <View
                 android:layout_width="54dp"
-                android:layout_height="4dp"
-                android:background="#4016232A"/>
+                android:layout_height="6dp"
+                android:background="@drawable/bg_stepper_inactive"/>
         </LinearLayout>
 
-        <!-- Spacer ke heading: y=165dp → 165-36=129dp gap -->
+        <!-- Flexible space atas sebelum heading -->
         <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="10"/>
 
-        <!-- Heading: "Import M3U from where?" -->
+        <!-- Heading -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -182,21 +179,20 @@ in one place."
             android:layout_gravity="center_horizontal"
             android:orientation="horizontal"
             android:gravity="center"
+            android:paddingStart="26dp"
+            android:paddingEnd="26dp"
             android:focusable="true"
             android:clickable="true"
             android:background="@drawable/selector_source_option">
 
-            <!-- Segitiga play kecil — hidden default, visible saat selected -->
-            <TextView
+            <!-- Segitiga rounded — hidden default, visible saat selected -->
+            <ImageView
                 android:id="@+id/checkbox_url"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:text="▶"
-                android:textColor="#E4EEF0"
-                android:textSize="12sp"
-                android:gravity="center"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_triangle_play"
                 android:visibility="gone"
-                android:layout_marginRight="10dp"/>
+                android:layout_marginEnd="14dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -207,7 +203,6 @@ in one place."
                 android:fontFamily="@font/inter_medium"/>
         </LinearLayout>
 
-        <!-- Gap antar option: 343-211=132dp, tapi 108dp sudah dipakai btn1, sisa 24dp -->
         <Space android:layout_width="match_parent" android:layout_height="24dp"/>
 
         <!-- Option Button 2: Local File (288x108dp) -->
@@ -218,20 +213,19 @@ in one place."
             android:layout_gravity="center_horizontal"
             android:orientation="horizontal"
             android:gravity="center"
+            android:paddingStart="26dp"
+            android:paddingEnd="26dp"
             android:focusable="true"
             android:clickable="true"
             android:background="@drawable/selector_source_option">
 
-            <TextView
+            <ImageView
                 android:id="@+id/checkbox_file"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:text="▶"
-                android:textColor="#E4EEF0"
-                android:textSize="12sp"
-                android:gravity="center"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_triangle_play"
                 android:visibility="gone"
-                android:layout_marginRight="10dp"/>
+                android:layout_marginEnd="14dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -242,7 +236,7 @@ in one place."
                 android:fontFamily="@font/inter_medium"/>
         </LinearLayout>
 
-        <!-- Flexible space sebelum Next step button -->
+        <!-- Flexible space sebelum Next step -->
         <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="20"/>
 
         <!-- Next step button (181x68dp) -->
@@ -260,28 +254,27 @@ in one place."
             android:focusable="true"
             android:clickable="true"/>
 
-        <!-- Gap: ~3% -->
         <Space android:layout_width="match_parent" android:layout_height="12dp"/>
 
-        <!-- Hint text: "Choose one to continue" -->
+        <!-- Helper text — center aligned -->
         <TextView
             android:id="@+id/tv_source_note"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
+            android:gravity="center"
             android:text="Choose one to continue"
             android:textColor="#16232A"
             android:textSize="11sp"
             android:textStyle="italic"
             android:fontFamily="@font/inter_medium"
-            android:alpha="0.7"/>
+            android:alpha="0.6"/>
 
-        <!-- Bottom spacer -->
         <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="8"/>
 
     </LinearLayout>
 
-    <!-- ===== PAGE URL ===== -->
+        <!-- ===== PAGE URL ===== -->
     <LinearLayout
         android:id="@+id/page_url"
         android:layout_width="match_parent"
