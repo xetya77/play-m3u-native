@@ -91,15 +91,17 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Harus sebelum super.onCreate — sembunyikan title bar dan status bar sejak awal
         requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-
+        getWindow().setStatusBarColor(0xFFE4EEF0);
+        getWindow().setNavigationBarColor(0xFFE4EEF0);
         super.onCreate(savedInstanceState);
 
-        // Warnai status bar & nav bar dengan warna background — cegah flicker hitam
+        // Sembunyikan status bar + nav bar SEBELUM layout di-render — cegah flicker hitam
+        getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         getWindow().setStatusBarColor(0xFFE4EEF0);
         getWindow().setNavigationBarColor(0xFFE4EEF0);
 
@@ -135,7 +137,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     @SuppressWarnings("deprecation")
     private void hideSystemUI() {
         getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         getWindow().getDecorView().setSystemUiVisibility(
             View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
             | View.SYSTEM_UI_FLAG_FULLSCREEN

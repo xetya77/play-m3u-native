@@ -32,10 +32,17 @@ public class SplashActivity extends Activity {
     @SuppressWarnings("deprecation")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Harus sebelum super.onCreate — cegah status bar hitam
+        requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+        getWindow().setStatusBarColor(0xFFE4EEF0);
+        getWindow().setNavigationBarColor(0xFFE4EEF0);
+
         super.onCreate(savedInstanceState);
 
-        // Fullscreen — kompatibel API 21+
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        // Immersive fullscreen
         getWindow().getDecorView().setSystemUiVisibility(
             View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
             | View.SYSTEM_UI_FLAG_FULLSCREEN

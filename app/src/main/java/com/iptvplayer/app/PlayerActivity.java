@@ -1,6 +1,7 @@
 package com.iptvplayer.app;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -479,14 +480,14 @@ public class PlayerActivity extends Activity {
         catTv.setOnClickListener(v -> { if (panelOpen) openCategoryFull(); });
         catRadio.setOnClickListener(v -> { if (panelOpen) openCategoryFull(); });
         catMovie.setOnClickListener(v -> { if (panelOpen) openCategoryFull(); });
-        catSettings.setOnClickListener(v -> finish());
+        catSettings.setOnClickListener(v -> openMainActivity());
 
         // Item di panel kategori expanded → pilih dan kembali ke daftar channel
         catFullAll.setOnClickListener(v -> selectCategory("ALL"));
         catFullTv.setOnClickListener(v -> selectCategory("TV"));
         catFullRadio.setOnClickListener(v -> selectCategory("RADIO"));
         catFullMovie.setOnClickListener(v -> selectCategory("FILM"));
-        catFullSettings.setOnClickListener(v -> finish());
+        catFullSettings.setOnClickListener(v -> openMainActivity());
     }
 
     /** Pilih kategori, update styling, filter channel, tutup panel kategori */
@@ -872,4 +873,14 @@ public class PlayerActivity extends Activity {
     @Override public void onBackPressed() {
         if (categoryFullOpen) closeCategoryFull(); else if (panelOpen) hidePanel(); else finish();
     }
+    /** Buka MainActivity (settings/playlist) — selalu buat instance baru jika perlu */
+    private void openMainActivity() {
+        Intent intent = new Intent(this, MainActivity.class);
+        // FLAG_ACTIVITY_REORDER_TO_FRONT: jika MainActivity sudah ada di stack, pindahkan ke depan
+        // FLAG_ACTIVITY_CLEAR_TOP: jika tidak ada, buat baru dan clear stack di atasnya
+        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        startActivity(intent);
+        // Jangan finish() PlayerActivity — biarkan di back stack agar bisa balik ke player
+    }
+
 }
