@@ -133,26 +133,26 @@ in one place."
         android:background="@color/welcome_bg"
         android:visibility="gone">
 
-        <!-- Stepper: 3 rounded bars — ukuran sama dengan URL page (75dp×5dp) -->
+        <!-- Stepper: IDENTIK dengan URL page — 76dp×6dp, gap 8dp, marginTop 47dp -->
         <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="5dp"
+            android:layout_height="6dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="47dp"
             android:orientation="horizontal">
             <View
-                android:layout_width="75dp"
-                android:layout_height="5dp"
+                android:layout_width="76dp"
+                android:layout_height="6dp"
                 android:background="@drawable/bg_stepper_active"
                 android:layout_marginEnd="8dp"/>
             <View
-                android:layout_width="75dp"
-                android:layout_height="5dp"
+                android:layout_width="76dp"
+                android:layout_height="6dp"
                 android:background="@drawable/bg_stepper_inactive"
                 android:layout_marginEnd="8dp"/>
             <View
-                android:layout_width="75dp"
-                android:layout_height="5dp"
+                android:layout_width="76dp"
+                android:layout_height="6dp"
                 android:background="@drawable/bg_stepper_inactive"/>
         </LinearLayout>
 
