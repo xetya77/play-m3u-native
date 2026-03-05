@@ -133,26 +133,26 @@ in one place."
         android:background="@color/welcome_bg"
         android:visibility="gone">
 
-        <!-- Stepper: 3 rounded bars -->
+        <!-- Stepper: 3 rounded bars — ukuran sama dengan URL page (75dp×5dp) -->
         <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="6dp"
+            android:layout_height="5dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="47dp"
             android:orientation="horizontal">
             <View
-                android:layout_width="54dp"
-                android:layout_height="6dp"
+                android:layout_width="75dp"
+                android:layout_height="5dp"
                 android:background="@drawable/bg_stepper_active"
                 android:layout_marginEnd="8dp"/>
             <View
-                android:layout_width="54dp"
-                android:layout_height="6dp"
+                android:layout_width="75dp"
+                android:layout_height="5dp"
                 android:background="@drawable/bg_stepper_inactive"
                 android:layout_marginEnd="8dp"/>
             <View
-                android:layout_width="54dp"
-                android:layout_height="6dp"
+                android:layout_width="75dp"
+                android:layout_height="5dp"
                 android:background="@drawable/bg_stepper_inactive"/>
         </LinearLayout>
 
@@ -165,7 +165,7 @@ in one place."
             android:layout_gravity="center_horizontal"
             android:text="Import M3U from where?"
             android:textColor="#16232A"
-            android:textSize="17sp"
+            android:textSize="22sp"
             android:fontFamily="@font/inter_bold"
             android:textStyle="bold"
             android:layout_marginBottom="28dp"/>
@@ -417,9 +417,9 @@ open the app."
             android:gravity="center"
             android:text="Add playlist"
             android:textColor="#16232A"
-            android:textSize="17sp"
-            android:fontFamily="@font/inter_bold"
-            android:textStyle="bold"
+            android:textSize="15sp"
+            android:fontFamily="@font/inter_medium"
+            android:textStyle="normal"
             android:background="@drawable/bg_add_playlist_btn"
             android:focusable="true"
             android:clickable="true"/>
