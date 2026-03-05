@@ -16,6 +16,12 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.FrameLayout;
+import android.view.animation.DecelerateInterpolator;
+import android.view.MotionEvent;
+import android.view.GestureDetector;
+import android.animation.ValueAnimator;
+import android.animation.ObjectAnimator;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -61,6 +67,9 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private TextView tvChCountName;
     private TextView radioYes, radioNo;
     private View radioBoxYes, radioBoxNo;
+    private View toggleThumb;
+    private FrameLayout toggleContainer;
+    private boolean toggleIsYes = true;
     private boolean downloadOnStart = true;
     private String pendingUrl = "";
 
@@ -184,6 +193,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         tvChCountName = findViewById(R.id.tv_ch_count_name);
         radioYes = (TextView) findViewById(R.id.radio_yes);
         radioNo = (TextView) findViewById(R.id.radio_no);
+        toggleThumb = findViewById(R.id.toggle_thumb);
+        toggleContainer = (FrameLayout) findViewById(R.id.toggle_container);
         radioBoxYes = findViewById(R.id.radio_box_yes);
         radioBoxNo = findViewById(R.id.radio_box_no);
 
@@ -261,8 +272,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnNameBack.setOnClickListener(v -> showPage("url"));
         btnNameClear.setOnClickListener(v -> etName.setText(""));
         btnNameSave.setOnClickListener(v -> saveName());
-        radioYes.setOnClickListener(v -> selectDownload(true));
-        radioNo.setOnClickListener(v -> selectDownload(false));
+        setupToggleSwipe();
         etName.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 saveName();
@@ -557,12 +567,10 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     private void selectDownload(boolean yes) {
         downloadOnStart = yes;
-        // Update visual Yes/No button — selected = orange, unselected = transparent
-        if (radioYes != null) radioYes.setBackgroundResource(yes ? R.drawable.bg_yesno_selected : R.drawable.bg_yesno_unselected);
-        if (radioNo != null) radioNo.setBackgroundResource(!yes ? R.drawable.bg_yesno_selected : R.drawable.bg_yesno_unselected);
-        // Update teks warna: selected putih, unselected semi-transparan
-        if (radioYes != null) radioYes.setAlpha(yes ? 1f : 0.6f);
-        if (radioNo != null) radioNo.setAlpha(!yes ? 1f : 0.6f);
+        toggleIsYes = yes;
+        // Alpha teks: selected=opaque, unselected=dim
+        if (radioYes != null) radioYes.setAlpha(yes ? 1f : 0.55f);
+        if (radioNo != null) radioNo.setAlpha(!yes ? 1f : 0.55f);
     }
 
     // ===== START WATCHING =====
@@ -766,6 +774,86 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         Toast.makeText(this, "Playlist berhasil ditambahkan!", Toast.LENGTH_SHORT).show();
         rebuildPlaylistList();
         autoPlay();
+    }
+
+    /**
+     * Toggle Yes/No dengan animasi geser halus.
+     * - Tap kiri  → Yes
+     * - Tap kanan → No
+     * - Swipe kiri/kanan → ikuti arah
+     */
+    private void setupToggleSwipe() {
+        if (toggleContainer == null || toggleThumb == null) return;
+
+        // Inisialisasi posisi thumb ke Yes (kiri)
+        toggleContainer.post(() -> {
+            int thumbW = toggleContainer.getWidth() / 2;
+            animateThumb(toggleIsYes ? 0f : (float) thumbW, false);
+            selectDownload(toggleIsYes);
+        });
+
+        final float[] downX = {0f};
+        final boolean[] dragging = {false};
+        final float[] thumbStartX = {0f};
+        final float SWIPE_THRESHOLD = 30f;
+
+        toggleContainer.setOnTouchListener((v, event) -> {
+            int thumbW = toggleContainer.getWidth() / 2;
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    downX[0] = event.getX();
+                    thumbStartX[0] = toggleThumb.getTranslationX();
+                    dragging[0] = false;
+                    break;
+
+                case MotionEvent.ACTION_MOVE:
+                    float dx = event.getX() - downX[0];
+                    if (Math.abs(dx) > SWIPE_THRESHOLD || dragging[0]) {
+                        dragging[0] = true;
+                        // Clamp posisi thumb antara 0 dan thumbW
+                        float newX = thumbStartX[0] + dx;
+                        newX = Math.max(0f, Math.min((float) thumbW, newX));
+                        toggleThumb.setTranslationX(newX);
+                        // Alpha teks realtime saat drag
+                        float ratio = newX / thumbW;           // 0=Yes, 1=No
+                        if (radioYes != null) radioYes.setAlpha(1f - ratio * 0.45f);
+                        if (radioNo != null)  radioNo.setAlpha(0.55f + ratio * 0.45f);
+                    }
+                    break;
+
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    if (dragging[0]) {
+                        // Snap: jika sudah lewat tengah → No, sebaliknya → Yes
+                        float currentX = toggleThumb.getTranslationX();
+                        boolean goNo = currentX > thumbW * 0.5f;
+                        animateThumb(goNo ? (float) thumbW : 0f, true);
+                        selectDownload(!goNo);
+                    } else {
+                        // Tap biasa
+                        boolean tapYes = event.getX() < toggleContainer.getWidth() / 2f;
+                        animateThumb(tapYes ? 0f : (float) thumbW, true);
+                        selectDownload(tapYes);
+                    }
+                    v.performClick();
+                    break;
+            }
+            return true;
+        });
+    }
+
+    /** Geser thumb ke posisi target dengan animasi smooth */
+    private void animateThumb(float targetX, boolean animate) {
+        if (toggleThumb == null) return;
+        if (!animate) {
+            toggleThumb.setTranslationX(targetX);
+            return;
+        }
+        ObjectAnimator anim = ObjectAnimator.ofFloat(toggleThumb, "translationX",
+                toggleThumb.getTranslationX(), targetX);
+        anim.setDuration(220);
+        anim.setInterpolator(new DecelerateInterpolator(1.5f));
+        anim.start();
     }
 
 }
