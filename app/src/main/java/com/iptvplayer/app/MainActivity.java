@@ -58,7 +58,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private View btnNameBack, btnNameClear, btnNameSave;
     private EditText etName;
     private TextView tvChCountName;
-    private View radioYes, radioNo, radioBoxYes, radioBoxNo;
+    private TextView radioYes, radioNo;
+    private View radioBoxYes, radioBoxNo;
     private boolean downloadOnStart = true;
     private String pendingUrl = "";
 
@@ -91,12 +92,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
-        getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-        getWindow().setStatusBarColor(0xFFE4EEF0);
-        getWindow().setNavigationBarColor(0xFFE4EEF0);
         super.onCreate(savedInstanceState);
 
         // Sembunyikan status bar + nav bar SEBELUM layout di-render — cegah flicker hitam
@@ -186,8 +181,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnNameSave = findViewById(R.id.btn_name_save);
         etName = findViewById(R.id.et_name);
         tvChCountName = findViewById(R.id.tv_ch_count_name);
-        radioYes = findViewById(R.id.radio_yes);
-        radioNo = findViewById(R.id.radio_no);
+        radioYes = (TextView) findViewById(R.id.radio_yes);
+        radioNo = (TextView) findViewById(R.id.radio_no);
         radioBoxYes = findViewById(R.id.radio_box_yes);
         radioBoxNo = findViewById(R.id.radio_box_no);
 
@@ -467,9 +462,9 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 handler.post(() -> {
                     hideLoading();
                     pendingChannels = channels;
-                    tvChCountUrl.setText(channels.size() + " channel ditemukan");
                     if (!channels.isEmpty()) {
-                        showPage("name");
+                        // Skip halaman nama — langsung simpan dengan nama auto dari URL
+                        autoSavePlaylist();
                     } else {
                         Toast.makeText(this, "Tidak ada channel ditemukan di URL ini", Toast.LENGTH_LONG).show();
                     }
@@ -551,8 +546,12 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     private void selectDownload(boolean yes) {
         downloadOnStart = yes;
-        radioBoxYes.setBackgroundResource(yes ? R.drawable.bg_checkbox_checked : R.drawable.bg_checkbox_empty);
-        radioBoxNo.setBackgroundResource(!yes ? R.drawable.bg_checkbox_checked : R.drawable.bg_checkbox_empty);
+        // Update visual Yes/No button — selected = orange, unselected = transparent
+        if (radioYes != null) radioYes.setBackgroundResource(yes ? R.drawable.bg_yesno_selected : R.drawable.bg_yesno_unselected);
+        if (radioNo != null) radioNo.setBackgroundResource(!yes ? R.drawable.bg_yesno_selected : R.drawable.bg_yesno_unselected);
+        // Update teks warna: selected putih, unselected semi-transparan
+        if (radioYes != null) radioYes.setAlpha(yes ? 1f : 0.6f);
+        if (radioNo != null) radioNo.setAlpha(!yes ? 1f : 0.6f);
     }
 
     // ===== START WATCHING =====
@@ -728,4 +727,34 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         super.onDestroy();
         executor.shutdown();
     }
+    /** Simpan playlist otomatis tanpa meminta nama — nama diambil dari URL atau auto-generate */
+    private void autoSavePlaylist() {
+        // Generate nama dari URL
+        String name = pendingUrl;
+        try {
+            java.net.URL u = new java.net.URL(pendingUrl);
+            String host = u.getHost();
+            if (host != null && !host.isEmpty()) {
+                name = host.replace("www.", "");
+            }
+        } catch (Exception ignored) {}
+        if (name.isEmpty()) name = "Playlist " + (playlists.size() + 1);
+
+        Playlist pl = new Playlist(name, pendingUrl, selectedSource, downloadOnStart);
+        pl.channels = new ArrayList<>(pendingChannels);
+        pl.lastUpdated = System.currentTimeMillis();
+
+        playlists.add(pl);
+        currentPlaylistIdx = playlists.size() - 1;
+        prefs.savePlaylists(playlists);
+        prefs.setCurrentPlaylistIndex(currentPlaylistIdx);
+
+        pendingChannels.clear();
+        pendingUrl = "";
+
+        Toast.makeText(this, "Playlist berhasil ditambahkan!", Toast.LENGTH_SHORT).show();
+        rebuildPlaylistList();
+        autoPlay();
+    }
+
 }
