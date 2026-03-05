@@ -49,7 +49,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private String selectedSource = null; // "url" or "file"
 
     // ===== URL =====
-    private View btnUrlBack, btnUrlClear, btnUrlNext;
+    private View btnUrlBack, btnUrlClear;
+    private TextView btnUrlNext;
     private EditText etUrl;
     private TextView tvChCountUrl;
     private List<Channel> pendingChannels = new ArrayList<>();
@@ -171,7 +172,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         // URL
         btnUrlBack = findViewById(R.id.btn_url_back);
         btnUrlClear = findViewById(R.id.btn_url_clear);
-        btnUrlNext = findViewById(R.id.btn_url_next);
+        btnUrlNext = (TextView) findViewById(R.id.btn_url_next);
         etUrl = findViewById(R.id.et_url);
         tvChCountUrl = findViewById(R.id.tv_ch_count_url);
 
@@ -231,6 +232,16 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnUrlBack.setOnClickListener(v -> showPage("source"));
         btnUrlClear.setOnClickListener(v -> { etUrl.setText(""); tvChCountUrl.setText(""); pendingChannels.clear(); });
         btnUrlNext.setOnClickListener(v -> fetchPlaylist());
+        btnUrlNext.setOnTouchListener((v, event) -> {
+            if (event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+                ((TextView) v).setTextColor(0xFFE4EEF0);
+            } else if (event.getAction() == android.view.MotionEvent.ACTION_UP
+                    || event.getAction() == android.view.MotionEvent.ACTION_CANCEL) {
+                ((TextView) v).setTextColor(0xFF16232A);
+                if (event.getAction() == android.view.MotionEvent.ACTION_UP) v.performClick();
+            }
+            return true;
+        });
         etUrl.addTextChangedListener(new TextWatcher() {
             public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
             public void onTextChanged(CharSequence s, int st, int b, int c) {}
