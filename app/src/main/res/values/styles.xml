@@ -19,10 +19,13 @@
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:windowTranslucentStatus">false</item>
         <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <item name="colorPrimary">@color/accent</item>
         <item name="colorPrimaryDark">#E4EEF0</item>
         <item name="android:textColor">@color/text_white</item>
     </style>
+
+    <!-- SplashActivity dan MainActivity sama-sama pakai bg #E4EEF0 -->
 
     <!-- PlayerActivity: fullscreen, background hitam -->
     <style name="Theme.PlayM3U.Player" parent="Theme.PlayM3U">
