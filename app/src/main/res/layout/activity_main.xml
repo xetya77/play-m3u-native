@@ -350,45 +350,55 @@ in one place."
             android:textStyle="bold"
             android:layout_marginBottom="16dp"/>
 
-        <!-- Yes/No container: 290x72dp rounded pill -->
-        <LinearLayout
+        <!-- Yes/No Swipeable Toggle -->
+        <FrameLayout
+            android:id="@+id/toggle_container"
             android:layout_width="290dp"
             android:layout_height="72dp"
             android:layout_gravity="center_horizontal"
-            android:orientation="horizontal"
             android:background="@drawable/bg_yesno_container"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="16dp"
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
+            <!-- Thumb geser (pill oranye) -->
+            <View
+                android:id="@+id/toggle_thumb"
+                android:layout_width="145dp"
+                android:layout_height="72dp"
+                android:layout_gravity="start"
+                android:background="@drawable/bg_yesno_selected"/>
+
+            <!-- Label Yes -->
             <TextView
                 android:id="@+id/radio_yes"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
+                android:layout_width="145dp"
+                android:layout_height="72dp"
+                android:layout_gravity="start"
                 android:gravity="center"
                 android:text="Yes"
                 android:textColor="#E4EEF0"
                 android:textSize="18sp"
                 android:fontFamily="@font/inter_bold"
                 android:textStyle="bold"
-                android:background="@drawable/bg_yesno_unselected"
-                android:focusable="true"
-                android:clickable="true"/>
+                android:clickable="false"
+                android:focusable="false"/>
 
+            <!-- Label No -->
             <TextView
                 android:id="@+id/radio_no"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
+                android:layout_width="145dp"
+                android:layout_height="72dp"
+                android:layout_gravity="end"
                 android:gravity="center"
                 android:text="No"
                 android:textColor="#E4EEF0"
                 android:textSize="18sp"
                 android:fontFamily="@font/inter_bold"
                 android:textStyle="bold"
-                android:background="@drawable/bg_yesno_unselected"
-                android:focusable="true"
-                android:clickable="true"/>
-        </LinearLayout>
+                android:clickable="false"
+                android:focusable="false"/>
+        </FrameLayout>
 
         <!-- Helper italic: "The playlist will update..." -->
         <TextView
