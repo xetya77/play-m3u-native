@@ -19,6 +19,7 @@ import android.widget.TextView;
 import android.widget.FrameLayout;
 import android.view.animation.DecelerateInterpolator;
 import android.view.MotionEvent;
+import android.view.inputmethod.InputMethodManager;
 import android.view.GestureDetector;
 import android.animation.ValueAnimator;
 import android.animation.ObjectAnimator;
@@ -854,6 +855,27 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         anim.setDuration(220);
         anim.setInterpolator(new DecelerateInterpolator(1.5f));
         anim.start();
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            android.view.View currentFocus = getCurrentFocus();
+            if (currentFocus instanceof android.widget.EditText) {
+                // Cek apakah tap berada di luar EditText
+                android.graphics.Rect rect = new android.graphics.Rect();
+                currentFocus.getGlobalVisibleRect(rect);
+                if (!rect.contains((int) event.getRawX(), (int) event.getRawY())) {
+                    currentFocus.clearFocus();
+                    InputMethodManager imm = (InputMethodManager)
+                            getSystemService(INPUT_METHOD_SERVICE);
+                    if (imm != null) {
+                        imm.hideSoftInputFromWindow(currentFocus.getWindowToken(), 0);
+                    }
+                }
+            }
+        }
+        return super.dispatchTouchEvent(event);
     }
 
 }
