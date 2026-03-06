@@ -88,6 +88,15 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     // ===== LOADING =====
     private View loadingOverlay;
+    private View cardLoading, cardSuccess, cardError;
+    private View progressFill;
+    private android.widget.TextView tvChCountLoading, tvLoadingLabel;
+    // Animasi dots & counter
+    private android.os.Handler dotsHandler = new android.os.Handler();
+    private Runnable dotsRunnable;
+    private int dotsCount = 0;
+    private ValueAnimator counterAnimator;
+    private ValueAnimator progressAnimator;
     private TextView tvLoadingText, tvLoadingSub;
 
     // ===== STATE =====
@@ -221,6 +230,12 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         loadingOverlay = findViewById(R.id.loading_overlay);
         tvLoadingText = findViewById(R.id.tv_loading_text);
         tvLoadingSub = findViewById(R.id.tv_loading_sub);
+        cardLoading = findViewById(R.id.card_loading);
+        cardSuccess = findViewById(R.id.card_success);
+        cardError   = findViewById(R.id.card_error);
+        progressFill = findViewById(R.id.progress_fill);
+        tvChCountLoading = findViewById(R.id.tv_ch_count_loading);
+        tvLoadingLabel   = findViewById(R.id.tv_loading_label);
     }
 
     private void setupListeners() {
@@ -476,6 +491,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         pendingUrl = url;
 
         showLoading("Mengunduh playlist...", "Mohon bersabar");
+        // Simulasi progress 0→70% selama fetch berlangsung
+        loadingOverlay.postDelayed(() -> animateProgressTo(0.7f), 800);
 
         executor.execute(() -> {
             try {
@@ -492,19 +509,18 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 List<Channel> channels = M3UParser.parse(content);
 
                 handler.post(() -> {
-                    hideLoading();
                     pendingChannels = channels;
                     if (!channels.isEmpty()) {
-                        // Skip halaman nama — langsung simpan dengan nama auto dari URL
-                        autoSavePlaylist();
+                        // Tampilkan sukses dengan animasi counter + progress penuh
+                        showSuccessCard(channels.size());
                     } else {
+                        hideLoading();
                         Toast.makeText(this, "Tidak ada channel ditemukan di URL ini", Toast.LENGTH_LONG).show();
                     }
                 });
             } catch (Exception e) {
                 handler.post(() -> {
-                    hideLoading();
-                    Toast.makeText(this, "Gagal: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    showErrorCard();
                 });
             }
         });
@@ -737,13 +753,172 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     // ===== LOADING =====
 
     private void showLoading(String text, String sub) {
-        tvLoadingText.setText(text);
-        tvLoadingSub.setText(sub);
+        // Compat: set text untuk kode lama yang masih pakai tvLoadingText
+        if (tvLoadingText != null) tvLoadingText.setText(text);
+        if (tvLoadingSub  != null) tvLoadingSub.setText(sub);
+        // Reset ke state loading
+        showLoadingCard(0);
+    }
+
+    /** Tampilkan loading card dan mulai animasi */
+    private void showLoadingCard(int initialChannels) {
         loadingOverlay.setVisibility(View.VISIBLE);
+        cardLoading.setVisibility(View.VISIBLE);
+        cardSuccess.setVisibility(View.GONE);
+        cardError.setVisibility(View.GONE);
+
+        // Reset progress fill ke 0
+        progressFill.getViewTreeObserver().addOnGlobalLayoutListener(
+            new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override public void onGlobalLayout() {
+                    progressFill.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    progressFill.getLayoutParams().width = 0;
+                    progressFill.requestLayout();
+                }
+            });
+
+        // Mulai animasi dots: "+ Adding Playlist." → ".." → "..."
+        startDotsAnimation();
+
+        // Reset counter
+        if (tvChCountLoading != null) tvChCountLoading.setText("0 Ch");
+    }
+
+    /** Tampilkan card sukses + animasi counter channel + progress bar penuh */
+    private void showSuccessCard(int channelCount) {
+        stopDotsAnimation();
+
+        // Animasi progress bar ke 100%
+        animateProgressToFull(() -> {
+            // Setelah progress penuh, animasi counter dari 0 ke channelCount
+            animateCounter(0, channelCount, () -> {
+                // Setelah counter selesai, fade ke card success
+                loadingOverlay.postDelayed(() -> {
+                    cardLoading.setVisibility(View.GONE);
+                    cardSuccess.setVisibility(View.VISIBLE);
+                    // Set teks success
+                    android.widget.TextView tvMsg = cardSuccess.findViewById(R.id.tv_success_msg);
+                    if (tvMsg != null) tvMsg.setText(channelCount + " channels
+imported.");
+                    // Auto hide setelah 1.5 detik lalu lanjut
+                    loadingOverlay.postDelayed(() -> {
+                        hideLoading();
+                        proceedAfterImport();
+                    }, 1500);
+                }, 300);
+            });
+        });
+    }
+
+    /** Tampilkan card error */
+    private void showErrorCard() {
+        stopDotsAnimation();
+        stopProgressAnimation();
+        cardLoading.setVisibility(View.GONE);
+        cardError.setVisibility(View.VISIBLE);
+        // Auto hide setelah 2 detik
+        loadingOverlay.postDelayed(this::hideLoading, 2000);
     }
 
     private void hideLoading() {
+        stopDotsAnimation();
+        stopProgressAnimation();
         loadingOverlay.setVisibility(View.GONE);
+        cardLoading.setVisibility(View.VISIBLE);
+        cardSuccess.setVisibility(View.GONE);
+        cardError.setVisibility(View.GONE);
+    }
+
+    /** Animasi titik-titik berjalan pada label "+ Adding Playlist..." */
+    private void startDotsAnimation() {
+        stopDotsAnimation();
+        dotsCount = 0;
+        dotsRunnable = new Runnable() {
+            @Override public void run() {
+                dotsCount = (dotsCount + 1) % 4;
+                String dots = dotsCount == 0 ? "" : dotsCount == 1 ? "." : dotsCount == 2 ? ".." : "...";
+                if (tvLoadingLabel != null)
+                    tvLoadingLabel.setText("+ Adding Playlist" + dots);
+                dotsHandler.postDelayed(this, 500);
+            }
+        };
+        dotsHandler.post(dotsRunnable);
+    }
+
+    private void stopDotsAnimation() {
+        if (dotsRunnable != null) dotsHandler.removeCallbacks(dotsRunnable);
+        dotsRunnable = null;
+    }
+
+    /** Animasi counter angka dari start ke end */
+    private void animateCounter(int start, int end, Runnable onDone) {
+        if (counterAnimator != null) counterAnimator.cancel();
+        counterAnimator = ValueAnimator.ofInt(start, end);
+        counterAnimator.setDuration(Math.min(1200, end * 8L));
+        counterAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        counterAnimator.addUpdateListener(a -> {
+            int val = (int) a.getAnimatedValue();
+            if (tvChCountLoading != null) tvChCountLoading.setText(val + " Ch");
+        });
+        counterAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override public void onAnimationEnd(android.animation.Animator a) {
+                if (onDone != null) onDone.run();
+            }
+        });
+        counterAnimator.start();
+    }
+
+    /** Animasi progress bar fill dari posisi saat ini ke 100% */
+    private void animateProgressToFull(Runnable onDone) {
+        progressFill.post(() -> {
+            int trackWidth = ((android.view.View) progressFill.getParent()).getWidth();
+            if (trackWidth == 0) trackWidth = (int)(280 * getResources().getDisplayMetrics().density);
+            final int target = trackWidth;
+            int current = progressFill.getLayoutParams().width;
+
+            if (progressAnimator != null) progressAnimator.cancel();
+            progressAnimator = ValueAnimator.ofInt(current, target);
+            progressAnimator.setDuration(600);
+            progressAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(1.5f));
+            progressAnimator.addUpdateListener(a -> {
+                int w = (int) a.getAnimatedValue();
+                progressFill.getLayoutParams().width = w;
+                progressFill.requestLayout();
+            });
+            progressAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+                @Override public void onAnimationEnd(android.animation.Animator a) {
+                    if (onDone != null) onDone.run();
+                }
+            });
+            progressAnimator.start();
+        });
+    }
+
+    /** Animasi progress bar fill mengikuti progress fetch (0-100%) */
+    private void animateProgressTo(float fraction) {
+        progressFill.post(() -> {
+            int trackWidth = ((android.view.View) progressFill.getParent()).getWidth();
+            if (trackWidth == 0) return;
+            int target = (int)(trackWidth * fraction);
+            if (progressAnimator != null && progressAnimator.isRunning()) return;
+            progressAnimator = ValueAnimator.ofInt(progressFill.getLayoutParams().width, target);
+            progressAnimator.setDuration(300);
+            progressAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
+            progressAnimator.addUpdateListener(a -> {
+                progressFill.getLayoutParams().width = (int) a.getAnimatedValue();
+                progressFill.requestLayout();
+            });
+            progressAnimator.start();
+        });
+    }
+
+    private void stopProgressAnimation() {
+        if (progressAnimator != null) { progressAnimator.cancel(); progressAnimator = null; }
+    }
+
+    /** Dipanggil setelah sukses import — jalankan autoSavePlaylist */
+    private void proceedAfterImport() {
+        autoSavePlaylist();
     }
 
     // ===== UTILS =====
@@ -782,7 +957,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         pendingChannels.clear();
         pendingUrl = "";
 
-        Toast.makeText(this, "Playlist berhasil ditambahkan!", Toast.LENGTH_SHORT).show();
         rebuildPlaylistList();
         autoPlay();
     }
