@@ -238,7 +238,23 @@ in one place."
 
         <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="20"/>
 
-        <!-- tv_source_note: dummy agar Java tidak NPE -->
+        <!-- Next step: awalnya GONE, muncul animasi saat source dipilih -->
+        <TextView
+            android:id="@+id/btn_source_next"
+            android:layout_width="181dp"
+            android:layout_height="68dp"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center"
+            android:text="Next step"
+            android:textColor="#E4EEF0"
+            android:textSize="15sp"
+            android:fontFamily="@font/inter_medium"
+            android:background="@drawable/bg_next_step_btn"
+            android:focusable="true"
+            android:clickable="true"
+            android:visibility="gone"/>
+
+        <!-- Dummy tv_source_note tetap ada agar Java tidak NPE -->
         <TextView
             android:id="@+id/tv_source_note"
             android:layout_width="1dp"
@@ -337,14 +353,13 @@ in one place."
             android:clipChildren="false"
             android:clipToPadding="false">
 
-            <!-- Thumb geser: awalnya GONE sampai user pertama kali sentuh -->
+            <!-- Thumb geser (pill oranye) -->
             <View
                 android:id="@+id/toggle_thumb"
                 android:layout_width="145dp"
                 android:layout_height="72dp"
                 android:layout_gravity="start"
-                android:background="@drawable/bg_yesno_selected"
-                android:visibility="gone"/>
+                android:background="@drawable/bg_yesno_selected"/>
 
             <!-- Label Yes -->
             <TextView
@@ -394,6 +409,23 @@ open the app."
             android:layout_marginBottom="8dp"/>
 
         <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="20"/>
+
+        <!-- Add playlist button: muncul animasi setelah URL + toggle dipilih -->
+        <TextView
+            android:id="@+id/btn_url_next"
+            android:layout_width="200dp"
+            android:layout_height="70dp"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center"
+            android:text="Add playlist"
+            android:textColor="#16232A"
+            android:textSize="15sp"
+            android:fontFamily="@font/inter_medium"
+            android:textStyle="normal"
+            android:background="@drawable/bg_add_playlist_btn"
+            android:focusable="true"
+            android:clickable="true"
+            android:visibility="gone"/>
 
         <Space android:layout_width="match_parent" android:layout_height="10dp"/>
 
@@ -767,43 +799,5 @@ and Press Add playlist"
                 android:clickable="true"/>
         </LinearLayout>
     </LinearLayout>
-
-    <!-- ===== FLOATING: btn_source_next — di luar page, overlay dari bawah ===== -->
-    <TextView
-        android:id="@+id/btn_source_next"
-        android:layout_width="181dp"
-        android:layout_height="68dp"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="48dp"
-        android:gravity="center"
-        android:text="Next step"
-        android:textColor="#E4EEF0"
-        android:textSize="15sp"
-        android:fontFamily="@font/inter_medium"
-        android:background="@drawable/bg_next_step_btn"
-        android:focusable="true"
-        android:clickable="true"
-        android:visibility="gone"
-        android:translationZ="4dp"/>
-
-    <!-- ===== FLOATING: btn_url_next — di luar page, overlay dari bawah ===== -->
-    <TextView
-        android:id="@+id/btn_url_next"
-        android:layout_width="200dp"
-        android:layout_height="70dp"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="48dp"
-        android:gravity="center"
-        android:text="Add playlist"
-        android:textColor="#16232A"
-        android:textSize="15sp"
-        android:fontFamily="@font/inter_medium"
-        android:textStyle="normal"
-        android:background="@drawable/bg_add_playlist_btn"
-        android:focusable="true"
-        android:clickable="true"
-        android:visibility="gone"
-        android:translationZ="4dp"/>
-
 
 </FrameLayout>
