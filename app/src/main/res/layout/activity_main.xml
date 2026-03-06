@@ -1,0 +1,809 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_dark">
+
+    <!-- ===== PAGE WELCOME (new design) ===== -->
+    <LinearLayout
+        android:id="@+id/page_welcome"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:background="@color/welcome_bg"
+        android:visibility="gone">
+
+        <!-- Spacer atas 12% layar -->
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="12"/>
+
+        <!-- Icon logo -->
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="center_horizontal"
+            android:src="@drawable/ic_app_logo"
+            android:scaleType="fitCenter"/>
+
+        <!-- Gap icon → Welcome to: ~5% -->
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="5"/>
+
+        <!-- Welcome to -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Welcome to"
+            android:textColor="#60163A2A"
+            android:textSize="17sp"
+            android:fontFamily="@font/inter_bold"
+            android:textStyle="bold"/>
+
+        <!-- PlayM3U -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="PlayM3U"
+            android:textColor="@color/welcome_dark"
+            android:textSize="34sp"
+            android:fontFamily="@font/inter_bold"
+            android:textStyle="bold"
+            android:layout_marginTop="2dp"/>
+
+        <!-- Gap PlayM3U → tagline: ~8% -->
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="8"/>
+
+        <!-- Tagline — dua baris: Stream your M3U playlists / in one place. -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Stream your M3U playlists
+in one place."
+            android:textColor="@color/welcome_dark"
+            android:textSize="17sp"
+            android:gravity="center"
+            android:lineSpacingMultiplier="1.5"
+            android:fontFamily="@font/inter_medium"
+            android:alpha="0.6"/>
+
+        <!-- Flexible space sebelum button -->
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="20"/>
+
+        <!-- Button Get Started -->
+        <TextView
+            android:id="@+id/btn_welcome_add"
+            android:layout_width="260dp"
+            android:layout_height="72dp"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center"
+            android:text="Get Started"
+            android:textColor="@color/welcome_bg"
+            android:textSize="22sp"
+            android:fontFamily="@font/inter_medium"
+            android:background="@drawable/bg_welcome_btn"
+            android:focusable="true"
+            android:clickable="true"/>
+
+        <!-- Gap button → Press OK: ~3% -->
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="3"/>
+
+        <!-- Press OK to start -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Press OK to start"
+            android:textColor="@color/welcome_dark"
+            android:textSize="13sp"
+            android:textStyle="italic"
+            android:fontFamily="@font/inter_medium"
+            android:alpha="0.5"/>
+
+        <!-- Bottom spacer: ~8% -->
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="8"/>
+
+    </LinearLayout>
+
+    <!-- ===== PAGE SOURCE (new design) ===== -->
+    <LinearLayout
+        android:id="@+id/page_source"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@color/welcome_bg"
+        android:visibility="gone">
+
+        <!-- Stepper: IDENTIK dengan URL page — 76dp×6dp, gap 8dp, marginTop 47dp -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="6dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="47dp"
+            android:orientation="horizontal">
+            <View
+                android:layout_width="76dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_stepper_active"
+                android:layout_marginEnd="8dp"/>
+            <View
+                android:layout_width="76dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_stepper_inactive"
+                android:layout_marginEnd="8dp"/>
+            <View
+                android:layout_width="76dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_stepper_inactive"/>
+        </LinearLayout>
+
+        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="10"/>
+
+        <!-- Heading: 17sp Inter Bold #16232A -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Import M3U from where?"
+            android:textColor="#16232A"
+            android:textSize="22sp"
+            android:fontFamily="@font/inter_bold"
+            android:textStyle="bold"
+            android:layout_marginBottom="28dp"/>
+
+        <!-- Option 1: Link/URL — 288x108dp -->
+        <LinearLayout
+            android:id="@+id/source_url_item"
+            android:layout_width="288dp"
+            android:layout_height="108dp"
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingStart="28dp"
+            android:paddingEnd="28dp"
+            android:focusable="true"
+            android:clickable="true"
+            android:background="@drawable/selector_source_option">
+
+            <ImageView
+                android:id="@+id/checkbox_url"
+                android:layout_width="19dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_triangle_play"
+                android:visibility="gone"
+                android:layout_marginEnd="16dp"
+                android:scaleType="fitCenter"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Link/URL"
+                android:textColor="#E4EEF0"
+                android:textSize="24sp"
+                android:fontFamily="@font/inter_medium"/>
+        </LinearLayout>
+
+        <Space android:layout_width="match_parent" android:layout_height="24dp"/>
+
+        <!-- Option 2: Local File — 288x108dp -->
+        <LinearLayout
+            android:id="@+id/source_file_item"
+            android:layout_width="288dp"
+            android:layout_height="108dp"
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingStart="28dp"
+            android:paddingEnd="28dp"
+            android:focusable="true"
+            android:clickable="true"
+            android:background="@drawable/selector_source_option">
+
+            <ImageView
+                android:id="@+id/checkbox_file"
+                android:layout_width="19dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_triangle_play"
+                android:visibility="gone"
+                android:layout_marginEnd="16dp"
+                android:scaleType="fitCenter"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Local File"
+                android:textColor="#E4EEF0"
+                android:textSize="24sp"
+                android:fontFamily="@font/inter_medium"/>
+        </LinearLayout>
+
+        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="20"/>
+
+        <!-- tv_source_note: dummy agar Java tidak NPE -->
+        <TextView
+            android:id="@+id/tv_source_note"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:visibility="gone"/>
+
+        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="8"/>
+
+    </LinearLayout>
+
+        <!-- ===== PAGE URL (new PDF design) ===== -->
+    <LinearLayout
+        android:id="@+id/page_url"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="#075056"
+        android:visibility="gone">
+
+        <!-- Stepper: 3 bars, bar1+bar2 active #FF5B04, bar3 inactive -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="6dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="47dp"
+            android:orientation="horizontal">
+            <View
+                android:layout_width="76dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_url_stepper_active"
+                android:layout_marginEnd="8dp"/>
+            <View
+                android:layout_width="76dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_url_stepper_active"
+                android:layout_marginEnd="8dp"/>
+            <View
+                android:layout_width="76dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_url_stepper_inactive"/>
+        </LinearLayout>
+
+        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="8"/>
+
+        <!-- Heading: "What's your M3U URL?" -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="What's your M3U URL?"
+            android:textColor="#E4EEF0"
+            android:textSize="22sp"
+            android:fontFamily="@font/inter_bold"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Input URL: 290x82dp, rounded pill -->
+        <EditText
+            android:id="@+id/et_url"
+            android:layout_width="290dp"
+            android:layout_height="82dp"
+            android:layout_gravity="center_horizontal"
+            android:hint="Enter playlist URL..."
+            android:textColorHint="#80E4EEF0"
+            android:textColor="#E4EEF0"
+            android:textSize="15sp"
+            android:fontFamily="@font/inter_medium"
+            android:paddingStart="28dp"
+            android:paddingEnd="28dp"
+            android:background="@drawable/selector_url_input"
+            android:inputType="textUri"
+            android:singleLine="true"
+            android:imeOptions="actionNext"
+            android:layout_marginBottom="32dp"/>
+
+        <!-- "Enable auto refresh?" label -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Enable auto refresh?"
+            android:textColor="#E4EEF0"
+            android:textSize="18sp"
+            android:fontFamily="@font/inter_bold"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Yes/No Swipeable Toggle -->
+        <FrameLayout
+            android:id="@+id/toggle_container"
+            android:layout_width="290dp"
+            android:layout_height="72dp"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/bg_yesno_container"
+            android:layout_marginBottom="16dp"
+            android:clipChildren="false"
+            android:clipToPadding="false">
+
+            <!-- Thumb geser: awalnya GONE sampai user pertama kali sentuh -->
+            <View
+                android:id="@+id/toggle_thumb"
+                android:layout_width="145dp"
+                android:layout_height="72dp"
+                android:layout_gravity="start"
+                android:background="@drawable/bg_yesno_selected"
+                android:visibility="gone"/>
+
+            <!-- Label Yes -->
+            <TextView
+                android:id="@+id/radio_yes"
+                android:layout_width="145dp"
+                android:layout_height="72dp"
+                android:layout_gravity="start"
+                android:gravity="center"
+                android:text="Yes"
+                android:textColor="#E4EEF0"
+                android:textSize="18sp"
+                android:fontFamily="@font/inter_bold"
+                android:textStyle="bold"
+                android:clickable="false"
+                android:focusable="false"/>
+
+            <!-- Label No -->
+            <TextView
+                android:id="@+id/radio_no"
+                android:layout_width="145dp"
+                android:layout_height="72dp"
+                android:layout_gravity="end"
+                android:gravity="center"
+                android:text="No"
+                android:textColor="#E4EEF0"
+                android:textSize="18sp"
+                android:fontFamily="@font/inter_bold"
+                android:textStyle="bold"
+                android:clickable="false"
+                android:focusable="false"/>
+        </FrameLayout>
+
+        <!-- Helper italic: "The playlist will update..." -->
+        <TextView
+            android:id="@+id/tv_ch_count_url"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center"
+            android:text="The playlist will update each time you
+open the app."
+            android:textColor="#E4EEF0"
+            android:textSize="11sp"
+            android:fontFamily="@font/inter_medium"
+            android:textStyle="italic"
+            android:alpha="0.7"
+            android:layout_marginBottom="8dp"/>
+
+        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="20"/>
+
+        <Space android:layout_width="match_parent" android:layout_height="10dp"/>
+
+        <!-- Bottom helper italic -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center"
+            android:text="Paste the direct link to your M3U playlist
+and Press Add playlist"
+            android:textColor="#E4EEF0"
+            android:textSize="11sp"
+            android:fontFamily="@font/inter_medium"
+            android:textStyle="italic"
+            android:alpha="0.7"/>
+
+        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="6"/>
+
+    </LinearLayout>
+
+    <!-- ===== PAGE NAME (hidden, tetap ada untuk kompatibilitas Java) ===== -->
+    <LinearLayout
+        android:id="@+id/page_name"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="#075056"
+        android:visibility="gone">
+
+        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+
+        <!-- Dummy views agar Java tidak NPE -->
+        <TextView
+            android:id="@+id/btn_url_back"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:visibility="gone"/>
+        <TextView
+            android:id="@+id/btn_url_clear"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:visibility="gone"/>
+        <EditText
+            android:id="@+id/et_name"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:visibility="gone"/>
+        <TextView
+            android:id="@+id/btn_name_back"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:visibility="gone"/>
+        <TextView
+            android:id="@+id/btn_name_clear"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:visibility="gone"/>
+        <TextView
+            android:id="@+id/btn_name_save"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:visibility="gone"/>
+        <TextView
+            android:id="@+id/tv_ch_count_name"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:visibility="gone"/>
+        <View
+            android:id="@+id/radio_box_yes"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:visibility="gone"/>
+        <View
+            android:id="@+id/radio_box_no"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:visibility="gone"/>
+
+        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+    </LinearLayout>
+
+        <!-- ===== PAGE SETTINGS ===== -->
+    <LinearLayout
+        android:id="@+id/page_settings"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="70dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingLeft="24dp"
+            android:paddingRight="24dp"
+            android:background="@color/bg_card2">
+            <TextView
+                android:id="@+id/btn_settings_exit"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="← Keluar"
+                android:textColor="@color/text_white"
+                android:textSize="14sp"
+                android:focusable="true"
+                android:clickable="true"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pengaturan"
+                android:textColor="@color/text_white"
+                android:textSize="14sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/btn_start_watch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Mulai menonton"
+            android:textColor="@color/text_white"
+            android:textSize="16sp"
+            android:paddingLeft="24dp"
+            android:paddingRight="24dp"
+            android:paddingTop="22dp"
+            android:paddingBottom="22dp"
+            android:focusable="true"
+            android:clickable="true"
+            android:background="@drawable/selector_settings_item"/>
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider"/>
+
+        <TextView
+            android:id="@+id/btn_go_playlists"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Playlists"
+            android:textColor="@color/text_white"
+            android:textSize="16sp"
+            android:paddingLeft="24dp"
+            android:paddingRight="24dp"
+            android:paddingTop="22dp"
+            android:paddingBottom="22dp"
+            android:focusable="true"
+            android:clickable="true"
+            android:background="@drawable/selector_settings_item"/>
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider"/>
+
+        <TextView
+            android:id="@+id/btn_add_playlist_settings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="+ Tambah Playlist Baru"
+            android:textColor="@color/text_white"
+            android:textSize="16sp"
+            android:paddingLeft="24dp"
+            android:paddingRight="24dp"
+            android:paddingTop="22dp"
+            android:paddingBottom="22dp"
+            android:focusable="true"
+            android:clickable="true"
+            android:background="@drawable/selector_settings_item"/>
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_margin="20dp"
+            android:padding="24dp"
+            android:background="@drawable/bg_note_box">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="catatan:"
+                android:textColor="@color/text_white"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="14dp"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Playlist sudah berhasil ditambahkan.\nSelamat menonton."
+                android:textColor="@color/text_desc"
+                android:textSize="12sp"
+                android:lineSpacingMultiplier="1.7"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ===== PAGE PLAYLISTS ===== -->
+    <LinearLayout
+        android:id="@+id/page_playlists"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="70dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingLeft="24dp"
+            android:paddingRight="24dp"
+            android:background="@color/bg_card2">
+            <TextView
+                android:id="@+id/btn_playlists_back"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="← Kembali"
+                android:textColor="@color/text_white"
+                android:textSize="14sp"
+                android:focusable="true"
+                android:clickable="true"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Playlists"
+                android:textColor="@color/text_white"
+                android:textSize="12sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+            <LinearLayout
+                android:id="@+id/playlist_list_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"/>
+        </ScrollView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@color/divider">
+            <TextView
+                android:id="@+id/btn_update_playlist"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🔄 Update Playlist"
+                android:textColor="@color/text_white"
+                android:textSize="15sp"
+                android:paddingLeft="24dp"
+                android:paddingRight="24dp"
+                android:paddingTop="20dp"
+                android:paddingBottom="20dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:background="@drawable/selector_settings_item"/>
+            <View android:layout_width="1dp" android:layout_height="match_parent" android:background="@color/divider"/>
+            <TextView
+                android:id="@+id/btn_switch_playlist"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="⇄ Ganti Playlist"
+                android:textColor="@color/text_white"
+                android:textSize="15sp"
+                android:paddingLeft="24dp"
+                android:paddingRight="24dp"
+                android:paddingTop="20dp"
+                android:paddingBottom="20dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:background="@drawable/selector_settings_item"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_update_success"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Playlist telah diperbaharui"
+            android:textColor="@color/text_white"
+            android:textSize="18sp"
+            android:gravity="center"
+            android:padding="20dp"
+            android:visibility="gone"/>
+    </LinearLayout>
+
+    <!-- ===== LOADING OVERLAY ===== -->
+    <LinearLayout
+        android:id="@+id/loading_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="#d90a1628"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:indeterminateTint="#3a7bd5"
+            android:layout_marginBottom="20dp"/>
+
+        <TextView
+            android:id="@+id/tv_loading_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mohon bersabar..."
+            android:textColor="@color/text_white"
+            android:textSize="15sp"/>
+
+        <TextView
+            android:id="@+id/tv_loading_sub"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_muted"
+            android:textSize="12sp"
+            android:layout_marginTop="8dp"/>
+    </LinearLayout>
+
+    <!-- ===== PLAYLIST SWITCHER MODAL ===== -->
+    <LinearLayout
+        android:id="@+id/switcher_backdrop"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:background="#b3000000"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/switcher_modal"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card"
+            android:padding="24dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Pilih Playlist"
+                android:textColor="@color/text_white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginBottom="16dp"/>
+
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxHeight="300dp">
+                <LinearLayout
+                    android:id="@+id/switcher_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"/>
+            </ScrollView>
+
+            <TextView
+                android:id="@+id/btn_switcher_close"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tutup"
+                android:textColor="@color/text_muted"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_search"
+                android:focusable="true"
+                android:clickable="true"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ===== FLOATING: btn_source_next — di luar page, overlay dari bawah ===== -->
+    <TextView
+        android:id="@+id/btn_source_next"
+        android:layout_width="181dp"
+        android:layout_height="68dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="48dp"
+        android:gravity="center"
+        android:text="Next step"
+        android:textColor="#E4EEF0"
+        android:textSize="15sp"
+        android:fontFamily="@font/inter_medium"
+        android:background="@drawable/bg_next_step_btn"
+        android:focusable="true"
+        android:clickable="true"
+        android:visibility="gone"
+        android:translationZ="4dp"/>
+
+    <!-- ===== FLOATING: btn_url_next — di luar page, overlay dari bawah ===== -->
+    <TextView
+        android:id="@+id/btn_url_next"
+        android:layout_width="200dp"
+        android:layout_height="70dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="48dp"
+        android:gravity="center"
+        android:text="Add playlist"
+        android:textColor="#16232A"
+        android:textSize="15sp"
+        android:fontFamily="@font/inter_medium"
+        android:textStyle="normal"
+        android:background="@drawable/bg_add_playlist_btn"
+        android:focusable="true"
+        android:clickable="true"
+        android:visibility="gone"
+        android:translationZ="4dp"/>
+
+
+</FrameLayout>
