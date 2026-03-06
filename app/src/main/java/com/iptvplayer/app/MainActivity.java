@@ -71,6 +71,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private View toggleThumb;
     private FrameLayout toggleContainer;
     private boolean toggleIsYes = true;
+    private boolean toggleTouched = false; // false = belum pernah dipilih
     private boolean downloadOnStart = true;
     private String pendingUrl = "";
 
@@ -246,9 +247,13 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnUrlNext.setOnClickListener(v -> fetchPlaylist());
         btnUrlNext.setOnTouchListener((v, event) -> {
             if (event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+                // Pressed: bg oranye seperti toggle selected, teks #E4EEF0
+                v.setBackgroundResource(R.drawable.bg_yesno_selected);
                 ((TextView) v).setTextColor(0xFFE4EEF0);
             } else if (event.getAction() == android.view.MotionEvent.ACTION_UP
                     || event.getAction() == android.view.MotionEvent.ACTION_CANCEL) {
+                // Release: kembali ke bg normal
+                v.setBackgroundResource(R.drawable.bg_add_playlist_btn);
                 ((TextView) v).setTextColor(0xFF16232A);
                 if (event.getAction() == android.view.MotionEvent.ACTION_UP) v.performClick();
             }
@@ -259,6 +264,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             public void onTextChanged(CharSequence s, int st, int b, int c) {}
             public void afterTextChanged(Editable s) {
                 if (s.length() == 0) tvChCountUrl.setText("");
+                checkShowAddPlaylist();
             }
         });
         etUrl.setOnFocusChangeListener((v, hasFocus) -> {
@@ -348,6 +354,33 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     }
 
     private void showPage(String page) {
+        // Reset url page saat dibuka ulang
+        if ("url".equals(page)) {
+            toggleTouched = false;
+            if (toggleThumb != null) {
+                toggleThumb.setVisibility(android.view.View.GONE);
+                toggleThumb.setTranslationX(0f);
+            }
+            if (btnUrlNext != null) {
+                btnUrlNext.setVisibility(android.view.View.GONE);
+                btnUrlNext.setAlpha(1f);
+                btnUrlNext.setTranslationY(0f);
+            }
+            if (etUrl != null) etUrl.setText("");
+        }
+        // Reset source page saat dibuka ulang
+        if ("source".equals(page)) {
+            if (btnSourceNext != null) {
+                btnSourceNext.setVisibility(android.view.View.GONE);
+                btnSourceNext.setAlpha(1f);
+                btnSourceNext.setTranslationY(0f);
+            }
+            selectedSource = null;
+            if (sourceUrlItem != null) sourceUrlItem.setSelected(false);
+            if (sourceFileItem != null) sourceFileItem.setSelected(false);
+            if (checkboxUrlIcon != null) checkboxUrlIcon.setVisibility(android.view.View.GONE);
+            if (checkboxFileIcon != null) checkboxFileIcon.setVisibility(android.view.View.GONE);
+        }
         pageWelcome.setVisibility(View.GONE);
         pageSource.setVisibility(View.GONE);
         pageUrl.setVisibility(View.GONE);
@@ -455,13 +488,10 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         if (sourceUrlItem != null) sourceUrlItem.setSelected("url".equals(source));
         if (sourceFileItem != null) sourceFileItem.setSelected("file".equals(source));
 
-        // Update hint text
-        if (source == null) {
-            if (tvSourceNote != null) tvSourceNote.setText("Choose one to continue");
-        } else if ("url".equals(source)) {
-            if (tvSourceNote != null) tvSourceNote.setText("Choose one to continue\nand press next step");
-        } else if ("file".equals(source)) {
-            if (tvSourceNote != null) tvSourceNote.setText("Choose one to continue\nand press next step");
+        // Animasi slide-up/down btn_source_next
+        if (btnSourceNext != null) {
+            if (source != null) slideUpShow(btnSourceNext);
+            else slideDownHide(btnSourceNext);
         }
     }
 
@@ -796,12 +826,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private void setupToggleSwipe() {
         if (toggleContainer == null || toggleThumb == null) return;
 
-        // Inisialisasi posisi thumb ke Yes (kiri)
-        toggleContainer.post(() -> {
-            int thumbW = toggleContainer.getWidth() / 2;
-            animateThumb(toggleIsYes ? 0f : (float) thumbW, false);
-            selectDownload(toggleIsYes);
-        });
+        // Thumb tidak ditampilkan sampai user pertama sentuh
+        if (toggleThumb != null) toggleThumb.setVisibility(android.view.View.GONE);
 
         final float[] downX = {0f};
         final boolean[] dragging = {false};
@@ -834,18 +860,29 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
+                    // Tampilkan thumb jika pertama kali disentuh
+                    if (toggleThumb.getVisibility() != android.view.View.VISIBLE) {
+                        toggleThumb.setVisibility(android.view.View.VISIBLE);
+                        toggleThumb.setAlpha(0f);
+                        toggleThumb.animate().alpha(1f).setDuration(180).start();
+                    }
                     if (dragging[0]) {
-                        // Snap: jika sudah lewat tengah → No, sebaliknya → Yes
                         float currentX = toggleThumb.getTranslationX();
                         boolean goNo = currentX > thumbW * 0.5f;
                         animateThumb(goNo ? (float) thumbW : 0f, true);
                         selectDownload(!goNo);
                     } else {
-                        // Tap biasa
                         boolean tapYes = event.getX() < toggleContainer.getWidth() / 2f;
+                        // Posisikan thumb ke sisi yang benar sebelum animasi
+                        if (toggleThumb.getVisibility() == android.view.View.VISIBLE
+                                && !toggleTouched) {
+                            toggleThumb.setTranslationX(tapYes ? 0f : (float) thumbW);
+                        }
                         animateThumb(tapYes ? 0f : (float) thumbW, true);
                         selectDownload(tapYes);
                     }
+                    toggleTouched = true;
+                    checkShowAddPlaylist();
                     v.performClick();
                     break;
             }
@@ -886,6 +923,48 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             }
         }
         return super.dispatchTouchEvent(event);
+    }
+
+    /** Tampilkan btn_url_next jika URL terisi DAN toggle sudah pernah dipilih */
+    private void checkShowAddPlaylist() {
+        if (btnUrlNext == null) return;
+        boolean urlFilled = etUrl != null && etUrl.getText().length() > 0;
+        boolean shouldShow = urlFilled && toggleTouched;
+        if (shouldShow && btnUrlNext.getVisibility() != android.view.View.VISIBLE) {
+            slideUpShow(btnUrlNext);
+        } else if (!shouldShow && btnUrlNext.getVisibility() == android.view.View.VISIBLE) {
+            slideDownHide(btnUrlNext);
+        }
+    }
+
+    /** Slide up + fade in → VISIBLE */
+    private void slideUpShow(final android.view.View v) {
+        if (v.getVisibility() == android.view.View.VISIBLE) return;
+        v.setVisibility(android.view.View.VISIBLE);
+        v.setAlpha(0f);
+        v.setTranslationY(60f);
+        v.animate()
+            .translationY(0f)
+            .alpha(1f)
+            .setDuration(280)
+            .setInterpolator(new android.view.animation.DecelerateInterpolator(1.5f))
+            .start();
+    }
+
+    /** Slide down + fade out → GONE */
+    private void slideDownHide(final android.view.View v) {
+        if (v.getVisibility() != android.view.View.VISIBLE) return;
+        v.animate()
+            .translationY(60f)
+            .alpha(0f)
+            .setDuration(200)
+            .setInterpolator(new android.view.animation.AccelerateInterpolator(1.5f))
+            .withEndAction(() -> {
+                v.setVisibility(android.view.View.GONE);
+                v.setTranslationY(0f);
+                v.setAlpha(1f);
+            })
+            .start();
     }
 
 }
