@@ -937,32 +937,34 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         }
     }
 
-    /** Slide up + fade in → VISIBLE */
+    /** Slide UP dari bawah layar → posisi final (tidak ada fade, murni geser) */
     private void slideUpShow(final android.view.View v) {
         if (v.getVisibility() == android.view.View.VISIBLE) return;
+        // Ukur tinggi layar untuk starting position di luar bawah layar
+        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        float screenH = dm.heightPixels;
+        v.setTranslationY(screenH);
+        v.setAlpha(1f);
         v.setVisibility(android.view.View.VISIBLE);
-        v.setAlpha(0f);
-        v.setTranslationY(60f);
         v.animate()
             .translationY(0f)
-            .alpha(1f)
-            .setDuration(280)
-            .setInterpolator(new android.view.animation.DecelerateInterpolator(1.5f))
+            .setDuration(320)
+            .setInterpolator(new android.view.animation.DecelerateInterpolator(2f))
             .start();
     }
 
-    /** Slide down + fade out → GONE */
+    /** Slide DOWN kembali ke bawah layar → GONE */
     private void slideDownHide(final android.view.View v) {
         if (v.getVisibility() != android.view.View.VISIBLE) return;
+        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        float screenH = dm.heightPixels;
         v.animate()
-            .translationY(60f)
-            .alpha(0f)
-            .setDuration(200)
-            .setInterpolator(new android.view.animation.AccelerateInterpolator(1.5f))
+            .translationY(screenH)
+            .setDuration(260)
+            .setInterpolator(new android.view.animation.AccelerateInterpolator(2f))
             .withEndAction(() -> {
                 v.setVisibility(android.view.View.GONE);
                 v.setTranslationY(0f);
-                v.setAlpha(1f);
             })
             .start();
     }
