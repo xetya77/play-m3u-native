@@ -798,8 +798,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                     cardSuccess.setVisibility(View.VISIBLE);
                     // Set teks success
                     android.widget.TextView tvMsg = cardSuccess.findViewById(R.id.tv_success_msg);
-                    if (tvMsg != null) tvMsg.setText(channelCount + " channels
-imported.");
+                    if (tvMsg != null) tvMsg.setText(channelCount + " channels\nimported.");
                     // Auto hide setelah 1.5 detik lalu lanjut
                     loadingOverlay.postDelayed(() -> {
                         hideLoading();
