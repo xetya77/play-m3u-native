@@ -71,7 +71,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private View toggleThumb;
     private FrameLayout toggleContainer;
     private boolean toggleIsYes = true;
-    private boolean toggleTouched = false; // false = belum pernah dipilih
+    private boolean toggleTouched = false; // false = belum pernah dipilih user
     private boolean downloadOnStart = true;
     private String pendingUrl = "";
 
@@ -247,12 +247,12 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnUrlNext.setOnClickListener(v -> fetchPlaylist());
         btnUrlNext.setOnTouchListener((v, event) -> {
             if (event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
-                // Pressed: bg oranye seperti toggle selected, teks #E4EEF0
+                // Pressed: bg oranye #FF5B04, teks #E4EEF0 (seperti Yes/No toggle)
                 v.setBackgroundResource(R.drawable.bg_yesno_selected);
                 ((TextView) v).setTextColor(0xFFE4EEF0);
             } else if (event.getAction() == android.view.MotionEvent.ACTION_UP
                     || event.getAction() == android.view.MotionEvent.ACTION_CANCEL) {
-                // Release: kembali ke bg normal
+                // Release: kembali ke bg normal #E4EEF0, teks gelap
                 v.setBackgroundResource(R.drawable.bg_add_playlist_btn);
                 ((TextView) v).setTextColor(0xFF16232A);
                 if (event.getAction() == android.view.MotionEvent.ACTION_UP) v.performClick();
@@ -354,32 +354,18 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     }
 
     private void showPage(String page) {
-        // Reset url page saat dibuka ulang
+        // Reset state url page saat dibuka ulang
         if ("url".equals(page)) {
             toggleTouched = false;
-            if (toggleThumb != null) {
-                toggleThumb.setVisibility(android.view.View.GONE);
-                toggleThumb.setTranslationX(0f);
-            }
             if (btnUrlNext != null) {
                 btnUrlNext.setVisibility(android.view.View.GONE);
                 btnUrlNext.setAlpha(1f);
                 btnUrlNext.setTranslationY(0f);
             }
-            if (etUrl != null) etUrl.setText("");
         }
         // Reset source page saat dibuka ulang
         if ("source".equals(page)) {
-            if (btnSourceNext != null) {
-                btnSourceNext.setVisibility(android.view.View.GONE);
-                btnSourceNext.setAlpha(1f);
-                btnSourceNext.setTranslationY(0f);
-            }
-            selectedSource = null;
-            if (sourceUrlItem != null) sourceUrlItem.setSelected(false);
-            if (sourceFileItem != null) sourceFileItem.setSelected(false);
-            if (checkboxUrlIcon != null) checkboxUrlIcon.setVisibility(android.view.View.GONE);
-            if (checkboxFileIcon != null) checkboxFileIcon.setVisibility(android.view.View.GONE);
+            selectSource(null);
         }
         pageWelcome.setVisibility(View.GONE);
         pageSource.setVisibility(View.GONE);
@@ -387,21 +373,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         pageName.setVisibility(View.GONE);
         pageSettings.setVisibility(View.GONE);
         pagePlaylists.setVisibility(View.GONE);
-
-        // Sembunyikan KEDUA floating button saat pindah halaman apapun
-        // Mereka hanya muncul kembali via selectSource() / checkShowAddPlaylist()
-        if (btnSourceNext != null) {
-            btnSourceNext.animate().cancel();
-            btnSourceNext.setVisibility(android.view.View.GONE);
-            btnSourceNext.setTranslationY(0f);
-            btnSourceNext.setAlpha(1f);
-        }
-        if (btnUrlNext != null) {
-            btnUrlNext.animate().cancel();
-            btnUrlNext.setVisibility(android.view.View.GONE);
-            btnUrlNext.setTranslationY(0f);
-            btnUrlNext.setAlpha(1f);
-        }
 
         // Add to history
         if (pageHistory.isEmpty() || !pageHistory.get(pageHistory.size() - 1).equals(page)) {
@@ -503,10 +474,13 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         if (sourceUrlItem != null) sourceUrlItem.setSelected("url".equals(source));
         if (sourceFileItem != null) sourceFileItem.setSelected("file".equals(source));
 
-        // Animasi slide-up/down btn_source_next
+        // Tampilkan / sembunyikan btn_source_next dengan animasi slide-up
         if (btnSourceNext != null) {
-            if (source != null) slideUpShow(btnSourceNext);
-            else slideDownHide(btnSourceNext);
+            if (source != null) {
+                slideUpShow(btnSourceNext);
+            } else {
+                slideDownHide(btnSourceNext);
+            }
         }
     }
 
@@ -841,8 +815,12 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private void setupToggleSwipe() {
         if (toggleContainer == null || toggleThumb == null) return;
 
-        // Thumb tidak ditampilkan sampai user pertama sentuh
-        if (toggleThumb != null) toggleThumb.setVisibility(android.view.View.GONE);
+        // Inisialisasi posisi thumb ke Yes (kiri)
+        toggleContainer.post(() -> {
+            int thumbW = toggleContainer.getWidth() / 2;
+            animateThumb(toggleIsYes ? 0f : (float) thumbW, false);
+            selectDownload(toggleIsYes);
+        });
 
         final float[] downX = {0f};
         final boolean[] dragging = {false};
@@ -875,12 +853,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    // Tampilkan thumb jika pertama kali disentuh
-                    if (toggleThumb.getVisibility() != android.view.View.VISIBLE) {
-                        toggleThumb.setVisibility(android.view.View.VISIBLE);
-                        toggleThumb.setAlpha(0f);
-                        toggleThumb.animate().alpha(1f).setDuration(180).start();
-                    }
                     if (dragging[0]) {
                         float currentX = toggleThumb.getTranslationX();
                         boolean goNo = currentX > thumbW * 0.5f;
@@ -888,11 +860,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                         selectDownload(!goNo);
                     } else {
                         boolean tapYes = event.getX() < toggleContainer.getWidth() / 2f;
-                        // Posisikan thumb ke sisi yang benar sebelum animasi
-                        if (toggleThumb.getVisibility() == android.view.View.VISIBLE
-                                && !toggleTouched) {
-                            toggleThumb.setTranslationX(tapYes ? 0f : (float) thumbW);
-                        }
                         animateThumb(tapYes ? 0f : (float) thumbW, true);
                         selectDownload(tapYes);
                     }
@@ -952,34 +919,30 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         }
     }
 
-    /** Slide UP dari bawah layar → posisi final (tidak ada fade, murni geser) */
+    /** Slide up + fade in, lalu set VISIBLE */
     private void slideUpShow(final android.view.View v) {
-        if (v.getVisibility() == android.view.View.VISIBLE) return;
-        // Ukur tinggi layar untuk starting position di luar bawah layar
-        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
-        float screenH = dm.heightPixels;
-        v.setTranslationY(screenH);
-        v.setAlpha(1f);
         v.setVisibility(android.view.View.VISIBLE);
+        v.setAlpha(0f);
+        v.setTranslationY(60f);
         v.animate()
             .translationY(0f)
-            .setDuration(320)
-            .setInterpolator(new android.view.animation.DecelerateInterpolator(2f))
+            .alpha(1f)
+            .setDuration(280)
+            .setInterpolator(new DecelerateInterpolator(1.5f))
             .start();
     }
 
-    /** Slide DOWN kembali ke bawah layar → GONE */
+    /** Slide down + fade out, lalu set GONE */
     private void slideDownHide(final android.view.View v) {
-        if (v.getVisibility() != android.view.View.VISIBLE) return;
-        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
-        float screenH = dm.heightPixels;
         v.animate()
-            .translationY(screenH)
-            .setDuration(260)
-            .setInterpolator(new android.view.animation.AccelerateInterpolator(2f))
+            .translationY(60f)
+            .alpha(0f)
+            .setDuration(200)
+            .setInterpolator(new android.view.animation.AccelerateInterpolator(1.5f))
             .withEndAction(() -> {
                 v.setVisibility(android.view.View.GONE);
                 v.setTranslationY(0f);
+                v.setAlpha(1f);
             })
             .start();
     }
