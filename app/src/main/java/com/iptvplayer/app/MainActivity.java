@@ -261,6 +261,16 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 if (s.length() == 0) tvChCountUrl.setText("");
             }
         });
+        etUrl.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                // Fokus: bg terang, teks gelap
+                etUrl.setTextColor(0xFF16232A);
+            } else {
+                // Unfocus: bg gelap, teks terang #E4EEF0
+                etUrl.setTextColor(0xFFE4EEF0);
+            }
+        });
+
         etUrl.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_NEXT || actionId == EditorInfo.IME_ACTION_GO) {
                 fetchPlaylist();
