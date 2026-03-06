@@ -491,8 +491,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         pendingUrl = url;
 
         showLoading("Mengunduh playlist...", "Mohon bersabar");
-        // Simulasi progress 0→70% selama fetch berlangsung
-        loadingOverlay.postDelayed(() -> animateProgressTo(0.7f), 800);
+        // Progress + counter mulai BERSAMAAN sejak awal, lambat dan nikmati UI
+        loadingOverlay.post(() -> startLoadingAnimation());
 
         executor.execute(() -> {
             try {
@@ -760,7 +760,38 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         showLoadingCard(0);
     }
 
-    /** Tampilkan loading card dan mulai animasi */
+    /** Mulai animasi loading: progress + counter jalan bersamaan dari awal */
+    private void startLoadingAnimation() {
+        // Progress bar: 0 → 70% dengan durasi panjang (user menikmati UI)
+        progressFill.post(() -> {
+            int trackWidth = ((android.view.View) progressFill.getParent()).getWidth();
+            if (trackWidth == 0) trackWidth = (int)(280 * getResources().getDisplayMetrics().density);
+            final int target = (int)(trackWidth * 0.72f);
+            if (progressAnimator != null) progressAnimator.cancel();
+            progressAnimator = ValueAnimator.ofInt(0, target);
+            progressAnimator.setDuration(4000); // 4 detik untuk 0→72%
+            progressAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(0.5f));
+            progressAnimator.addUpdateListener(a -> {
+                progressFill.getLayoutParams().width = (int) a.getAnimatedValue();
+                progressFill.requestLayout();
+            });
+            progressAnimator.start();
+        });
+
+        // Counter: 0 → angka simulasi (akan di-reset saat sukses)
+        // Angka naik lambat bersamaan progress, memberikan kesan real-time
+        if (counterAnimator != null) counterAnimator.cancel();
+        counterAnimator = ValueAnimator.ofInt(0, 999); // simulasi naik
+        counterAnimator.setDuration(60000); // sangat lambat, akan dibatalkan saat sukses
+        counterAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
+        counterAnimator.addUpdateListener(a -> {
+            int val = (int) a.getAnimatedValue();
+            if (tvChCountLoading != null) tvChCountLoading.setText(val + " Ch");
+        });
+        counterAnimator.start();
+    }
+
+        /** Tampilkan loading card dan mulai animasi */
     private void showLoadingCard(int initialChannels) {
         loadingOverlay.setVisibility(View.VISIBLE);
         cardLoading.setVisibility(View.VISIBLE);
@@ -788,25 +819,36 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private void showSuccessCard(int channelCount) {
         stopDotsAnimation();
 
-        // Animasi progress bar ke 100%
-        animateProgressToFull(() -> {
-            // Setelah progress penuh, animasi counter dari 0 ke channelCount
-            animateCounter(0, channelCount, () -> {
-                // Setelah counter selesai, fade ke card success
+        // Hentikan animasi loading, lanjut ke 100%
+        stopProgressAnimation();
+
+        // Counter dan progress berjalan BERSAMAAN ke nilai akhir
+        animateProgressToFull(null); // progress → 100%
+        animateCounter(                // counter → channelCount, bersamaan
+            tvChCountLoading != null
+                ? parseChCount(tvChCountLoading.getText().toString())
+                : 0,
+            channelCount,
+            () -> {
+                // Counter selesai → tunggu sebentar lalu tampil sukses
                 loadingOverlay.postDelayed(() -> {
                     cardLoading.setVisibility(View.GONE);
                     cardSuccess.setVisibility(View.VISIBLE);
-                    // Set teks success
                     android.widget.TextView tvMsg = cardSuccess.findViewById(R.id.tv_success_msg);
                     if (tvMsg != null) tvMsg.setText(channelCount + " channels\nimported.");
-                    // Auto hide setelah 1.5 detik lalu lanjut
                     loadingOverlay.postDelayed(() -> {
                         hideLoading();
                         proceedAfterImport();
-                    }, 1500);
-                }, 300);
+                    }, 1800);
+                }, 400);
             });
-        });
+    }
+
+    /** Parse angka dari teks "123 Ch" → 123 */
+    private int parseChCount(CharSequence text) {
+        try {
+            return Integer.parseInt(text.toString().replace(" Ch", "").trim());
+        } catch (Exception e) { return 0; }
     }
 
     /** Tampilkan card error */
@@ -853,7 +895,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private void animateCounter(int start, int end, Runnable onDone) {
         if (counterAnimator != null) counterAnimator.cancel();
         counterAnimator = ValueAnimator.ofInt(start, end);
-        counterAnimator.setDuration(Math.min(1200, end * 8L));
+        counterAnimator.setDuration(Math.max(1500, Math.min(2500, end * 12L)));
         counterAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator());
         counterAnimator.addUpdateListener(a -> {
             int val = (int) a.getAnimatedValue();
@@ -877,7 +919,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
             if (progressAnimator != null) progressAnimator.cancel();
             progressAnimator = ValueAnimator.ofInt(current, target);
-            progressAnimator.setDuration(600);
+            progressAnimator.setDuration(900); // sedikit lebih lambat ke 100%
             progressAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(1.5f));
             progressAnimator.addUpdateListener(a -> {
                 int w = (int) a.getAnimatedValue();
@@ -899,10 +941,10 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             int trackWidth = ((android.view.View) progressFill.getParent()).getWidth();
             if (trackWidth == 0) return;
             int target = (int)(trackWidth * fraction);
-            if (progressAnimator != null && progressAnimator.isRunning()) return;
+            if (progressAnimator != null) progressAnimator.cancel();
             progressAnimator = ValueAnimator.ofInt(progressFill.getLayoutParams().width, target);
-            progressAnimator.setDuration(300);
-            progressAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
+            progressAnimator.setDuration(2800); // lambat agar user bisa menikmati
+            progressAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(0.6f));
             progressAnimator.addUpdateListener(a -> {
                 progressFill.getLayoutParams().width = (int) a.getAnimatedValue();
                 progressFill.requestLayout();
