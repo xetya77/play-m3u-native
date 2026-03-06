@@ -388,6 +388,21 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         pageSettings.setVisibility(View.GONE);
         pagePlaylists.setVisibility(View.GONE);
 
+        // Sembunyikan KEDUA floating button saat pindah halaman apapun
+        // Mereka hanya muncul kembali via selectSource() / checkShowAddPlaylist()
+        if (btnSourceNext != null) {
+            btnSourceNext.animate().cancel();
+            btnSourceNext.setVisibility(android.view.View.GONE);
+            btnSourceNext.setTranslationY(0f);
+            btnSourceNext.setAlpha(1f);
+        }
+        if (btnUrlNext != null) {
+            btnUrlNext.animate().cancel();
+            btnUrlNext.setVisibility(android.view.View.GONE);
+            btnUrlNext.setTranslationY(0f);
+            btnUrlNext.setAlpha(1f);
+        }
+
         // Add to history
         if (pageHistory.isEmpty() || !pageHistory.get(pageHistory.size() - 1).equals(page)) {
             pageHistory.add(page);
