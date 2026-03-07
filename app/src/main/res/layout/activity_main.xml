@@ -658,15 +658,14 @@ this playlist?"
                 android:focusable="true">
 
                 <!-- Icon play (hanya tampil saat selected/pressed) -->
-                <TextView
+                <ImageView
                     android:id="@+id/ic_start_play"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="16dp"
+                    android:layout_height="19dp"
                     android:layout_gravity="center_vertical"
                     android:layout_marginStart="28dp"
-                    android:text="▶"
-                    android:textColor="#16232A"
-                    android:textSize="16sp"
+                    android:src="@drawable/ic_triangle_play"
+                    android:scaleType="fitCenter"
                     android:visibility="gone"/>
 
                 <TextView
@@ -680,13 +679,6 @@ this playlist?"
                     android:fontFamily="@font/inter_medium"/>
             </FrameLayout>
 
-            <!-- Divider tipis -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginStart="20dp"
-                android:layout_marginEnd="20dp"
-                android:background="#20E4EEF0"/>
 
             <!-- PLAYLIST button -->
             <FrameLayout
@@ -699,15 +691,14 @@ this playlist?"
                 android:clickable="true"
                 android:focusable="true">
 
-                <TextView
+                <ImageView
                     android:id="@+id/ic_playlist_play"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="16dp"
+                    android:layout_height="19dp"
                     android:layout_gravity="center_vertical"
                     android:layout_marginStart="28dp"
-                    android:text="▶"
-                    android:textColor="#16232A"
-                    android:textSize="16sp"
+                    android:src="@drawable/ic_triangle_play"
+                    android:scaleType="fitCenter"
                     android:visibility="gone"/>
 
                 <TextView
@@ -721,13 +712,6 @@ this playlist?"
                     android:fontFamily="@font/inter_medium"/>
             </FrameLayout>
 
-            <!-- Divider tipis -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginStart="20dp"
-                android:layout_marginEnd="20dp"
-                android:background="#20E4EEF0"/>
 
             <!-- EPG button -->
             <FrameLayout
@@ -740,15 +724,14 @@ this playlist?"
                 android:clickable="true"
                 android:focusable="true">
 
-                <TextView
+                <ImageView
                     android:id="@+id/ic_epg_play"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="16dp"
+                    android:layout_height="19dp"
                     android:layout_gravity="center_vertical"
                     android:layout_marginStart="28dp"
-                    android:text="▶"
-                    android:textColor="#16232A"
-                    android:textSize="16sp"
+                    android:src="@drawable/ic_triangle_play"
+                    android:scaleType="fitCenter"
                     android:visibility="gone"/>
 
                 <TextView
