@@ -843,8 +843,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is));
                 StringBuilder sb = new StringBuilder();
                 String line;
-                while ((line = reader.readLine()) != null) sb.append(line).append("
-");
+                while ((line = reader.readLine()) != null) sb.append(line).append("\n");
                 reader.close();
 
                 java.util.List<EpgEntry> entries = EpgParser.parse(sb.toString());
@@ -1073,7 +1072,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         Playlist pl = playlists.get(idx);
         new android.app.AlertDialog.Builder(this)
             .setTitle("Hapus Playlist?")
-            .setMessage(""" + pl.name + "" akan dihapus permanen.")
+            .setMessage("\"" + pl.name + "\" akan dihapus permanen.")
             .setPositiveButton("Hapus", (d, w) -> {
                 playlists.remove(idx);
                 if (currentPlaylistIdx >= playlists.size())
