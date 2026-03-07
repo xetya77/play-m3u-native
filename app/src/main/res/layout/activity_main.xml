@@ -460,59 +460,110 @@ and Press Add playlist"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="#075056"
+        android:background="#0D1B22"
         android:visibility="gone">
 
-        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+        <!-- Stepper: 3 bar semua orange (step 3/3) -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal"
+            android:layout_marginTop="47dp"
+            android:gravity="center_vertical">
+            <View
+                android:layout_width="76dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_url_stepper_active"/>
+            <Space android:layout_width="5dp" android:layout_height="0dp"/>
+            <View
+                android:layout_width="76dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_url_stepper_active"/>
+            <Space android:layout_width="5dp" android:layout_height="0dp"/>
+            <View
+                android:layout_width="76dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_url_stepper_active"/>
+        </LinearLayout>
 
-        <!-- Dummy views agar Java tidak NPE -->
+        <!-- Spacer atas flexible -->
+        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="2"/>
+
+        <!-- Heading -->
         <TextView
-            android:id="@+id/btn_url_back"
-            android:layout_width="1dp"
-            android:layout_height="1dp"
-            android:visibility="gone"/>
-        <TextView
-            android:id="@+id/btn_url_clear"
-            android:layout_width="1dp"
-            android:layout_height="1dp"
-            android:visibility="gone"/>
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center"
+            android:text="What should we call
+this playlist?"
+            android:textColor="#E4EEF0"
+            android:textSize="22sp"
+            android:fontFamily="@font/inter_bold"
+            android:textStyle="bold"
+            android:lineSpacingMultiplier="1.2"
+            android:layout_marginBottom="28dp"/>
+
+        <!-- Input nama: 290x82dp pill, teal gelap normal, terang saat fokus -->
         <EditText
             android:id="@+id/et_name"
-            android:layout_width="1dp"
-            android:layout_height="1dp"
-            android:visibility="gone"/>
-        <TextView
-            android:id="@+id/btn_name_back"
-            android:layout_width="1dp"
-            android:layout_height="1dp"
-            android:visibility="gone"/>
-        <TextView
-            android:id="@+id/btn_name_clear"
-            android:layout_width="1dp"
-            android:layout_height="1dp"
-            android:visibility="gone"/>
+            android:layout_width="290dp"
+            android:layout_height="82dp"
+            android:layout_gravity="center_horizontal"
+            android:background="@drawable/selector_name_input"
+            android:hint="Enter playlist name..."
+            android:textColorHint="#80E4EEF0"
+            android:textColor="#E4EEF0"
+            android:textSize="16sp"
+            android:fontFamily="@font/inter_regular"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:singleLine="true"
+            android:inputType="text"
+            android:imeOptions="actionDone"
+            android:maxLines="1"/>
+
+        <!-- Spacer tengah flexible -->
+        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="5"/>
+
+        <!-- Button Done: 200x70dp, default #E4EEF0, ada teks → #FF5B04 -->
         <TextView
             android:id="@+id/btn_name_save"
-            android:layout_width="1dp"
-            android:layout_height="1dp"
-            android:visibility="gone"/>
-        <TextView
-            android:id="@+id/tv_ch_count_name"
-            android:layout_width="1dp"
-            android:layout_height="1dp"
-            android:visibility="gone"/>
-        <View
-            android:id="@+id/radio_box_yes"
-            android:layout_width="1dp"
-            android:layout_height="1dp"
-            android:visibility="gone"/>
-        <View
-            android:id="@+id/radio_box_no"
-            android:layout_width="1dp"
-            android:layout_height="1dp"
-            android:visibility="gone"/>
+            android:layout_width="200dp"
+            android:layout_height="70dp"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center"
+            android:text="Done"
+            android:textColor="#16232A"
+            android:textSize="17sp"
+            android:fontFamily="@font/inter_medium"
+            android:background="@drawable/bg_done_btn"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginBottom="10dp"/>
 
-        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+        <!-- Footer italic -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center"
+            android:text="Give it a name to keep things organized."
+            android:textColor="#80E4EEF0"
+            android:textSize="13sp"
+            android:fontFamily="@font/inter_regular"
+            android:textStyle="italic"
+            android:layout_marginBottom="32dp"/>
+
+        <!-- Dummy hidden views agar Java tidak NPE -->
+        <TextView android:id="@+id/btn_url_back"    android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone"/>
+        <TextView android:id="@+id/btn_url_clear"   android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone"/>
+        <TextView android:id="@+id/btn_name_back"   android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone"/>
+        <TextView android:id="@+id/btn_name_clear"  android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone"/>
+        <TextView android:id="@+id/tv_ch_count_name" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone"/>
+        <View     android:id="@+id/radio_box_yes"   android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone"/>
+        <View     android:id="@+id/radio_box_no"    android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone"/>
     </LinearLayout>
 
         <!-- ===== PAGE SETTINGS ===== -->
