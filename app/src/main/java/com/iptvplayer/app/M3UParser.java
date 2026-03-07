@@ -14,7 +14,7 @@ public class M3UParser {
         String[] lines = content.split("\n");
 
         // Buffer metadata — di-reset hanya saat ketemu URL (channel selesai)
-        String name = null, logo = null, group = null;
+        String name = null, logo = null, group = null, tvgId = null;
         String userAgent = null, referrer = null;
         String drmType = null, drmKey = null;
 
@@ -33,6 +33,7 @@ public class M3UParser {
                 name  = n;
                 logo  = extractAttr(line, "tvg-logo");
                 group = extractAttr(line, "group-title");
+                tvgId = extractAttr(line, "tvg-id");
 
                 // User-agent kadang inline di EXTINF
                 String inlineUa = extractAttr(line, "tvg-user-agent");
@@ -61,6 +62,7 @@ public class M3UParser {
                 // Ini adalah URL channel
                 if (name == null || name.isEmpty()) name = "Channel";
                 Channel ch = new Channel(name, line, logo, group);
+                ch.tvgId     = tvgId;
                 ch.userAgent = userAgent;
                 ch.referrer  = referrer;
                 ch.drmType   = drmType;
@@ -69,7 +71,7 @@ public class M3UParser {
                 channels.add(ch);
 
                 // Reset semua setelah channel tersimpan
-                name = null; logo = null; group = null;
+                name = null; logo = null; group = null; tvgId = null;
                 userAgent = null; referrer = null;
                 drmType = null; drmKey = null;
             }

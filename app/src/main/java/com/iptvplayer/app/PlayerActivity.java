@@ -39,6 +39,9 @@ import androidx.media3.ui.PlayerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -108,7 +111,7 @@ public class PlayerActivity extends Activity {
 
     private Handler handler = new Handler(Looper.getMainLooper());
     private Runnable chInfoHideRunnable, numClearRunnable, swipeHintHideRunnable;
-    private Runnable clockRunnable, dominoRunnable, bitrateRunnable;
+    private Runnable clockRunnable, dominoRunnable, bitrateRunnable, epgRefreshRunnable;
     private int dominoPhase = 0;
     private long lastTapTime = 0;
 
@@ -144,6 +147,8 @@ public class PlayerActivity extends Activity {
         setupGestures();
         setupCategoryListeners();
         startClock();
+        // Auto-load EPG jika URL sudah tersimpan dan belum loaded
+        autoLoadEpgIfNeeded();
         startDominoAnimation();
         playChannel(currentChannelIdx, false);
         showSwipeHint();
@@ -214,6 +219,38 @@ public class PlayerActivity extends Activity {
         swipeHint         = findViewById(R.id.swipe_hint);
         swipeFbUp         = findViewById(R.id.swipe_fb_up);
         swipeFbDown       = findViewById(R.id.swipe_fb_down);
+    }
+
+    // ===== EPG AUTO-LOAD =====
+    private void autoLoadEpgIfNeeded() {
+        EpgManager mgr = EpgManager.get(this);
+        if (mgr.isLoaded()) return; // sudah ada data
+        String url = mgr.getEpgUrl();
+        if (url == null || url.isEmpty()) return;
+        // Fetch di background tanpa UI loading
+        new Thread(() -> {
+            try {
+                okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
+                        .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                        .readTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
+                        .build();
+                okhttp3.Request req = new okhttp3.Request.Builder().url(url).build();
+                okhttp3.Response resp = client.newCall(req).execute();
+                if (resp.isSuccessful()) {
+                    String body = resp.body().string();
+                    java.util.List<EpgEntry> entries = EpgParser.parse(body);
+                    mgr.loadEpg(entries);
+                    // Refresh EPG text untuk channel aktif
+                    handler.post(() -> {
+                        if (!channels.isEmpty() && currentChannelIdx < channels.size()) {
+                            String nowPlaying = mgr.getNowPlaying(channels.get(currentChannelIdx));
+                            if (tvChEpg != null)
+                                tvChEpg.setText(nowPlaying != null ? nowPlaying : "Tidak ada informasi");
+                        }
+                    });
+                }
+            } catch (Exception ignored) {}
+        }).start();
     }
 
     // ===== CLOCK =====
@@ -353,6 +390,24 @@ public class PlayerActivity extends Activity {
                     .withEndAction(() -> remoteGuide.setVisibility(View.GONE)).start();
         // Jam opacity 50% saat menonton (panel tutup)
         tvClock.animate().alpha(0.5f).setDuration(600).start();
+        // Refresh EPG setiap 60 detik (program bisa berganti)
+        startEpgRefresh();
+    }
+
+    private void startEpgRefresh() {
+        if (epgRefreshRunnable != null) handler.removeCallbacks(epgRefreshRunnable);
+        epgRefreshRunnable = new Runnable() {
+            @Override public void run() {
+                if (channels != null && currentChannelIdx < channels.size()) {
+                    Channel ch = channels.get(currentChannelIdx);
+                    String nowPlaying = EpgManager.get(PlayerActivity.this).getNowPlaying(ch);
+                    if (tvChEpg != null)
+                        tvChEpg.setText(nowPlaying != null ? nowPlaying : "Tidak ada informasi");
+                }
+                handler.postDelayed(this, 60_000);
+            }
+        };
+        handler.postDelayed(epgRefreshRunnable, 60_000);
     }
     private String getErrorMessage(androidx.media3.common.PlaybackException e) {
         int c = e.errorCode;
@@ -709,7 +764,9 @@ public class PlayerActivity extends Activity {
     private void updateChInfo(Channel ch, int idx) {
         tvChNum.setText(String.valueOf(idx + 1));
         tvChName.setText(ch.name);
-        tvChEpg.setText("Tidak ada informasi");
+        // Coba ambil EPG dari EpgManager
+        String nowPlaying = EpgManager.get(this).getNowPlaying(ch);
+        tvChEpg.setText(nowPlaying != null ? nowPlaying : "Tidak ada informasi");
         tvChPlaylistName.setText(playlistName);
         if (ch.logoUrl != null && !ch.logoUrl.isEmpty()) {
             ivChLogo.setVisibility(View.VISIBLE);
@@ -868,6 +925,7 @@ public class PlayerActivity extends Activity {
     @Override protected void onDestroy() {
         super.onDestroy();
         if (player != null) { player.release(); player = null; }
+        if (epgRefreshRunnable != null) handler.removeCallbacks(epgRefreshRunnable);
         handler.removeCallbacksAndMessages(null);
     }
     @Override public void onBackPressed() {

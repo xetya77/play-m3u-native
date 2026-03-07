@@ -5,6 +5,7 @@ public class Channel {
     public String url;
     public String logoUrl;
     public String group;
+    public String tvgId;     // tvg-id dari M3U, digunakan untuk matching EPG
     public boolean isDrm;
     public String userAgent;
     public String referrer;

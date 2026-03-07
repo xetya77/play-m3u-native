@@ -79,6 +79,19 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private View btnSettingsExit, btnStartWatch, btnGoPlaylists, btnAddPlaylistSettings;
     private View btnEpg;
     private android.widget.TextView tvSettingsPlaylistName;
+
+    // ===== EPG fields =====
+    private View pageEpg;
+    private android.widget.EditText etEpgUrl;
+    private android.widget.TextView btnEpgLoad;
+    private View cardEpgLoading, cardEpgSuccess, cardEpgError;
+    private View epgProgressFill;
+    private android.widget.TextView tvEpgLoadingLabel, tvEpgProgCount, tvEpgSuccessMsg;
+    private boolean isEpgFetching = false;
+    private android.animation.ValueAnimator epgProgressAnimator, epgCounterAnimator;
+    private android.os.Handler epgDotsHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private android.os.Runnable epgDotsRunnable;
+    private int epgDotsCount = 0;
     // State "first tap" untuk 2x klik: null=belum ada, "start"/"playlists"/"epg"
     private String settingsSelectedMenu = null;
 
@@ -219,6 +232,16 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnGoPlaylists  = findViewById(R.id.btn_go_playlists);
         btnAddPlaylistSettings = findViewById(R.id.btn_add_playlist_settings);
         btnEpg = findViewById(R.id.btn_epg);
+        pageEpg         = findViewById(R.id.page_epg);
+        etEpgUrl        = findViewById(R.id.et_epg_url);
+        btnEpgLoad      = (android.widget.TextView) findViewById(R.id.btn_epg_load);
+        cardEpgLoading  = findViewById(R.id.card_epg_loading);
+        cardEpgSuccess  = findViewById(R.id.card_epg_success);
+        cardEpgError    = findViewById(R.id.card_epg_error);
+        epgProgressFill = findViewById(R.id.epg_progress_fill);
+        tvEpgLoadingLabel = (android.widget.TextView) findViewById(R.id.tv_epg_loading_label);
+        tvEpgProgCount    = (android.widget.TextView) findViewById(R.id.tv_epg_prog_count);
+        tvEpgSuccessMsg   = (android.widget.TextView) findViewById(R.id.tv_epg_success_msg);
         tvSettingsPlaylistName = findViewById(R.id.tv_settings_playlist_name);
 
         // Playlists
@@ -395,6 +418,30 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         setupMenuPressedState(btnEpg,         "epg");
         btnAddPlaylistSettings.setOnClickListener(v -> showPageWithTransition("source"));
 
+        // EPG page listeners
+        if (btnEpgLoad != null) {
+            btnEpgLoad.setOnTouchListener((v, event) -> {
+                if (isEpgFetching) return true;
+                switch (event.getAction()) {
+                    case android.view.MotionEvent.ACTION_DOWN:
+                        v.setBackgroundResource(R.drawable.bg_add_playlist_btn_pressed);
+                        ((android.widget.TextView) v).setTextColor(0xFFFFFFFF);
+                        break;
+                    case android.view.MotionEvent.ACTION_UP:
+                        v.setBackgroundResource(R.drawable.bg_add_playlist_btn);
+                        ((android.widget.TextView) v).setTextColor(0xFF16232A);
+                        v.performClick();
+                        break;
+                    case android.view.MotionEvent.ACTION_CANCEL:
+                        v.setBackgroundResource(R.drawable.bg_add_playlist_btn);
+                        ((android.widget.TextView) v).setTextColor(0xFF16232A);
+                        break;
+                }
+                return true;
+            });
+            btnEpgLoad.setOnClickListener(v -> fetchEpg());
+        }
+
         // Playlists
         btnPlaylistsBack.setOnClickListener(v -> showPage("settings"));
         btnUpdatePlaylist.setOnClickListener(v -> updateCurrentPlaylist());
@@ -451,6 +498,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         pageName.setVisibility(View.GONE);
         pageSettings.setVisibility(View.GONE);
         pagePlaylists.setVisibility(View.GONE);
+        if (pageEpg != null) pageEpg.setVisibility(View.GONE);
 
         // Add to history
         if (pageHistory.isEmpty() || !pageHistory.get(pageHistory.size() - 1).equals(page)) {
@@ -1312,13 +1360,198 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         }
     }
 
-    /** Dialog EPG — placeholder untuk input URL EPG */
+    /** Buka halaman EPG */
     private void showEpgDialog() {
-        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-        builder.setTitle("EPG");
-        builder.setMessage("Fitur EPG akan segera hadir.");
-        builder.setPositiveButton("OK", null);
-        builder.show();
+        showPageWithTransition("epg");
+    }
+
+        // ===================================================================
+    // ===================== EPG FETCH & ANIMATION =======================
+    // ===================================================================
+
+    private void fetchEpg() {
+        if (isEpgFetching) return;
+        String url = etEpgUrl != null ? etEpgUrl.getText().toString().trim() : "";
+        if (url.isEmpty()) {
+            android.widget.Toast.makeText(this, "Masukkan URL EPG terlebih dahulu", android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            showEpgErrorCard(); return;
+        }
+        try { new java.net.URL(url).toURI(); } catch (Exception e) { showEpgErrorCard(); return; }
+
+        isEpgFetching = true;
+        EpgManager.get(this).setEpgUrl(url);
+        showEpgLoadingCard();
+
+        executor.execute(() -> {
+            try {
+                okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
+                        .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                        .readTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
+                        .build();
+                okhttp3.Request req = new okhttp3.Request.Builder().url(url).build();
+                okhttp3.Response resp = client.newCall(req).execute();
+                if (!resp.isSuccessful()) throw new java.io.IOException("HTTP " + resp.code());
+                String body = resp.body().string();
+
+                // Parse XMLTV di background thread
+                java.util.List<EpgEntry> entries = EpgParser.parse(body);
+                EpgManager.get(MainActivity.this).loadEpg(entries);
+                int count = entries.size();
+
+                handler.post(() -> {
+                    isEpgFetching = false;
+                    if (count > 0) showEpgSuccessCard(count);
+                    else showEpgErrorCard();
+                });
+            } catch (Exception e) {
+                handler.post(() -> {
+                    isEpgFetching = false;
+                    showEpgErrorCard();
+                });
+            }
+        });
+    }
+
+    private void showEpgLoadingCard() {
+        if (loadingOverlay == null) return;
+        // Sembunyikan card playlist, tampilkan card EPG
+        if (cardLoading  != null) cardLoading.setVisibility(View.GONE);
+        if (cardSuccess  != null) cardSuccess.setVisibility(View.GONE);
+        if (cardError    != null) cardError.setVisibility(View.GONE);
+        cardEpgLoading.setVisibility(View.VISIBLE);
+        cardEpgLoading.setAlpha(0f);
+        cardEpgSuccess.setVisibility(View.GONE);
+        cardEpgError.setVisibility(View.GONE);
+
+        loadingOverlay.setAlpha(0f);
+        loadingOverlay.setVisibility(View.VISIBLE);
+        loadingOverlay.animate().alpha(1f).setDuration(250).withEndAction(() -> {
+            cardEpgLoading.animate().alpha(1f).setDuration(300).start();
+        }).start();
+
+        startEpgDotsAnimation();
+        startEpgProgressAnimation();
+    }
+
+    private void startEpgDotsAnimation() {
+        epgDotsCount = 0;
+        if (epgDotsRunnable != null) epgDotsHandler.removeCallbacks(epgDotsRunnable);
+        epgDotsRunnable = new Runnable() {
+            @Override public void run() {
+                epgDotsCount = (epgDotsCount + 1) % 4;
+                String dots = epgDotsCount == 0 ? "" : epgDotsCount == 1 ? "." : epgDotsCount == 2 ? ".." : "...";
+                if (tvEpgLoadingLabel != null) tvEpgLoadingLabel.setText("+ Loading EPG" + dots);
+                epgDotsHandler.postDelayed(this, 500);
+            }
+        };
+        epgDotsHandler.postDelayed(epgDotsRunnable, 500);
+    }
+
+    private void startEpgProgressAnimation() {
+        if (epgProgressFill == null) return;
+        epgProgressFill.post(() -> {
+            int trackW = ((android.view.View) epgProgressFill.getParent()).getWidth();
+            if (trackW == 0) trackW = 600;
+            final int target = (int)(trackW * 0.75f);
+            epgProgressAnimator = android.animation.ValueAnimator.ofInt(0, target);
+            epgProgressAnimator.setDuration(8000);
+            epgProgressAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(0.5f));
+            epgProgressAnimator.addUpdateListener(a -> {
+                if (epgProgressFill != null) {
+                    android.view.ViewGroup.LayoutParams lp = epgProgressFill.getLayoutParams();
+                    lp.width = (int) a.getAnimatedValue();
+                    epgProgressFill.setLayoutParams(lp);
+                }
+            });
+            epgProgressAnimator.start();
+
+            // Counter prog count 0 → estimasi
+            epgCounterAnimator = android.animation.ValueAnimator.ofInt(0, 50000);
+            epgCounterAnimator.setDuration(90000);
+            epgCounterAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
+            epgCounterAnimator.addUpdateListener(a -> {
+                if (tvEpgProgCount != null)
+                    tvEpgProgCount.setText(a.getAnimatedValue() + " Prog");
+            });
+            epgCounterAnimator.start();
+        });
+    }
+
+    private void showEpgSuccessCard(int count) {
+        if (epgDotsRunnable != null) epgDotsHandler.removeCallbacks(epgDotsRunnable);
+        if (epgProgressAnimator != null) epgProgressAnimator.cancel();
+        if (epgCounterAnimator != null) epgCounterAnimator.cancel();
+
+        // Animasi progress ke 100%
+        if (epgProgressFill != null) {
+            epgProgressFill.post(() -> {
+                int trackW = ((android.view.View) epgProgressFill.getParent()).getWidth();
+                if (trackW == 0) trackW = 600;
+                android.animation.ValueAnimator anim = android.animation.ValueAnimator.ofInt(
+                        epgProgressFill.getLayoutParams().width, trackW);
+                anim.setDuration(1200);
+                anim.setInterpolator(new android.view.animation.DecelerateInterpolator(1.5f));
+                anim.addUpdateListener(a -> {
+                    android.view.ViewGroup.LayoutParams lp = epgProgressFill.getLayoutParams();
+                    lp.width = (int) a.getAnimatedValue();
+                    epgProgressFill.setLayoutParams(lp);
+                });
+                anim.start();
+            });
+        }
+        if (tvEpgProgCount != null) tvEpgProgCount.setText(count + " Prog");
+        if (tvEpgSuccessMsg != null) tvEpgSuccessMsg.setText(count + " programmes imported.");
+
+        handler.postDelayed(() -> {
+            cardEpgLoading.animate().alpha(0f).setDuration(250).withEndAction(() -> {
+                cardEpgLoading.setVisibility(View.GONE);
+                cardEpgSuccess.setAlpha(0f);
+                cardEpgSuccess.setVisibility(View.VISIBLE);
+                cardEpgSuccess.animate().alpha(1f).setDuration(350).start();
+            }).start();
+        }, 1400);
+
+        handler.postDelayed(() -> {
+            loadingOverlay.animate().alpha(0f).setDuration(300).withEndAction(() -> {
+                loadingOverlay.setVisibility(View.GONE);
+                cardEpgLoading.setVisibility(View.GONE);
+                cardEpgSuccess.setVisibility(View.GONE);
+                cardEpgError.setVisibility(View.GONE);
+                // Kembali ke settings
+                showPageWithTransition("settings");
+            }).start();
+        }, 4000);
+    }
+
+    private void showEpgErrorCard() {
+        if (epgDotsRunnable != null) epgDotsHandler.removeCallbacks(epgDotsRunnable);
+        if (epgProgressAnimator != null) epgProgressAnimator.cancel();
+        if (epgCounterAnimator != null) epgCounterAnimator.cancel();
+        isEpgFetching = false;
+
+        if (!loadingOverlay.isShown()) {
+            // Error sebelum loading overlay muncul (validasi URL)
+            loadingOverlay.setAlpha(0f);
+            loadingOverlay.setVisibility(View.VISIBLE);
+            loadingOverlay.animate().alpha(1f).setDuration(200).start();
+        }
+        cardEpgLoading.setVisibility(View.GONE);
+        cardEpgSuccess.setVisibility(View.GONE);
+        cardEpgError.setAlpha(0f);
+        cardEpgError.setVisibility(View.VISIBLE);
+        cardEpgError.animate().alpha(1f).setDuration(300).start();
+
+        handler.postDelayed(() -> {
+            loadingOverlay.animate().alpha(0f).setDuration(300).withEndAction(() -> {
+                loadingOverlay.setVisibility(View.GONE);
+                cardEpgLoading.setVisibility(View.GONE);
+                cardEpgSuccess.setVisibility(View.GONE);
+                cardEpgError.setVisibility(View.GONE);
+            }).start();
+        }, 2500);
     }
 
         /** Simpan playlist otomatis tanpa meminta nama — nama diambil dari URL atau auto-generate */
