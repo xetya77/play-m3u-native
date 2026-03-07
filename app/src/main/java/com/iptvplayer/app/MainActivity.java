@@ -1070,9 +1070,19 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         if (progressAnimator != null) { progressAnimator.cancel(); progressAnimator = null; }
     }
 
-    /** Dipanggil setelah sukses import — jalankan autoSavePlaylist */
+    /** Dipanggil setelah sukses import — tampilkan halaman input nama playlist */
     private void proceedAfterImport() {
-        autoSavePlaylist();
+        // Reset field nama & button Done
+        if (etName != null) {
+            etName.setText("");
+            etName.setTextColor(0xFFE4EEF0);
+            etName.clearFocus();
+        }
+        if (btnNameSave != null) {
+            btnNameSave.setBackgroundResource(R.drawable.bg_done_btn);
+            ((android.widget.TextView) btnNameSave).setTextColor(0xFF16232A);
+        }
+        showPage("name");
     }
 
     // ===== UTILS =====
