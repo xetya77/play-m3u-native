@@ -73,6 +73,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private boolean toggleIsYes = true;
     private boolean downloadOnStart = true;
     private String pendingUrl = "";
+    private boolean isFetching = false; // guard: cegah double tap saat loading
 
     // ===== SETTINGS =====
     private View btnSettingsExit, btnStartWatch, btnGoPlaylists, btnAddPlaylistSettings;
@@ -260,14 +261,16 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnUrlClear.setOnClickListener(v -> { etUrl.setText(""); tvChCountUrl.setText(""); pendingChannels.clear(); });
         btnUrlNext.setOnClickListener(v -> fetchPlaylist());
         btnUrlNext.setOnTouchListener((v, event) -> {
+            // Abaikan sentuhan saat sedang fetch
+            if (isFetching) return true;
             switch (event.getAction()) {
                 case android.view.MotionEvent.ACTION_DOWN:
-                    // Pressed: bg orange + teks putih (sesuai gambar 1)
+                    // Pressed: bg orange + teks putih
                     v.setBackgroundResource(R.drawable.bg_add_playlist_btn_pressed);
                     ((TextView) v).setTextColor(0xFFFFFFFF);
                     break;
                 case android.view.MotionEvent.ACTION_UP:
-                    // Released: kembali normal
+                    // Released: kembali normal lalu jalankan
                     v.setBackgroundResource(R.drawable.bg_add_playlist_btn);
                     ((TextView) v).setTextColor(0xFF16232A);
                     v.performClick();
@@ -550,12 +553,30 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     // ===== FETCH PLAYLIST =====
 
     private void fetchPlaylist() {
+        // Guard: jangan fetch ulang jika sedang berjalan
+        if (isFetching) return;
+
         String url = etUrl.getText().toString().trim();
         if (url.isEmpty()) {
             Toast.makeText(this, "Masukkan URL terlebih dahulu", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        // Validasi format URL sebelum request
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            showErrorCard();
+            return;
+        }
+        try {
+            new java.net.URL(url).toURI();
+        } catch (Exception e) {
+            showErrorCard();
+            return;
+        }
+
         pendingUrl = url;
+        isFetching = true;
+        setUrlButtonEnabled(false); // nonaktifkan tombol saat loading
 
         showLoading("Mengunduh playlist...", "Mohon bersabar");
         // Progress + counter mulai BERSAMAAN sejak awal, lambat dan nikmati UI
@@ -572,25 +593,36 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 if (!resp.isSuccessful()) {
                     throw new IOException("HTTP " + resp.code());
                 }
-                String content = resp.body().string();
-                List<Channel> channels = M3UParser.parse(content);
+                String body = resp.body().string();
+                List<Channel> channels = M3UParser.parse(body);
 
                 handler.post(() -> {
                     pendingChannels = channels;
                     if (!channels.isEmpty()) {
-                        // Tampilkan sukses dengan animasi counter + progress penuh
                         showSuccessCard(channels.size());
                     } else {
-                        hideLoading();
-                        Toast.makeText(this, "Tidak ada channel ditemukan di URL ini", Toast.LENGTH_LONG).show();
+                        // Tidak ada channel = URL valid tapi bukan M3U → error card
+                        isFetching = false;
+                        setUrlButtonEnabled(true);
+                        showErrorCard();
                     }
                 });
             } catch (Exception e) {
                 handler.post(() -> {
+                    isFetching = false;
+                    setUrlButtonEnabled(true);
                     showErrorCard();
                 });
             }
         });
+    }
+
+    /** Aktif/nonaktifkan tombol Add playlist secara visual */
+    private void setUrlButtonEnabled(boolean enabled) {
+        if (btnUrlNext == null) return;
+        btnUrlNext.setClickable(enabled);
+        btnUrlNext.setFocusable(enabled);
+        btnUrlNext.setAlpha(enabled ? 1f : 0.45f);
     }
 
     // ===== FILE HANDLING =====
@@ -949,6 +981,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     /** Tampilkan card error dengan fade halus */
     private void showErrorCard() {
+        isFetching = false;
+        setUrlButtonEnabled(true);
         stopDotsAnimation();
         stopProgressAnimation();
         cardError.setAlpha(0f);
@@ -1090,6 +1124,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     /** Dipanggil setelah sukses import — fade in ke halaman input nama playlist */
     private void proceedAfterImport() {
+        isFetching = false;
+        setUrlButtonEnabled(true);
         // Reset field nama & button Done ke state awal
         if (etName != null) {
             etName.setText("");
