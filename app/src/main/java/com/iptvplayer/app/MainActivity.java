@@ -77,6 +77,10 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     // ===== SETTINGS =====
     private View btnSettingsExit, btnStartWatch, btnGoPlaylists, btnAddPlaylistSettings;
+    private View btnEpg;
+    private android.widget.TextView tvSettingsPlaylistName;
+    // State "first tap" untuk 2x klik: null=belum ada, "start"/"playlists"/"epg"
+    private String settingsSelectedMenu = null;
 
     // ===== PLAYLISTS =====
     private View btnPlaylistsBack, btnUpdatePlaylist, btnSwitchPlaylist;
@@ -211,9 +215,11 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
         // Settings
         btnSettingsExit = findViewById(R.id.btn_settings_exit);
-        btnStartWatch = findViewById(R.id.btn_start_watch);
-        btnGoPlaylists = findViewById(R.id.btn_go_playlists);
+        btnStartWatch   = findViewById(R.id.btn_start_watch);
+        btnGoPlaylists  = findViewById(R.id.btn_go_playlists);
         btnAddPlaylistSettings = findViewById(R.id.btn_add_playlist_settings);
+        btnEpg = findViewById(R.id.btn_epg);
+        tvSettingsPlaylistName = findViewById(R.id.tv_settings_playlist_name);
 
         // Playlists
         btnPlaylistsBack = findViewById(R.id.btn_playlists_back);
@@ -378,10 +384,16 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         });
 
         // Settings
-        btnSettingsExit.setOnClickListener(v -> confirmExit());
-        btnStartWatch.setOnClickListener(v -> startWatching());
-        btnGoPlaylists.setOnClickListener(v -> showPage("playlists"));
-        btnAddPlaylistSettings.setOnClickListener(v -> showPage("source"));
+        // Settings: 2x klik — pertama highlight, kedua eksekusi
+        btnSettingsExit.setOnClickListener(v -> handleExitTap());
+        setupSettingsMenuButton(btnStartWatch,   "start");
+        setupSettingsMenuButton(btnGoPlaylists,  "playlists");
+        setupSettingsMenuButton(btnEpg,          "epg");
+        // Touch: pressed state → orange (page 3 PDF)
+        setupMenuPressedState(btnStartWatch,  "start");
+        setupMenuPressedState(btnGoPlaylists, "playlists");
+        setupMenuPressedState(btnEpg,         "epg");
+        btnAddPlaylistSettings.setOnClickListener(v -> showPageWithTransition("source"));
 
         // Playlists
         btnPlaylistsBack.setOnClickListener(v -> showPage("settings"));
@@ -464,6 +476,9 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 break;
             case "settings":
                 pageSettings.setVisibility(View.VISIBLE);
+                updateSettingsPlaylistName();
+                settingsSelectedMenu = null;
+                resetAllSettingsMenus();
                 break;
             case "playlists":
                 pagePlaylists.setVisibility(View.VISIBLE);
@@ -494,12 +509,28 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     }
 
     private void confirmExit() {
+        // Reset exit button ke normal setelah dialog
+        if (btnSettingsExit != null)
+            btnSettingsExit.setBackgroundResource(R.drawable.bg_exit_btn_normal);
         new android.app.AlertDialog.Builder(this)
             .setTitle("Keluar Aplikasi")
             .setMessage("Yakin ingin keluar?")
             .setPositiveButton("Keluar", (d, w) -> finish())
             .setNegativeButton("Batal", null)
             .show();
+    }
+
+    /** Tap pertama X → orange; tap kedua → confirmExit */
+    private void handleExitTap() {
+        if (btnSettingsExit == null) return;
+        if ("exit_pending".equals(settingsSelectedMenu)) {
+            settingsSelectedMenu = null;
+            confirmExit();
+        } else {
+            settingsSelectedMenu = "exit_pending";
+            resetAllSettingsMenus();
+            btnSettingsExit.setBackgroundResource(R.drawable.bg_exit_btn_pressed);
+        }
     }
 
     private void goBack() {
@@ -683,6 +714,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         pendingUrl = "";
 
         showPage("settings");
+        updateSettingsPlaylistName();
     }
 
     private void updateChCountName() {
@@ -1152,7 +1184,131 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         super.onDestroy();
         executor.shutdown();
     }
-    /** Simpan playlist otomatis tanpa meminta nama — nama diambil dari URL atau auto-generate */
+    /** Update teks nama playlist di settings header */
+    private void updateSettingsPlaylistName() {
+        if (tvSettingsPlaylistName == null) return;
+        if (playlists.isEmpty()) {
+            tvSettingsPlaylistName.setText("My\nPlaylist.");
+        } else {
+            String name = playlists.get(currentPlaylistIdx).name;
+            tvSettingsPlaylistName.setText(name + "\n.");
+        }
+    }
+
+    /** Setup menu button settings dengan logika 2x klik */
+    private void setupSettingsMenuButton(View btn, String menuKey) {
+        if (btn == null) return;
+        btn.setOnClickListener(v -> {
+            if (menuKey.equals(settingsSelectedMenu)) {
+                // Klik kedua: eksekusi
+                settingsSelectedMenu = null;
+                resetAllSettingsMenus();
+                executeSettingsMenu(menuKey);
+            } else {
+                // Klik pertama: highlight (selected state putih)
+                settingsSelectedMenu = menuKey;
+                resetAllSettingsMenus();
+                highlightSettingsMenu(btn, menuKey);
+            }
+        });
+    }
+
+    /** Highlight menu terpilih: bg putih, icon ▶ muncul, teks gelap */
+    private void highlightSettingsMenu(View btn, String menuKey) {
+        if (btn == null) return;
+        btn.setBackgroundResource(R.drawable.bg_settings_menu_selected);
+        updateMenuLabelColor(menuKey, 0xFF16232A, true);
+    }
+
+    /** Reset semua menu ke state normal */
+    private void resetAllSettingsMenus() {
+        for (String key : new String[]{"start", "playlists", "epg"}) {
+            View b = getMenuBtn(key);
+            if (b != null) {
+                b.setBackgroundResource(R.drawable.bg_settings_menu_normal);
+                updateMenuLabelColor(key, 0xFFE4EEF0, false);
+            }
+        }
+    }
+
+    private View getMenuBtn(String key) {
+        switch (key) {
+            case "start":     return btnStartWatch;
+            case "playlists": return btnGoPlaylists;
+            case "epg":       return btnEpg;
+        }
+        return null;
+    }
+
+    private void updateMenuLabelColor(String key, int color, boolean showIcon) {
+        int labelId, iconId;
+        switch (key) {
+            case "start":
+                labelId = R.id.tv_start_label; iconId = R.id.ic_start_play; break;
+            case "playlists":
+                labelId = R.id.tv_playlist_label; iconId = R.id.ic_playlist_play; break;
+            case "epg":
+                labelId = R.id.tv_epg_label; iconId = R.id.ic_epg_play; break;
+            default: return;
+        }
+        android.widget.TextView lbl = pageSettings != null ? pageSettings.findViewById(labelId) : null;
+        android.widget.TextView ico = pageSettings != null ? pageSettings.findViewById(iconId) : null;
+        if (lbl != null) lbl.setTextColor(color);
+        if (ico != null) ico.setVisibility(showIcon ? android.view.View.VISIBLE : android.view.View.GONE);
+    }
+
+    /** Setup touch: pressed → orange; released → kembali ke selected/normal */
+    private void setupMenuPressedState(View btn, String menuKey) {
+        btn.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    // Pressed: orange
+                    v.setBackgroundResource(R.drawable.bg_settings_menu_pressed);
+                    updateMenuLabelColor(menuKey, 0xFFFFFFFF, true);
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    // Kembali ke state sebelum pressed
+                    boolean isSelected = menuKey.equals(settingsSelectedMenu);
+                    v.setBackgroundResource(isSelected
+                        ? R.drawable.bg_settings_menu_selected
+                        : R.drawable.bg_settings_menu_normal);
+                    updateMenuLabelColor(menuKey,
+                        isSelected ? 0xFF16232A : 0xFFE4EEF0,
+                        isSelected);
+                    if (event.getAction() == android.view.MotionEvent.ACTION_UP)
+                        v.performClick();
+                    break;
+            }
+            return true;
+        });
+    }
+
+    /** Eksekusi aksi menu setelah klik kedua */
+    private void executeSettingsMenu(String menuKey) {
+        switch (menuKey) {
+            case "start":
+                startWatching();
+                break;
+            case "playlists":
+                showPageWithTransition("playlists");
+                break;
+            case "epg":
+                showEpgDialog();
+                break;
+        }
+    }
+
+    /** Dialog EPG — placeholder untuk input URL EPG */
+    private void showEpgDialog() {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("EPG");
+        builder.setMessage("Fitur EPG akan segera hadir.");
+        builder.setPositiveButton("OK", null);
+        builder.show();
+    }
+
+        /** Simpan playlist otomatis tanpa meminta nama — nama diambil dari URL atau auto-generate */
     private void autoSavePlaylist() {
         // Generate nama dari URL
         String name = pendingUrl;
