@@ -262,18 +262,19 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnUrlNext.setOnTouchListener((v, event) -> {
             switch (event.getAction()) {
                 case android.view.MotionEvent.ACTION_DOWN:
-                    // Bg selector sudah handle orange — text putih agar kontras
+                    // Pressed: bg orange + teks putih (sesuai gambar 1)
+                    v.setBackgroundResource(R.drawable.bg_add_playlist_btn_pressed);
                     ((TextView) v).setTextColor(0xFFFFFFFF);
-                    v.setAlpha(0.9f);
                     break;
                 case android.view.MotionEvent.ACTION_UP:
+                    // Released: kembali normal
+                    v.setBackgroundResource(R.drawable.bg_add_playlist_btn);
                     ((TextView) v).setTextColor(0xFF16232A);
-                    v.setAlpha(1f);
                     v.performClick();
                     break;
                 case android.view.MotionEvent.ACTION_CANCEL:
+                    v.setBackgroundResource(R.drawable.bg_add_playlist_btn);
                     ((TextView) v).setTextColor(0xFF16232A);
-                    v.setAlpha(1f);
                     break;
             }
             return true;
@@ -309,12 +310,29 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         // Done button: default #E4EEF0 teks gelap; saat ada teks → bg #FF5B04 teks putih
         btnNameSave.setOnClickListener(v -> saveName());
         btnNameSave.setOnTouchListener((v, event) -> {
-            if (event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
-                v.setAlpha(0.85f);
-            } else if (event.getAction() == android.view.MotionEvent.ACTION_UP
-                    || event.getAction() == android.view.MotionEvent.ACTION_CANCEL) {
-                v.setAlpha(1f);
-                if (event.getAction() == android.view.MotionEvent.ACTION_UP) v.performClick();
+            boolean hasText = etName != null && etName.getText().length() > 0;
+            switch (event.getAction()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    if (hasText) {
+                        // Ada teks: pressed orange lebih gelap
+                        v.setBackgroundResource(R.drawable.bg_done_btn_active_pressed);
+                        ((TextView) v).setTextColor(0xFFFFFFFF);
+                    } else {
+                        // Kosong: pressed abu-abu
+                        v.setBackgroundResource(R.drawable.bg_done_btn_pressed);
+                        ((TextView) v).setTextColor(0xFF16232A);
+                    }
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                    // Kembalikan ke state sesuai teks
+                    v.setBackgroundResource(hasText ? R.drawable.bg_done_btn_active : R.drawable.bg_done_btn);
+                    ((TextView) v).setTextColor(hasText ? 0xFFFFFFFF : 0xFF16232A);
+                    v.performClick();
+                    break;
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    v.setBackgroundResource(hasText ? R.drawable.bg_done_btn_active : R.drawable.bg_done_btn);
+                    ((TextView) v).setTextColor(hasText ? 0xFFFFFFFF : 0xFF16232A);
+                    break;
             }
             return true;
         });
@@ -1070,19 +1088,21 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         if (progressAnimator != null) { progressAnimator.cancel(); progressAnimator = null; }
     }
 
-    /** Dipanggil setelah sukses import — tampilkan halaman input nama playlist */
+    /** Dipanggil setelah sukses import — fade in ke halaman input nama playlist */
     private void proceedAfterImport() {
-        // Reset field nama & button Done
+        // Reset field nama & button Done ke state awal
         if (etName != null) {
             etName.setText("");
             etName.setTextColor(0xFFE4EEF0);
+            etName.setHintTextColor(0x80E4EEF0);
             etName.clearFocus();
         }
         if (btnNameSave != null) {
             btnNameSave.setBackgroundResource(R.drawable.bg_done_btn);
             ((android.widget.TextView) btnNameSave).setTextColor(0xFF16232A);
         }
-        showPage("name");
+        // Fade in halus ke page_name
+        showPageWithTransition("name");
     }
 
     // ===== UTILS =====
