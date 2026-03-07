@@ -99,9 +99,50 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private String settingsSelectedMenu = null;
 
     // ===== PLAYLISTS =====
-    private View btnPlaylistsBack, btnUpdatePlaylist, btnSwitchPlaylist;
+    private View btnPlaylistsBack, btnUpdatePlaylist, btnSwitchPlaylist, btnAddNewPlaylist;
     private LinearLayout playlistListContainer;
     private TextView tvUpdateSuccess;
+
+
+    /** Update semua playlist satu per satu (URL only) */
+    private void updateAllPlaylists() {
+        if (playlists.isEmpty()) return;
+        java.util.List<Playlist> urlPlaylists = new java.util.ArrayList<>();
+        for (Playlist pl : playlists) {
+            if (pl.url != null && (pl.url.startsWith("http://") || pl.url.startsWith("https://")))
+                urlPlaylists.add(pl);
+        }
+        if (urlPlaylists.isEmpty()) {
+            Toast.makeText(this, "Tidak ada playlist URL untuk diupdate", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        showLoading("Mengupdate " + urlPlaylists.size() + " playlist...", "");
+        executor.execute(() -> {
+            int success = 0;
+            for (Playlist pl : urlPlaylists) {
+                try {
+                    OkHttpClient client = new OkHttpClient.Builder()
+                            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                            .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                            .build();
+                    Request req = new Request.Builder().url(pl.url).build();
+                    Response resp = client.newCall(req).execute();
+                    String body = resp.body().string();
+                    List<Channel> channels = M3UParser.parse(body);
+                    pl.channels = channels;
+                    pl.lastUpdated = System.currentTimeMillis();
+                    success++;
+                } catch (Exception ignored) {}
+            }
+            final int done = success;
+            handler.post(() -> {
+                hideLoading();
+                prefs.savePlaylists(playlists);
+                rebuildPlaylistList();
+                Toast.makeText(this, done + " playlist berhasil diupdate", Toast.LENGTH_SHORT).show();
+            });
+        });
+    }
 
     // ===== SWITCHER =====
     private View switcherBackdrop, btnSwitcherClose;
@@ -254,6 +295,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnPlaylistsBack = findViewById(R.id.btn_playlists_back);
         btnUpdatePlaylist = findViewById(R.id.btn_update_playlist);
         btnSwitchPlaylist = findViewById(R.id.btn_switch_playlist);
+        btnAddNewPlaylist = findViewById(R.id.btn_add_new_playlist);
         playlistListContainer = findViewById(R.id.playlist_list_container);
         tvUpdateSuccess = findViewById(R.id.tv_update_success);
 
@@ -432,6 +474,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         }
         if (epgSourceFileItem != null) {
             epgSourceFileItem.setOnClickListener(v -> {
+                showPage("settings"); // tutup dulu
                 if (epgFilePickerLauncher != null)
                     epgFilePickerLauncher.launch("*/*");
             });
@@ -467,10 +510,14 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             btnEpgLoad.setOnClickListener(v -> fetchEpg());
         }
 
-        // Playlists
+        // Playlists — back
         btnPlaylistsBack.setOnClickListener(v -> showPage("settings"));
-        btnUpdatePlaylist.setOnClickListener(v -> updateCurrentPlaylist());
-        btnSwitchPlaylist.setOnClickListener(v -> showSwitcher());
+
+        // Panel bottom: 2x tap style (sama dengan settings menu)
+        setupPlaylistMenuButton(btnUpdatePlaylist,  "update");
+        setupPlaylistMenuButton(btnSwitchPlaylist,  "switch");
+        if (btnAddNewPlaylist != null)
+            setupPlaylistMenuButton(btnAddNewPlaylist, "add");
 
         // Switcher
         switcherBackdrop.setOnClickListener(v -> hideSwitcher());
@@ -561,6 +608,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 break;
             case "playlists":
                 pagePlaylists.setVisibility(View.VISIBLE);
+                playlistSelectedMenu = null;
+                restoreAllPlaylistMenus();
                 rebuildPlaylistList();
                 break;
             case "epg_source":
@@ -786,41 +835,21 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private void handleEpgFileUri(android.net.Uri uri) {
         if (isEpgFetching) return;
         isEpgFetching = true;
-
-        // Tampilkan overlay dulu — baru parse setelah animasi fade-in selesai.
-        // File lokal terbaca sangat cepat; tanpa delay, success/error card
-        // dipanggil sebelum overlay selesai muncul sehingga overlay langsung hilang.
         showEpgLoadingCard();
 
-        handler.postDelayed(() -> executor.execute(() -> {
+        executor.execute(() -> {
             try {
-                java.io.InputStream rawIs = getContentResolver().openInputStream(uri);
-                if (rawIs == null) throw new java.io.IOException("Cannot open file");
-
-                // Deteksi file GZIP (.xml.gz) via magic bytes 0x1F 0x8B
-                java.io.InputStream is;
-                java.io.PushbackInputStream pb = new java.io.PushbackInputStream(rawIs, 2);
-                byte[] sig = new byte[2];
-                int rd = pb.read(sig);
-                pb.unread(sig, 0, rd);
-                if (rd == 2 && sig[0] == (byte) 0x1F && sig[1] == (byte) 0x8B) {
-                    is = new java.util.zip.GZIPInputStream(pb);
-                } else {
-                    is = pb;
-                }
-
-                java.io.BufferedReader reader =
-                        new java.io.BufferedReader(new java.io.InputStreamReader(is, "UTF-8"));
+                java.io.InputStream is = getContentResolver().openInputStream(uri);
+                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is));
                 StringBuilder sb = new StringBuilder();
-                String ln;
-                while ((ln = reader.readLine()) != null) {
-                    sb.append(ln);
-                    sb.append('\n');
-                }
+                String line;
+                while ((line = reader.readLine()) != null) sb.append(line).append("
+");
                 reader.close();
 
                 java.util.List<EpgEntry> entries = EpgParser.parse(sb.toString());
                 EpgManager.get(MainActivity.this).loadEpg(entries);
+                // Simpan path URI sebagai referensi (opsional)
                 EpgManager.get(MainActivity.this).setEpgUrl(uri.toString());
                 int count = entries.size();
 
@@ -835,8 +864,9 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                     showEpgErrorCard();
                 });
             }
-        }), 600); // tunggu overlay fade-in (250+300ms) selesai
+        });
     }
+
     // ===== SAVE PLAYLIST =====
 
     private void saveName() {
@@ -906,46 +936,245 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         for (int i = 0; i < playlists.size(); i++) {
             final int idx = i;
             Playlist pl = playlists.get(i);
+            boolean isActive = (idx == currentPlaylistIdx);
 
-            View item = getLayoutInflater().inflate(R.layout.item_playlist_row, playlistListContainer, false);
-            TextView tvName = item.findViewById(R.id.tv_pl_name);
-            TextView tvInfo = item.findViewById(R.id.tv_pl_info);
+            android.view.View item = getLayoutInflater().inflate(
+                    R.layout.item_playlist_row, playlistListContainer, false);
+
+            TextView tvName   = item.findViewById(R.id.tv_pl_name);
+            TextView tvInfo   = item.findViewById(R.id.tv_pl_info);
+            TextView tvType   = item.findViewById(R.id.tv_pl_type);
+            TextView tvBadge  = item.findViewById(R.id.tv_pl_active_badge);
+            TextView btnEditName = item.findViewById(R.id.btn_pl_edit_name);
+            TextView btnEditUrl  = item.findViewById(R.id.btn_pl_edit_url);
+            TextView btnDelete   = item.findViewById(R.id.btn_pl_delete);
 
             tvName.setText(pl.name);
-            tvInfo.setText(pl.getChannelCount() + " channel • " +
-                    (pl.downloadOnStart ? "Auto update" : "Manual"));
+            tvInfo.setText(pl.getChannelCount() + " channel");
+            tvType.setText("file".equals(pl.type) ? "File lokal" : "URL");
+            tvBadge.setVisibility(isActive ? android.view.View.VISIBLE : android.view.View.GONE);
 
-            if (i < playlists.size() - 1) {
-                // Add divider
-                View divider = new View(this);
-                divider.setLayoutParams(new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, 1));
-                divider.setBackgroundColor(0x14ffffff);
-                playlistListContainer.addView(item);
-                playlistListContainer.addView(divider);
-            } else {
-                playlistListContainer.addView(item);
-            }
+            // Highlight nama playlist aktif
+            tvName.setTextColor(isActive ? 0xFFFF5B04 : 0xFFE4EEF0);
 
-            item.setOnClickListener(v -> {
-                currentPlaylistIdx = idx;
-                prefs.setCurrentPlaylistIndex(idx);
-            });
+            // ── Edit Nama ──────────────────────────────────────────────────
+            applyMenuPressedStyle(btnEditName);
+            btnEditName.setOnClickListener(v -> showEditNameDialog(idx));
 
-            item.setOnLongClickListener(v -> {
-                // Long press = delete
-                playlists.remove(idx);
-                if (currentPlaylistIdx >= playlists.size()) {
-                    currentPlaylistIdx = Math.max(0, playlists.size() - 1);
+            // ── Edit URL ───────────────────────────────────────────────────
+            applyMenuPressedStyle(btnEditUrl);
+            btnEditUrl.setOnClickListener(v -> showEditUrlDialog(idx));
+
+            // ── Hapus ──────────────────────────────────────────────────────
+            btnDelete.setOnTouchListener((v, event) -> {
+                switch (event.getAction()) {
+                    case android.view.MotionEvent.ACTION_DOWN:
+                        v.setBackgroundResource(R.drawable.bg_settings_menu_pressed);
+                        ((TextView) v).setTextColor(0xFFFFFFFF);
+                        break;
+                    case android.view.MotionEvent.ACTION_UP:
+                        v.setBackgroundResource(R.drawable.bg_settings_menu_normal);
+                        ((TextView) v).setTextColor(0xFFFF5B04);
+                        v.performClick();
+                        break;
+                    case android.view.MotionEvent.ACTION_CANCEL:
+                        v.setBackgroundResource(R.drawable.bg_settings_menu_normal);
+                        ((TextView) v).setTextColor(0xFFFF5B04);
+                        break;
                 }
+                return true;
+            });
+            btnDelete.setOnClickListener(v -> showDeleteConfirm(idx));
+
+            playlistListContainer.addView(item);
+        }
+    }
+
+    /** Touch highlight untuk tombol edit (putih saat pressed) */
+    private void applyMenuPressedStyle(TextView btn) {
+        btn.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    v.setBackgroundResource(R.drawable.bg_settings_menu_pressed);
+                    ((TextView) v).setTextColor(0xFFFFFFFF);
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                    v.setBackgroundResource(R.drawable.bg_settings_menu_normal);
+                    ((TextView) v).setTextColor(0xFFE4EEF0);
+                    v.performClick();
+                    break;
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    v.setBackgroundResource(R.drawable.bg_settings_menu_normal);
+                    ((TextView) v).setTextColor(0xFFE4EEF0);
+                    break;
+            }
+            return true;
+        });
+    }
+
+    /** Dialog edit nama playlist */
+    private void showEditNameDialog(int idx) {
+        Playlist pl = playlists.get(idx);
+        android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this);
+        b.setTitle("Edit Nama");
+
+        final android.widget.EditText et = new android.widget.EditText(this);
+        et.setText(pl.name);
+        et.selectAll();
+        et.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
+        int pad = (int)(16 * getResources().getDisplayMetrics().density);
+        et.setPadding(pad, pad, pad, pad);
+        b.setView(et);
+
+        b.setPositiveButton("Simpan", (d, w) -> {
+            String name = et.getText().toString().trim();
+            if (!name.isEmpty()) {
+                pl.name = name;
+                prefs.savePlaylists(playlists);
+                rebuildPlaylistList();
+                updateSettingsPlaylistName();
+            }
+        });
+        b.setNegativeButton("Batal", null);
+        b.show();
+    }
+
+    /** Dialog edit URL playlist */
+    private void showEditUrlDialog(int idx) {
+        Playlist pl = playlists.get(idx);
+        android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this);
+        b.setTitle("Edit URL");
+
+        final android.widget.EditText et = new android.widget.EditText(this);
+        et.setText(pl.url != null ? pl.url : "");
+        et.selectAll();
+        et.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+                | android.text.InputType.TYPE_TEXT_VARIATION_URI);
+        int pad = (int)(16 * getResources().getDisplayMetrics().density);
+        et.setPadding(pad, pad, pad, pad);
+        b.setView(et);
+
+        b.setPositiveButton("Simpan", (d, w) -> {
+            String url = et.getText().toString().trim();
+            if (!url.isEmpty()) {
+                pl.url = url;
+                pl.type = (url.startsWith("http://") || url.startsWith("https://"))
+                        ? "url" : "file";
+                prefs.savePlaylists(playlists);
+                rebuildPlaylistList();
+            }
+        });
+        b.setNegativeButton("Batal", null);
+        b.show();
+    }
+
+    /** Konfirmasi hapus playlist */
+    private void showDeleteConfirm(int idx) {
+        Playlist pl = playlists.get(idx);
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("Hapus Playlist?")
+            .setMessage(""" + pl.name + "" akan dihapus permanen.")
+            .setPositiveButton("Hapus", (d, w) -> {
+                playlists.remove(idx);
+                if (currentPlaylistIdx >= playlists.size())
+                    currentPlaylistIdx = Math.max(0, playlists.size() - 1);
                 prefs.savePlaylists(playlists);
                 prefs.setCurrentPlaylistIndex(currentPlaylistIdx);
                 rebuildPlaylistList();
+                updateSettingsPlaylistName();
                 if (playlists.isEmpty()) showPage("welcome");
-                return true;
-            });
+            })
+            .setNegativeButton("Batal", null)
+            .show();
+    }
+
+    /** 2x-tap menu style untuk panel bawah playlist page */
+    private String playlistSelectedMenu = null;
+
+    private void setupPlaylistMenuButton(android.view.View btn, String key) {
+        btn.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    if (key.equals(playlistSelectedMenu)) {
+                        v.setBackgroundResource(R.drawable.bg_settings_menu_pressed);
+                        getMenuLabelInPlaylist(v).setTextColor(0xFFFFFFFF);
+                        getMenuIconInPlaylist(v).setVisibility(android.view.View.VISIBLE);
+                    } else {
+                        v.setBackgroundResource(R.drawable.bg_settings_menu_selected);
+                        getMenuLabelInPlaylist(v).setTextColor(0xFF16232A);
+                        getMenuIconInPlaylist(v).setVisibility(android.view.View.VISIBLE);
+                    }
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                    v.performClick();
+                    break;
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    restorePlaylistMenu(v, key);
+                    break;
+            }
+            return true;
+        });
+        btn.setOnClickListener(v -> {
+            if (key.equals(playlistSelectedMenu)) {
+                // 2nd tap — execute
+                playlistSelectedMenu = null;
+                restoreAllPlaylistMenus();
+                executePlaylistMenu(key);
+            } else {
+                // 1st tap — highlight
+                playlistSelectedMenu = key;
+                restoreAllPlaylistMenus();
+                v.setBackgroundResource(R.drawable.bg_settings_menu_selected);
+                getMenuLabelInPlaylist(v).setTextColor(0xFF16232A);
+                getMenuIconInPlaylist(v).setVisibility(android.view.View.VISIBLE);
+            }
+        });
+    }
+
+    private TextView getMenuLabelInPlaylist(android.view.View btn) {
+        if (btn instanceof android.view.ViewGroup) {
+            android.view.ViewGroup vg = (android.view.ViewGroup) btn;
+            for (int i = 0; i < vg.getChildCount(); i++) {
+                android.view.View c = vg.getChildAt(i);
+                if (c instanceof TextView) return (TextView) c;
+            }
+        }
+        return new TextView(this);
+    }
+
+    private android.widget.ImageView getMenuIconInPlaylist(android.view.View btn) {
+        if (btn instanceof android.view.ViewGroup) {
+            android.view.ViewGroup vg = (android.view.ViewGroup) btn;
+            for (int i = 0; i < vg.getChildCount(); i++) {
+                android.view.View c = vg.getChildAt(i);
+                if (c instanceof android.widget.ImageView)
+                    return (android.widget.ImageView) c;
+            }
+        }
+        return new android.widget.ImageView(this);
+    }
+
+    private void restorePlaylistMenu(android.view.View btn, String key) {
+        btn.setBackgroundResource(R.drawable.bg_settings_menu_normal);
+        getMenuLabelInPlaylist(btn).setTextColor(0xFFE4EEF0);
+        getMenuIconInPlaylist(btn).setVisibility(android.view.View.GONE);
+    }
+
+    private void restoreAllPlaylistMenus() {
+        for (android.view.View btn : new android.view.View[]{
+                btnUpdatePlaylist, btnSwitchPlaylist, btnAddNewPlaylist}) {
+            if (btn != null) restorePlaylistMenu(btn, "");
         }
     }
+
+    private void executePlaylistMenu(String key) {
+        switch (key) {
+            case "update": updateAllPlaylists(); break;
+            case "switch": showSwitcher(); break;
+            case "add":    showPage("source"); break;
+        }
+    }
+
 
     private void updateCurrentPlaylist() {
         if (playlists.isEmpty()) return;
