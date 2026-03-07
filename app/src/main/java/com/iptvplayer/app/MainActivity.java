@@ -769,7 +769,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             final int target = (int)(trackWidth * 0.72f);
             if (progressAnimator != null) progressAnimator.cancel();
             progressAnimator = ValueAnimator.ofInt(0, target);
-            progressAnimator.setDuration(4000); // 4 detik untuk 0→72%
+            progressAnimator.setDuration(6500); // 6.5 detik untuk 0→72% — user nikmati UI
             progressAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(0.5f));
             progressAnimator.addUpdateListener(a -> {
                 progressFill.getLayoutParams().width = (int) a.getAnimatedValue();
@@ -782,7 +782,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         // Angka naik lambat bersamaan progress, memberikan kesan real-time
         if (counterAnimator != null) counterAnimator.cancel();
         counterAnimator = ValueAnimator.ofInt(0, 999); // simulasi naik
-        counterAnimator.setDuration(60000); // sangat lambat, akan dibatalkan saat sukses
+        counterAnimator.setDuration(90000); // lambat, dibatalkan saat sukses — naik bersama progress
         counterAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
         counterAnimator.addUpdateListener(a -> {
             int val = (int) a.getAnimatedValue();
@@ -791,28 +791,38 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         counterAnimator.start();
     }
 
-        /** Tampilkan loading card dan mulai animasi */
+        /** Tampilkan loading card dan mulai animasi dengan fade in halus */
     private void showLoadingCard(int initialChannels) {
-        loadingOverlay.setVisibility(View.VISIBLE);
+        // Reset state card
         cardLoading.setVisibility(View.VISIBLE);
         cardSuccess.setVisibility(View.GONE);
         cardError.setVisibility(View.GONE);
+        cardLoading.setAlpha(0f);
 
         // Reset progress fill ke 0
-        progressFill.getViewTreeObserver().addOnGlobalLayoutListener(
-            new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override public void onGlobalLayout() {
-                    progressFill.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                    progressFill.getLayoutParams().width = 0;
-                    progressFill.requestLayout();
-                }
-            });
+        progressFill.getLayoutParams().width = 0;
+        progressFill.requestLayout();
 
-        // Mulai animasi dots: "+ Adding Playlist." → ".." → "..."
+        // Reset counter & dots
+        if (tvChCountLoading != null) tvChCountLoading.setText("0 Ch");
         startDotsAnimation();
 
-        // Reset counter
-        if (tvChCountLoading != null) tvChCountLoading.setText("0 Ch");
+        // Fade in overlay background dulu (0→1, 250ms)
+        loadingOverlay.setAlpha(0f);
+        loadingOverlay.setVisibility(View.VISIBLE);
+        loadingOverlay.animate()
+            .alpha(1f)
+            .setDuration(250)
+            .setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator())
+            .withEndAction(() -> {
+                // Lalu fade in card loading (0→1, 300ms)
+                cardLoading.animate()
+                    .alpha(1f)
+                    .setDuration(300)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                    .start();
+            })
+            .start();
     }
 
     /** Tampilkan card sukses + animasi counter channel + progress bar penuh */
@@ -830,16 +840,35 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 : 0,
             channelCount,
             () -> {
-                // Counter selesai → tunggu sebentar lalu tampil sukses
+                // Counter selesai → fade out card loading, fade in card sukses
                 loadingOverlay.postDelayed(() -> {
-                    cardLoading.setVisibility(View.GONE);
-                    cardSuccess.setVisibility(View.VISIBLE);
                     android.widget.TextView tvMsg = cardSuccess.findViewById(R.id.tv_success_msg);
                     if (tvMsg != null) tvMsg.setText(channelCount + " channels\nimported.");
-                    loadingOverlay.postDelayed(() -> {
-                        hideLoading();
-                        proceedAfterImport();
-                    }, 1800);
+                    cardSuccess.setAlpha(0f);
+                    cardSuccess.setVisibility(View.VISIBLE);
+                    // Fade out loading card
+                    cardLoading.animate()
+                        .alpha(0f)
+                        .setDuration(250)
+                        .withEndAction(() -> {
+                            cardLoading.setVisibility(View.GONE);
+                            // Fade in success card
+                            cardSuccess.animate()
+                                .alpha(1f)
+                                .setDuration(350)
+                                .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                                .withEndAction(() -> {
+                                    // Tampil 2 detik lalu fade out seluruh overlay
+                                    loadingOverlay.postDelayed(() -> {
+                                        fadeOutOverlay(() -> {
+                                            hideLoading();
+                                            proceedAfterImport();
+                                        });
+                                    }, 2000);
+                                })
+                                .start();
+                        })
+                        .start();
                 }, 400);
             });
     }
@@ -851,22 +880,57 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         } catch (Exception e) { return 0; }
     }
 
-    /** Tampilkan card error */
+    /** Tampilkan card error dengan fade halus */
     private void showErrorCard() {
         stopDotsAnimation();
         stopProgressAnimation();
-        cardLoading.setVisibility(View.GONE);
+        cardError.setAlpha(0f);
         cardError.setVisibility(View.VISIBLE);
-        // Auto hide setelah 2 detik
-        loadingOverlay.postDelayed(this::hideLoading, 2000);
+        // Fade out loading card
+        cardLoading.animate()
+            .alpha(0f)
+            .setDuration(220)
+            .withEndAction(() -> {
+                cardLoading.setVisibility(View.GONE);
+                // Fade in error card
+                cardError.animate()
+                    .alpha(1f)
+                    .setDuration(300)
+                    .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                    .withEndAction(() -> {
+                        // Tampil 2.5 detik lalu fade out
+                        loadingOverlay.postDelayed(() -> {
+                            fadeOutOverlay(this::hideLoading);
+                        }, 2500);
+                    })
+                    .start();
+            })
+            .start();
+    }
+
+    /** Fade out seluruh overlay lalu callback */
+    private void fadeOutOverlay(Runnable onDone) {
+        loadingOverlay.animate()
+            .alpha(0f)
+            .setDuration(300)
+            .setInterpolator(new android.view.animation.AccelerateInterpolator())
+            .withEndAction(() -> {
+                if (onDone != null) onDone.run();
+            })
+            .start();
     }
 
     private void hideLoading() {
         stopDotsAnimation();
         stopProgressAnimation();
+        loadingOverlay.clearAnimation();
+        loadingOverlay.setAlpha(1f);
         loadingOverlay.setVisibility(View.GONE);
+        cardLoading.setAlpha(1f);
         cardLoading.setVisibility(View.VISIBLE);
+        cardSuccess.setAlpha(0f);
         cardSuccess.setVisibility(View.GONE);
+        cardError.setAlpha(0f);
         cardError.setVisibility(View.GONE);
     }
 
@@ -895,7 +959,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private void animateCounter(int start, int end, Runnable onDone) {
         if (counterAnimator != null) counterAnimator.cancel();
         counterAnimator = ValueAnimator.ofInt(start, end);
-        counterAnimator.setDuration(Math.max(1500, Math.min(2500, end * 12L)));
+        counterAnimator.setDuration(Math.max(2000, Math.min(3500, end * 15L)));
         counterAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator());
         counterAnimator.addUpdateListener(a -> {
             int val = (int) a.getAnimatedValue();
@@ -919,7 +983,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
             if (progressAnimator != null) progressAnimator.cancel();
             progressAnimator = ValueAnimator.ofInt(current, target);
-            progressAnimator.setDuration(900); // sedikit lebih lambat ke 100%
+            progressAnimator.setDuration(1400); // lambat ke 100% — nikmati transisi
             progressAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(1.5f));
             progressAnimator.addUpdateListener(a -> {
                 int w = (int) a.getAnimatedValue();
