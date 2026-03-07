@@ -90,7 +90,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private boolean isEpgFetching = false;
     private android.animation.ValueAnimator epgProgressAnimator, epgCounterAnimator;
     private android.os.Handler epgDotsHandler = new android.os.Handler(android.os.Looper.getMainLooper());
-    private android.os.Runnable epgDotsRunnable;
+    private Runnable epgDotsRunnable;
     private int epgDotsCount = 0;
     // State "first tap" untuk 2x klik: null=belum ada, "start"/"playlists"/"epg"
     private String settingsSelectedMenu = null;
