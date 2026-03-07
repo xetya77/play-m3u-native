@@ -224,9 +224,14 @@ public class PlayerActivity extends Activity {
     // ===== EPG AUTO-LOAD =====
     private void autoLoadEpgIfNeeded() {
         EpgManager mgr = EpgManager.get(this);
-        if (mgr.isLoaded()) return; // sudah ada data
+        if (mgr.isLoaded()) {
+            // Sudah ada data — langsung update EPG text channel aktif
+            refreshEpgText();
+            return;
+        }
         String url = mgr.getEpgUrl();
         if (url == null || url.isEmpty()) return;
+
         // Fetch di background tanpa UI loading
         new Thread(() -> {
             try {
@@ -236,21 +241,24 @@ public class PlayerActivity extends Activity {
                         .build();
                 okhttp3.Request req = new okhttp3.Request.Builder().url(url).build();
                 okhttp3.Response resp = client.newCall(req).execute();
-                if (resp.isSuccessful()) {
+                if (resp.isSuccessful() && resp.body() != null) {
                     String body = resp.body().string();
                     java.util.List<EpgEntry> entries = EpgParser.parse(body);
                     mgr.loadEpg(entries);
-                    // Refresh EPG text untuk channel aktif
-                    handler.post(() -> {
-                        if (!channels.isEmpty() && currentChannelIdx < channels.size()) {
-                            String nowPlaying = mgr.getNowPlaying(channels.get(currentChannelIdx));
-                            if (tvChEpg != null)
-                                tvChEpg.setText(nowPlaying != null ? nowPlaying : "Tidak ada informasi");
-                        }
-                    });
+                    // Refresh EPG text di main thread setelah load selesai
+                    handler.post(PlayerActivity.this::refreshEpgText);
                 }
             } catch (Exception ignored) {}
         }).start();
+    }
+
+    /** Update tv_ch_epg untuk channel yang sedang aktif */
+    private void refreshEpgText() {
+        if (channels.isEmpty() || currentChannelIdx >= channels.size()) return;
+        Channel ch = channels.get(currentChannelIdx);
+        String nowPlaying = EpgManager.get(this).getNowPlaying(ch);
+        if (tvChEpg != null)
+            tvChEpg.setText(nowPlaying != null ? nowPlaying : "Tidak ada informasi");
     }
 
     // ===== CLOCK =====
@@ -398,12 +406,7 @@ public class PlayerActivity extends Activity {
         if (epgRefreshRunnable != null) handler.removeCallbacks(epgRefreshRunnable);
         epgRefreshRunnable = new Runnable() {
             @Override public void run() {
-                if (channels != null && currentChannelIdx < channels.size()) {
-                    Channel ch = channels.get(currentChannelIdx);
-                    String nowPlaying = EpgManager.get(PlayerActivity.this).getNowPlaying(ch);
-                    if (tvChEpg != null)
-                        tvChEpg.setText(nowPlaying != null ? nowPlaying : "Tidak ada informasi");
-                }
+                refreshEpgText();
                 handler.postDelayed(this, 60_000);
             }
         };

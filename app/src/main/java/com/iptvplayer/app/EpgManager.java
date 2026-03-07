@@ -74,26 +74,43 @@ public class EpgManager {
         if (!loaded || ch == null) return null;
         long now = System.currentTimeMillis();
 
-        // 1. Coba tvg-id
+        // 1. Coba tvg-id exact match (case-insensitive)
         if (ch.tvgId != null && !ch.tvgId.isEmpty()) {
             String key = ch.tvgId.trim().toLowerCase(Locale.US);
             EpgEntry e = findNow(key, now);
             if (e != null) return formatEntry(e);
+
+            // tvg-id partial: misal tvg-id="RTV" cocok dengan key "rtv.id"
+            for (String k : epgData.keySet()) {
+                if (k.contains(key) || key.contains(k)) {
+                    e = findNow(k, now);
+                    if (e != null) return formatEntry(e);
+                }
+            }
         }
 
-        // 2. Fallback: nama channel (exact & partial)
+        // 2. Fallback: nama channel
         if (ch.name != null && !ch.name.isEmpty()) {
+            // Normalisasi: buang spasi & karakter non-alfanumerik untuk matching lebih toleran
             String nameLow = ch.name.trim().toLowerCase(Locale.US);
-            // Exact match
+            String nameNorm = nameLow.replaceAll("[^a-z0-9]", "");
+
+            // Exact match nama
             EpgEntry e = findNow(nameLow, now);
             if (e != null) return formatEntry(e);
 
-            // Partial: cari key yang mengandung nama channel atau sebaliknya
+            // Partial match — prioritaskan key yang lebih panjang (lebih spesifik)
+            String bestKey = null;
             for (String key : epgData.keySet()) {
-                if (key.contains(nameLow) || nameLow.contains(key)) {
-                    e = findNow(key, now);
-                    if (e != null) return formatEntry(e);
+                String keyNorm = key.replaceAll("[^a-z0-9]", "");
+                if (keyNorm.isEmpty() || nameNorm.isEmpty()) continue;
+                if (keyNorm.contains(nameNorm) || nameNorm.contains(keyNorm)) {
+                    if (bestKey == null || key.length() > bestKey.length()) bestKey = key;
                 }
+            }
+            if (bestKey != null) {
+                e = findNow(bestKey, now);
+                if (e != null) return formatEntry(e);
             }
         }
         return null;

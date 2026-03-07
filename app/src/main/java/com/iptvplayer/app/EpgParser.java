@@ -17,10 +17,7 @@ import java.util.Locale;
  */
 public class EpgParser {
 
-    private static final SimpleDateFormat SDF_TZ =
-            new SimpleDateFormat("yyyyMMddHHmmss Z", Locale.US);
-    private static final SimpleDateFormat SDF_NOTZ =
-            new SimpleDateFormat("yyyyMMddHHmmss", Locale.US);
+    // Dibuat per-call agar thread-safe (SimpleDateFormat tidak thread-safe)
 
     public static List<EpgEntry> parse(String xmlContent) {
         List<EpgEntry> entries = new ArrayList<>();
@@ -71,25 +68,42 @@ public class EpgParser {
         return entries;
     }
 
-    /** Parse waktu XMLTV menjadi epoch ms. Support format dengan/tanpa timezone. */
+    /** Parse waktu XMLTV menjadi epoch ms. Thread-safe, support berbagai format. */
     private static long parseTime(String s) {
         if (s == null || s.isEmpty()) return 0;
         try {
-            // Normalisasi: hapus semua karakter selain digit dan + - spasi
             s = s.trim();
-            // Format: "20240315120000 +0700" (dengan spasi) atau "20240315120000+0700"
-            if (s.length() >= 19 && (s.charAt(14) == ' ' || s.contains("+")||s.contains("-"))) {
-                // Pastikan ada spasi sebelum timezone
-                String num = s.substring(0, 14);
-                String tz  = s.substring(14).trim();
-                if (!tz.isEmpty()) {
-                    Date d = SDF_TZ.parse(num + " " + tz);
-                    return d != null ? d.getTime() : 0;
-                }
+            if (s.length() < 14) return 0;
+
+            // Ambil 14 digit pertama (yyyyMMddHHmmss)
+            String digits = s.substring(0, 14);
+
+            // Cari timezone: karakter setelah digit bisa berupa spasi, +, atau -
+            // Format: "20240315120000 +0700", "20240315120000+0700", "20240315120000 -0500"
+            String tz = "";
+            if (s.length() > 14) {
+                tz = s.substring(14).trim();
             }
-            // Tanpa timezone
-            Date d = SDF_NOTZ.parse(s.substring(0, Math.min(14, s.length())));
-            return d != null ? d.getTime() : 0;
+
+            if (!tz.isEmpty()) {
+                // Pastikan format tz benar: harus diawali + atau -
+                if (!tz.startsWith("+") && !tz.startsWith("-")) tz = "";
+            }
+
+            if (!tz.isEmpty()) {
+                // Parse dengan timezone — buat SDF baru (thread-safe)
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss Z", Locale.US);
+                sdf.setLenient(false);
+                Date d = sdf.parse(digits + " " + tz);
+                return d != null ? d.getTime() : 0;
+            } else {
+                // Tanpa timezone — asumsikan UTC
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss", Locale.US);
+                sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+                sdf.setLenient(false);
+                Date d = sdf.parse(digits);
+                return d != null ? d.getTime() : 0;
+            }
         } catch (Exception e) {
             return 0;
         }
