@@ -432,7 +432,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         }
         if (epgSourceFileItem != null) {
             epgSourceFileItem.setOnClickListener(v -> {
-                showPage("settings"); // tutup dulu
                 if (epgFilePickerLauncher != null)
                     epgFilePickerLauncher.launch("*/*");
             });
@@ -787,20 +786,41 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private void handleEpgFileUri(android.net.Uri uri) {
         if (isEpgFetching) return;
         isEpgFetching = true;
+
+        // Tampilkan overlay dulu — baru parse setelah animasi fade-in selesai.
+        // File lokal terbaca sangat cepat; tanpa delay, success/error card
+        // dipanggil sebelum overlay selesai muncul sehingga overlay langsung hilang.
         showEpgLoadingCard();
 
-        executor.execute(() -> {
+        handler.postDelayed(() -> executor.execute(() -> {
             try {
-                java.io.InputStream is = getContentResolver().openInputStream(uri);
-                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is));
+                java.io.InputStream rawIs = getContentResolver().openInputStream(uri);
+                if (rawIs == null) throw new java.io.IOException("Cannot open file");
+
+                // Deteksi file GZIP (.xml.gz) via magic bytes 0x1F 0x8B
+                java.io.InputStream is;
+                java.io.PushbackInputStream pb = new java.io.PushbackInputStream(rawIs, 2);
+                byte[] sig = new byte[2];
+                int rd = pb.read(sig);
+                pb.unread(sig, 0, rd);
+                if (rd == 2 && sig[0] == (byte) 0x1F && sig[1] == (byte) 0x8B) {
+                    is = new java.util.zip.GZIPInputStream(pb);
+                } else {
+                    is = pb;
+                }
+
+                java.io.BufferedReader reader =
+                        new java.io.BufferedReader(new java.io.InputStreamReader(is, "UTF-8"));
                 StringBuilder sb = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) sb.append(line).append("\n");
+                String ln;
+                while ((ln = reader.readLine()) != null) {
+                    sb.append(ln);
+                    sb.append('\n');
+                }
                 reader.close();
 
                 java.util.List<EpgEntry> entries = EpgParser.parse(sb.toString());
                 EpgManager.get(MainActivity.this).loadEpg(entries);
-                // Simpan path URI sebagai referensi (opsional)
                 EpgManager.get(MainActivity.this).setEpgUrl(uri.toString());
                 int count = entries.size();
 
@@ -815,9 +835,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                     showEpgErrorCard();
                 });
             }
-        });
+        }), 600); // tunggu overlay fade-in (250+300ms) selesai
     }
-
     // ===== SAVE PLAYLIST =====
 
     private void saveName() {
