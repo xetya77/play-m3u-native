@@ -80,8 +80,8 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:marginStart="20dp"
-        android:marginEnd="20dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
         android:background="#20E4EEF0"/>
 
     <!-- Row bawah: tombol Edit Nama | Edit URL | Hapus -->
