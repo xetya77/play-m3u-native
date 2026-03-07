@@ -575,36 +575,38 @@ this playlist?"
         android:background="#075056"
         android:visibility="gone">
 
-        <!-- Stepper: bar 1 aktif, 2 & 3 inactive (step 1/2) -->
+        <!-- Back + Heading (no stepper) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:paddingStart="28dp"
-            android:paddingEnd="28dp"
-            android:paddingTop="47dp"
+            android:paddingStart="20dp"
+            android:paddingTop="44dp"
             android:gravity="center_vertical">
-            <View android:layout_width="0dp" android:layout_height="6dp"
-                android:layout_weight="1" android:background="@drawable/bg_url_stepper_active"/>
-            <View android:layout_width="8dp" android:layout_height="1dp"/>
-            <View android:layout_width="0dp" android:layout_height="6dp"
-                android:layout_weight="1" android:background="@drawable/bg_url_stepper_inactive"/>
-            <View android:layout_width="8dp" android:layout_height="1dp"/>
-            <View android:layout_width="0dp" android:layout_height="6dp"
-                android:layout_weight="1" android:background="@drawable/bg_url_stepper_inactive"/>
+            <TextView
+                android:id="@+id/btn_epg_url_back"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="&#8592;"
+                android:textColor="#E4EEF0"
+                android:textSize="28sp"
+                android:fontFamily="@font/inter_bold"
+                android:paddingEnd="16dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:clickable="true"
+                android:focusable="true"/>
         </LinearLayout>
-
-        <!-- Heading -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="What&#8217;s your EPG URL?"
+            android:text="EPG URL"
             android:textColor="#E4EEF0"
             android:textSize="22sp"
             android:fontFamily="@font/inter_bold"
             android:textStyle="bold"
             android:gravity="center"
-            android:paddingTop="40dp"
+            android:paddingTop="24dp"
             android:paddingStart="28dp"
             android:paddingEnd="28dp"/>
 
@@ -616,7 +618,7 @@ this playlist?"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="32dp"
             android:background="@drawable/selector_url_input"
-            android:hint="Enter EPG URL (XMLTV)..."
+            android:hint="Paste XMLTV EPG URL here..."
             android:textColorHint="#80E4EEF0"
             android:textColor="#E4EEF0"
             android:textSize="14sp"
@@ -651,7 +653,7 @@ this playlist?"
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Paste the direct link to your XMLTV EPG file."
+            android:text="Supports XMLTV format (.xml / .xml.gz)"
             android:textColor="#80E4EEF0"
             android:textSize="13sp"
             android:fontFamily="@font/inter_regular"
@@ -660,6 +662,109 @@ this playlist?"
             android:paddingBottom="32dp"
             android:paddingStart="28dp"
             android:paddingEnd="28dp"/>
+    </LinearLayout>
+
+
+    <!-- ===== PAGE EPG SOURCE (pilih URL atau File) ===== -->
+    <LinearLayout
+        android:id="@+id/page_epg_source"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@color/welcome_bg"
+        android:visibility="gone">
+
+        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="10"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Load EPG from where?"
+            android:textColor="#16232A"
+            android:textSize="22sp"
+            android:fontFamily="@font/inter_bold"
+            android:textStyle="bold"
+            android:layout_marginBottom="28dp"/>
+
+        <!-- Option 1: Link/URL -->
+        <LinearLayout
+            android:id="@+id/epg_source_url_item"
+            android:layout_width="288dp"
+            android:layout_height="108dp"
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingStart="28dp"
+            android:paddingEnd="28dp"
+            android:focusable="true"
+            android:clickable="true"
+            android:background="@drawable/selector_source_option">
+            <ImageView
+                android:id="@+id/epg_checkbox_url"
+                android:layout_width="19dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_triangle_play"
+                android:visibility="gone"
+                android:layout_marginEnd="16dp"
+                android:scaleType="fitCenter"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Link/URL"
+                android:textColor="#E4EEF0"
+                android:textSize="24sp"
+                android:fontFamily="@font/inter_medium"/>
+        </LinearLayout>
+
+        <Space android:layout_width="match_parent" android:layout_height="24dp"/>
+
+        <!-- Option 2: Local File -->
+        <LinearLayout
+            android:id="@+id/epg_source_file_item"
+            android:layout_width="288dp"
+            android:layout_height="108dp"
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingStart="28dp"
+            android:paddingEnd="28dp"
+            android:focusable="true"
+            android:clickable="true"
+            android:background="@drawable/selector_source_option">
+            <ImageView
+                android:id="@+id/epg_checkbox_file"
+                android:layout_width="19dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_triangle_play"
+                android:visibility="gone"
+                android:layout_marginEnd="16dp"
+                android:scaleType="fitCenter"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Local File"
+                android:textColor="#E4EEF0"
+                android:textSize="24sp"
+                android:fontFamily="@font/inter_medium"/>
+        </LinearLayout>
+
+        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="20"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center"
+            android:text="Choose one to continue"
+            android:textColor="#16232A"
+            android:textSize="11sp"
+            android:textStyle="italic"
+            android:fontFamily="@font/inter_medium"
+            android:alpha="0.7"/>
+
+        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="8"/>
+
     </LinearLayout>
 
     <!-- ===== PAGE SETTINGS ===== -->
