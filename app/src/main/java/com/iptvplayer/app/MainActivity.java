@@ -525,8 +525,10 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         if (btnSettingsExit == null) return;
         if ("exit_pending".equals(settingsSelectedMenu)) {
             settingsSelectedMenu = null;
+            btnSettingsExit.setBackgroundResource(R.drawable.bg_exit_btn_normal);
             confirmExit();
         } else {
+            // Reset semua menu highlight dulu, baru set X orange
             settingsSelectedMenu = "exit_pending";
             resetAllSettingsMenus();
             btnSettingsExit.setBackgroundResource(R.drawable.bg_exit_btn_pressed);
@@ -1184,15 +1186,19 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         super.onDestroy();
         executor.shutdown();
     }
-    /** Update teks nama playlist di settings header */
+    /** Update teks nama playlist — titik oranye menempel di akhir nama */
     private void updateSettingsPlaylistName() {
         if (tvSettingsPlaylistName == null) return;
-        if (playlists.isEmpty()) {
-            tvSettingsPlaylistName.setText("My\nPlaylist.");
-        } else {
-            String name = playlists.get(currentPlaylistIdx).name;
-            tvSettingsPlaylistName.setText(name + "\n.");
-        }
+        String name = playlists.isEmpty() ? "My Playlist" : playlists.get(currentPlaylistIdx).name;
+        // Titik oranye (#FF5B04) langsung menempel di akhir nama, satu baris
+        String full = name + ".";
+        android.text.SpannableString span = new android.text.SpannableString(full);
+        span.setSpan(
+            new android.text.style.ForegroundColorSpan(0xFFFF5B04),
+            full.length() - 1, full.length(),
+            android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        );
+        tvSettingsPlaylistName.setText(span);
     }
 
     /** Setup menu button settings dengan logika 2x klik */
@@ -1205,8 +1211,10 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 resetAllSettingsMenus();
                 executeSettingsMenu(menuKey);
             } else {
-                // Klik pertama: highlight (selected state putih)
+                // Klik pertama: reset X orange dulu, lalu highlight menu ini
                 settingsSelectedMenu = menuKey;
+                if (btnSettingsExit != null)
+                    btnSettingsExit.setBackgroundResource(R.drawable.bg_exit_btn_normal);
                 resetAllSettingsMenus();
                 highlightSettingsMenu(btn, menuKey);
             }
@@ -1240,7 +1248,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         return null;
     }
 
-    private void updateMenuLabelColor(String key, int color, boolean showIcon) {
+    private void updateMenuLabelColor(String key, int labelColor, boolean showIcon) {
         int labelId, iconId;
         switch (key) {
             case "start":
@@ -1252,9 +1260,14 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             default: return;
         }
         android.widget.TextView lbl = pageSettings != null ? pageSettings.findViewById(labelId) : null;
-        android.widget.TextView ico = pageSettings != null ? pageSettings.findViewById(iconId) : null;
-        if (lbl != null) lbl.setTextColor(color);
-        if (ico != null) ico.setVisibility(showIcon ? android.view.View.VISIBLE : android.view.View.GONE);
+        android.widget.ImageView ico = pageSettings != null ? pageSettings.findViewById(iconId) : null;
+        if (lbl != null) lbl.setTextColor(labelColor);
+        if (ico != null) {
+            ico.setVisibility(showIcon ? android.view.View.VISIBLE : android.view.View.GONE);
+            // Tint: gelap saat selected (putih bg), putih saat pressed (orange bg)
+            int tint = (labelColor == 0xFF16232A) ? 0xFF16232A : 0xFFE4EEF0;
+            ico.setColorFilter(tint, android.graphics.PorterDuff.Mode.SRC_IN);
+        }
     }
 
     /** Setup touch: pressed → orange; released → kembali ke selected/normal */
