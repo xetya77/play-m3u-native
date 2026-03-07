@@ -260,12 +260,21 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnUrlClear.setOnClickListener(v -> { etUrl.setText(""); tvChCountUrl.setText(""); pendingChannels.clear(); });
         btnUrlNext.setOnClickListener(v -> fetchPlaylist());
         btnUrlNext.setOnTouchListener((v, event) -> {
-            if (event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
-                ((TextView) v).setTextColor(0xFFE4EEF0);
-            } else if (event.getAction() == android.view.MotionEvent.ACTION_UP
-                    || event.getAction() == android.view.MotionEvent.ACTION_CANCEL) {
-                ((TextView) v).setTextColor(0xFF16232A);
-                if (event.getAction() == android.view.MotionEvent.ACTION_UP) v.performClick();
+            switch (event.getAction()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    // Bg selector sudah handle orange — text putih agar kontras
+                    ((TextView) v).setTextColor(0xFFFFFFFF);
+                    v.setAlpha(0.9f);
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                    ((TextView) v).setTextColor(0xFF16232A);
+                    v.setAlpha(1f);
+                    v.performClick();
+                    break;
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    ((TextView) v).setTextColor(0xFF16232A);
+                    v.setAlpha(1f);
+                    break;
             }
             return true;
         });
@@ -297,7 +306,47 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         // Name
         btnNameBack.setOnClickListener(v -> showPage("url"));
         btnNameClear.setOnClickListener(v -> etName.setText(""));
+        // Done button: default #E4EEF0 teks gelap; saat ada teks → bg #FF5B04 teks putih
         btnNameSave.setOnClickListener(v -> saveName());
+        btnNameSave.setOnTouchListener((v, event) -> {
+            if (event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+                v.setAlpha(0.85f);
+            } else if (event.getAction() == android.view.MotionEvent.ACTION_UP
+                    || event.getAction() == android.view.MotionEvent.ACTION_CANCEL) {
+                v.setAlpha(1f);
+                if (event.getAction() == android.view.MotionEvent.ACTION_UP) v.performClick();
+            }
+            return true;
+        });
+
+        // TextWatcher: ubah bg & warna teks Done saat ada/tidak ada teks
+        if (etName != null) {
+            etName.addTextChangedListener(new TextWatcher() {
+                public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
+                public void onTextChanged(CharSequence s, int st, int b, int c) {}
+                public void afterTextChanged(android.text.Editable s) {
+                    boolean hasText = s.length() > 0;
+                    if (btnNameSave != null) {
+                        btnNameSave.setBackgroundResource(
+                            hasText ? R.drawable.bg_done_btn_active : R.drawable.bg_done_btn);
+                        ((TextView) btnNameSave).setTextColor(
+                            hasText ? 0xFFFFFFFF : 0xFF16232A);
+                    }
+                }
+            });
+
+            // Focus change: unfocused=teal gelap teks terang, fokus=putih teks gelap
+            etName.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) {
+                    etName.setTextColor(0xFF16232A);
+                    etName.setHintTextColor(0x80607D8B);
+                } else {
+                    etName.setTextColor(0xFFE4EEF0);
+                    etName.setHintTextColor(0x80E4EEF0);
+                }
+            });
+        }
+
         setupToggleSwipe();
         etName.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
