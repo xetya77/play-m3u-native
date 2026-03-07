@@ -532,6 +532,14 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 pagePlaylists.setVisibility(View.VISIBLE);
                 rebuildPlaylistList();
                 break;
+            case "epg":
+                if (pageEpg != null) {
+                    pageEpg.setVisibility(View.VISIBLE);
+                    String savedEpg = EpgManager.get(this).getEpgUrl();
+                    if (!savedEpg.isEmpty() && etEpgUrl != null)
+                        etEpgUrl.setText(savedEpg);
+                }
+                break;
         }
     }
 
