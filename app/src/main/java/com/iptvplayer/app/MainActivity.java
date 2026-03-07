@@ -81,7 +81,10 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private android.widget.TextView tvSettingsPlaylistName;
 
     // ===== EPG fields =====
+    private View pageEpgSource;
     private View pageEpg;
+    private View epgSourceUrlItem, epgSourceFileItem;
+    private androidx.activity.result.ActivityResultLauncher<String> epgFilePickerLauncher;
     private android.widget.EditText etEpgUrl;
     private android.widget.TextView btnEpgLoad;
     private View cardEpgLoading, cardEpgSuccess, cardEpgError;
@@ -232,6 +235,9 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnGoPlaylists  = findViewById(R.id.btn_go_playlists);
         btnAddPlaylistSettings = findViewById(R.id.btn_add_playlist_settings);
         btnEpg = findViewById(R.id.btn_epg);
+        pageEpgSource   = findViewById(R.id.page_epg_source);
+        epgSourceUrlItem = findViewById(R.id.epg_source_url_item);
+        epgSourceFileItem = findViewById(R.id.epg_source_file_item);
         pageEpg         = findViewById(R.id.page_epg);
         etEpgUrl        = findViewById(R.id.et_epg_url);
         btnEpgLoad      = (android.widget.TextView) findViewById(R.id.btn_epg_load);
@@ -418,6 +424,26 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         setupMenuPressedState(btnEpg,         "epg");
         btnAddPlaylistSettings.setOnClickListener(v -> showPageWithTransition("source"));
 
+        // EPG source page listeners
+        if (epgSourceUrlItem != null) {
+            epgSourceUrlItem.setOnClickListener(v -> {
+                showPage("epg");
+            });
+        }
+        if (epgSourceFileItem != null) {
+            epgSourceFileItem.setOnClickListener(v -> {
+                showPage("settings"); // tutup dulu
+                if (epgFilePickerLauncher != null)
+                    epgFilePickerLauncher.launch("*/*");
+            });
+        }
+
+        // btn back dari epg url → ke epg source
+        View btnEpgUrlBack = findViewById(R.id.btn_epg_url_back);
+        if (btnEpgUrlBack != null) {
+            btnEpgUrlBack.setOnClickListener(v -> showPage("epg_source"));
+        }
+
         // EPG page listeners
         if (btnEpgLoad != null) {
             btnEpgLoad.setOnTouchListener((v, event) -> {
@@ -458,13 +484,18 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 uri -> {
                     if (uri != null) handleFileUri(uri);
                 });
+        epgFilePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null) handleEpgFileUri(uri);
+                });
     }
 
     // ===== PAGE NAVIGATION =====
 
     private void showPageWithTransition(String page) {
         android.view.View currentVisible = null;
-        for (android.view.View v : new android.view.View[]{pageWelcome, pageSource, pageUrl, pageName, pageSettings, pagePlaylists}) {
+        for (android.view.View v : new android.view.View[]{pageWelcome, pageSource, pageUrl, pageName, pageSettings, pagePlaylists, pageEpgSource, pageEpg}) {
             if (v != null && v.getVisibility() == android.view.View.VISIBLE) { currentVisible = v; break; }
         }
         final android.view.View outView = currentVisible;
@@ -498,6 +529,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         pageName.setVisibility(View.GONE);
         pageSettings.setVisibility(View.GONE);
         pagePlaylists.setVisibility(View.GONE);
+        if (pageEpgSource != null) pageEpgSource.setVisibility(View.GONE);
         if (pageEpg != null) pageEpg.setVisibility(View.GONE);
 
         // Add to history
@@ -531,6 +563,9 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             case "playlists":
                 pagePlaylists.setVisibility(View.VISIBLE);
                 rebuildPlaylistList();
+                break;
+            case "epg_source":
+                if (pageEpgSource != null) pageEpgSource.setVisibility(View.VISIBLE);
                 break;
             case "epg":
                 if (pageEpg != null) {
@@ -744,6 +779,41 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 handler.post(() -> {
                     hideLoading();
                     Toast.makeText(this, "Gagal baca file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            }
+        });
+    }
+
+    private void handleEpgFileUri(android.net.Uri uri) {
+        if (isEpgFetching) return;
+        isEpgFetching = true;
+        showEpgLoadingCard();
+
+        executor.execute(() -> {
+            try {
+                java.io.InputStream is = getContentResolver().openInputStream(uri);
+                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) sb.append(line).append("
+");
+                reader.close();
+
+                java.util.List<EpgEntry> entries = EpgParser.parse(sb.toString());
+                EpgManager.get(MainActivity.this).loadEpg(entries);
+                // Simpan path URI sebagai referensi (opsional)
+                EpgManager.get(MainActivity.this).setEpgUrl(uri.toString());
+                int count = entries.size();
+
+                handler.post(() -> {
+                    isEpgFetching = false;
+                    if (count > 0) showEpgSuccessCard(count);
+                    else showEpgErrorCard();
+                });
+            } catch (Exception e) {
+                handler.post(() -> {
+                    isEpgFetching = false;
+                    showEpgErrorCard();
                 });
             }
         });
@@ -1368,9 +1438,9 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         }
     }
 
-    /** Buka halaman EPG */
+    /** Buka halaman pilihan sumber EPG */
     private void showEpgDialog() {
-        showPageWithTransition("epg");
+        showPageWithTransition("epg_source");
     }
 
         // ===================================================================
