@@ -566,392 +566,22 @@ this playlist?"
         <View     android:id="@+id/radio_box_no"    android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone"/>
     </LinearLayout>
 
-        <!-- ===== PAGE EPG ===== -->
-    <LinearLayout
-        android:id="@+id/page_epg"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:background="#075056"
-        android:visibility="gone">
+        <!-- Dummy views EPG — dihapus dari UI, hanya agar Java tidak NPE -->
+        <View android:id="@+id/page_epg_source" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <View android:id="@+id/page_epg" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <EditText android:id="@+id/et_epg_url" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <TextView android:id="@+id/btn_epg_load" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <View android:id="@+id/card_epg_loading" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <View android:id="@+id/card_epg_success" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <View android:id="@+id/card_epg_error" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <View android:id="@+id/epg_progress_fill" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <TextView android:id="@+id/tv_epg_loading_label" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <TextView android:id="@+id/tv_epg_prog_count" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <TextView android:id="@+id/tv_epg_success_msg" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <View android:id="@+id/epg_source_url_item" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+        <View android:id="@+id/epg_source_file_item" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
 
-        <!-- Back + Heading (no stepper) -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingStart="20dp"
-            android:paddingTop="44dp"
-            android:gravity="center_vertical">
-            <TextView
-                android:id="@+id/btn_epg_url_back"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="&#8592;"
-                android:textColor="#E4EEF0"
-                android:textSize="28sp"
-                android:fontFamily="@font/inter_bold"
-                android:paddingEnd="16dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp"
-                android:clickable="true"
-                android:focusable="true"/>
-        </LinearLayout>
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="EPG URL"
-            android:textColor="#E4EEF0"
-            android:textSize="22sp"
-            android:fontFamily="@font/inter_bold"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:paddingTop="24dp"
-            android:paddingStart="28dp"
-            android:paddingEnd="28dp"/>
-
-        <!-- Input URL EPG -->
-        <EditText
-            android:id="@+id/et_epg_url"
-            android:layout_width="290dp"
-            android:layout_height="82dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="32dp"
-            android:background="@drawable/selector_url_input"
-            android:hint="Paste XMLTV EPG URL here..."
-            android:textColorHint="#80E4EEF0"
-            android:textColor="#E4EEF0"
-            android:textSize="14sp"
-            android:inputType="textUri"
-            android:imeOptions="actionDone"
-            android:singleLine="true"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp"
-            android:fontFamily="@font/inter_regular"/>
-
-        <!-- Spacer flexible -->
-        <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
-
-        <!-- Button Load EPG -->
-        <TextView
-            android:id="@+id/btn_epg_load"
-            android:layout_width="200dp"
-            android:layout_height="70dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_add_playlist_btn"
-            android:text="Load EPG"
-            android:textColor="#16232A"
-            android:textSize="16sp"
-            android:fontFamily="@font/inter_bold"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:clickable="true"
-            android:focusable="true"/>
-
-        <!-- Footer hint -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Supports XMLTV format (.xml / .xml.gz)"
-            android:textColor="#80E4EEF0"
-            android:textSize="13sp"
-            android:fontFamily="@font/inter_regular"
-            android:textStyle="italic"
-            android:gravity="center"
-            android:paddingBottom="32dp"
-            android:paddingStart="28dp"
-            android:paddingEnd="28dp"/>
-    </LinearLayout>
-
-
-    <!-- ===== PAGE EPG SOURCE (pilih URL atau File) ===== -->
-    <LinearLayout
-        android:id="@+id/page_epg_source"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:background="@color/welcome_bg"
-        android:visibility="gone">
-
-        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="10"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:text="Load EPG from where?"
-            android:textColor="#16232A"
-            android:textSize="22sp"
-            android:fontFamily="@font/inter_bold"
-            android:textStyle="bold"
-            android:layout_marginBottom="28dp"/>
-
-        <!-- Option 1: Link/URL -->
-        <LinearLayout
-            android:id="@+id/epg_source_url_item"
-            android:layout_width="288dp"
-            android:layout_height="108dp"
-            android:layout_gravity="center_horizontal"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:paddingStart="28dp"
-            android:paddingEnd="28dp"
-            android:focusable="true"
-            android:clickable="true"
-            android:background="@drawable/selector_source_option">
-            <ImageView
-                android:id="@+id/epg_checkbox_url"
-                android:layout_width="19dp"
-                android:layout_height="22dp"
-                android:src="@drawable/ic_triangle_play"
-                android:visibility="gone"
-                android:layout_marginEnd="16dp"
-                android:scaleType="fitCenter"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Link/URL"
-                android:textColor="#E4EEF0"
-                android:textSize="24sp"
-                android:fontFamily="@font/inter_medium"/>
-        </LinearLayout>
-
-        <Space android:layout_width="match_parent" android:layout_height="24dp"/>
-
-        <!-- Option 2: Local File -->
-        <LinearLayout
-            android:id="@+id/epg_source_file_item"
-            android:layout_width="288dp"
-            android:layout_height="108dp"
-            android:layout_gravity="center_horizontal"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:paddingStart="28dp"
-            android:paddingEnd="28dp"
-            android:focusable="true"
-            android:clickable="true"
-            android:background="@drawable/selector_source_option">
-            <ImageView
-                android:id="@+id/epg_checkbox_file"
-                android:layout_width="19dp"
-                android:layout_height="22dp"
-                android:src="@drawable/ic_triangle_play"
-                android:visibility="gone"
-                android:layout_marginEnd="16dp"
-                android:scaleType="fitCenter"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Local File"
-                android:textColor="#E4EEF0"
-                android:textSize="24sp"
-                android:fontFamily="@font/inter_medium"/>
-        </LinearLayout>
-
-        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="20"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:gravity="center"
-            android:text="Choose one to continue"
-            android:textColor="#16232A"
-            android:textSize="11sp"
-            android:textStyle="italic"
-            android:fontFamily="@font/inter_medium"
-            android:alpha="0.7"/>
-
-        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="8"/>
-
-    </LinearLayout>
-
-    <!-- ===== PAGE SETTINGS ===== -->
-        <LinearLayout
-        android:id="@+id/page_settings"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:background="#16232A"
-        android:visibility="gone">
-
-        <!-- Area atas: nama playlist + tombol X -->
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:paddingStart="28dp"
-            android:paddingEnd="28dp"
-            android:paddingTop="40dp">
-
-            <!-- Nama playlist aktif: "My\nPlaylist." dengan titik orange -->
-            <LinearLayout
-                android:id="@+id/ll_playlist_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentTop="true"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/tv_settings_playlist_name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="My\nPlaylist."
-                    android:textColor="#E4EEF0"
-                    android:textSize="38sp"
-                    android:fontFamily="@font/inter_bold"
-                    android:textStyle="bold"
-                    android:lineSpacingMultiplier="1.05"/>
-
-                <!-- Titik oranye ikonik di bawah nama -->
-                <View
-                    android:layout_width="10dp"
-                    android:layout_height="10dp"
-                    android:layout_marginTop="-14dp"
-                    android:layout_marginStart="4dp"
-                    android:background="@drawable/bg_status_success"
-                    android:visibility="gone"/>
-            </LinearLayout>
-
-            <!-- Tombol X keluar: circle 52dp, pojok kanan atas -->
-            <FrameLayout
-                android:id="@+id/btn_settings_exit"
-                android:layout_width="52dp"
-                android:layout_height="52dp"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentTop="true"
-                android:background="@drawable/bg_exit_btn_normal"
-                android:clickable="true"
-                android:focusable="true">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="✕"
-                    android:textColor="#E4EEF0"
-                    android:textSize="20sp"
-                    android:fontFamily="@font/inter_bold"
-                    android:textStyle="bold"/>
-            </FrameLayout>
-        </RelativeLayout>
-
-        <!-- Panel teal bawah dengan rounded top -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/bg_settings_panel"
-            android:paddingTop="12dp"
-            android:paddingBottom="28dp">
-
-            <!-- START button -->
-            <FrameLayout
-                android:id="@+id/btn_start_watch"
-                android:layout_width="match_parent"
-                android:layout_height="82dp"
-                android:layout_marginStart="20dp"
-                android:layout_marginEnd="20dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/bg_settings_menu_normal"
-                android:clickable="true"
-                android:focusable="true">
-
-                <!-- Icon play (hanya tampil saat selected/pressed) -->
-                <ImageView
-                    android:id="@+id/ic_start_play"
-                    android:layout_width="16dp"
-                    android:layout_height="19dp"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginStart="28dp"
-                    android:src="@drawable/ic_triangle_play"
-                    android:scaleType="fitCenter"
-                    android:visibility="gone"/>
-
-                <TextView
-                    android:id="@+id/tv_start_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="Start"
-                    android:textColor="#E4EEF0"
-                    android:textSize="20sp"
-                    android:fontFamily="@font/inter_medium"/>
-            </FrameLayout>
-
-
-            <!-- PLAYLIST button -->
-            <FrameLayout
-                android:id="@+id/btn_go_playlists"
-                android:layout_width="match_parent"
-                android:layout_height="82dp"
-                android:layout_marginStart="20dp"
-                android:layout_marginEnd="20dp"
-                android:background="@drawable/bg_settings_menu_normal"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    android:id="@+id/ic_playlist_play"
-                    android:layout_width="16dp"
-                    android:layout_height="19dp"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginStart="28dp"
-                    android:src="@drawable/ic_triangle_play"
-                    android:scaleType="fitCenter"
-                    android:visibility="gone"/>
-
-                <TextView
-                    android:id="@+id/tv_playlist_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="Playlist"
-                    android:textColor="#E4EEF0"
-                    android:textSize="20sp"
-                    android:fontFamily="@font/inter_medium"/>
-            </FrameLayout>
-
-
-            <!-- EPG button -->
-            <FrameLayout
-                android:id="@+id/btn_epg"
-                android:layout_width="match_parent"
-                android:layout_height="82dp"
-                android:layout_marginStart="20dp"
-                android:layout_marginEnd="20dp"
-                android:background="@drawable/bg_settings_menu_normal"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    android:id="@+id/ic_epg_play"
-                    android:layout_width="16dp"
-                    android:layout_height="19dp"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginStart="28dp"
-                    android:src="@drawable/ic_triangle_play"
-                    android:scaleType="fitCenter"
-                    android:visibility="gone"/>
-
-                <TextView
-                    android:id="@+id/tv_epg_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="EPG"
-                    android:textColor="#E4EEF0"
-                    android:textSize="20sp"
-                    android:fontFamily="@font/inter_medium"/>
-            </FrameLayout>
-        </LinearLayout>
-
-        <!-- Dummy views agar Java tidak NPE -->
-        <TextView android:id="@+id/btn_add_playlist_settings" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone"/>
-    </LinearLayout>
-
-    <!-- ===== PAGE PLAYLISTS ===== -->
+        <!-- ===== PAGE PLAYLISTS ===== -->
     <LinearLayout
         android:id="@+id/page_playlists"
         android:layout_width="match_parent"
@@ -1053,6 +683,314 @@ this playlist?"
                     android:textSize="18sp"
                     android:fontFamily="@font/inter_medium"/>
             </FrameLayout>
+
+            <!-- Switch Active Playlist -->
+            <FrameLayout
+                android:id="@+id/btn_switch_playlist"
+                android:layout_width="match_parent"
+                android:layout_height="72dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:background="@drawable/bg_settings_menu_normal"
+                android:clickable="true"
+                android:focusable="true">
+                <ImageView
+                    android:id="@+id/ic_switch_play"
+                    android:layout_width="16dp"
+                    android:layout_height="19dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="28dp"
+                    android:src="@drawable/ic_triangle_play"
+                    android:scaleType="fitCenter"
+                    android:visibility="gone"/>
+                <TextView
+                    android:id="@+id/tv_switch_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="Ganti Aktif"
+                    android:textColor="#E4EEF0"
+                    android:textSize="18sp"
+                    android:fontFamily="@font/inter_medium"/>
+            </FrameLayout>
+
+            <!-- Tambah Playlist -->
+            <FrameLayout
+                android:id="@+id/btn_add_new_playlist"
+                android:layout_width="match_parent"
+                android:layout_height="72dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:background="@drawable/bg_settings_menu_normal"
+                android:clickable="true"
+                android:focusable="true">
+                <ImageView
+                    android:id="@+id/ic_add_play"
+                    android:layout_width="16dp"
+                    android:layout_height="19dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="28dp"
+                    android:src="@drawable/ic_triangle_play"
+                    android:scaleType="fitCenter"
+                    android:visibility="gone"/>
+                <TextView
+                    android:id="@+id/tv_add_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="Tambah Playlist"
+                    android:textColor="#E4EEF0"
+                    android:textSize="18sp"
+                    android:fontFamily="@font/inter_medium"/>
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- Hidden compat views -->
+        <TextView android:id="@+id/tv_update_success"
+            android:layout_width="0dp" android:layout_height="0dp"
+            android:visibility="gone"/>
+    </LinearLayout>
+
+    <!-- ===== LOADING OVERLAY (PDF card design) ===== -->
+    <FrameLayout
+        android:id="@+id/loading_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#CC0A1628"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
+
+        <!-- Card: Loading state -->
+        <LinearLayout
+            android:id="@+id/card_loading"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:background="@drawable/bg_loading_card"
+            android:padding="24dp"
+            android:visibility="visible">
+
+            <!-- "+ Adding Playlist..." dengan dots animasi -->
+            <TextView
+                android:id="@+id/tv_loading_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+ Adding Playlist..."
+                android:textColor="#607D8B"
+                android:textSize="13sp"
+                android:fontFamily="@font/inter_medium"
+                android:layout_marginBottom="4dp"/>
+
+            <!-- "50 Ch • Available" -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="20dp">
+
+                <TextView
+                    android:id="@+id/tv_ch_count_loading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0 Ch"
+                    android:textColor="#16232A"
+                    android:textSize="28sp"
+                    android:fontFamily="@font/inter_bold"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" • "
+                    android:textColor="#FF5B04"
+                    android:textSize="28sp"
+                    android:fontFamily="@font/inter_bold"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Available"
+                    android:textColor="#16232A"
+                    android:textSize="28sp"
+                    android:fontFamily="@font/inter_bold"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+
+            <!-- Progress labels: 0% 50% 100% -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="4dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="0%"
+                    android:textColor="#90607D8B"
+                    android:textSize="11sp"
+                    android:fontFamily="@font/inter_regular"
+                    android:gravity="start"/>
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="50%"
+                    android:textColor="#90607D8B"
+                    android:textSize="11sp"
+                    android:fontFamily="@font/inter_regular"
+                    android:gravity="center"/>
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="100%"
+                    android:textColor="#90607D8B"
+                    android:textSize="11sp"
+                    android:fontFamily="@font/inter_regular"
+                    android:gravity="end"/>
+            </LinearLayout>
+
+            <!-- Progress bar track + fill -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="60dp">
+
+                <!-- Track (dark background) -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:background="@drawable/bg_progress_track"/>
+
+                <!-- Fill (orange) -->
+                <View
+                    android:id="@+id/progress_fill"
+                    android:layout_width="0dp"
+                    android:layout_height="60dp"
+                    android:background="@drawable/bg_progress_fill"/>
+
+                <!-- Divider tengah -->
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center"
+                    android:background="#40E4EEF0"/>
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- Card: Success state -->
+        <LinearLayout
+            android:id="@+id/card_success"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:background="@drawable/bg_loading_card"
+            android:padding="24dp"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Playlist added"
+                android:textColor="#16232A"
+                android:textSize="20sp"
+                android:fontFamily="@font/inter_bold"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- Checkmark icon circle -->
+            <FrameLayout
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_marginBottom="16dp">
+                <View
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:background="@drawable/bg_status_success"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="✓"
+                    android:textColor="#FFFFFF"
+                    android:textSize="22sp"
+                    android:fontFamily="@font/inter_bold"
+                    android:textStyle="bold"/>
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/tv_success_msg"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="124 channels
+imported."
+                android:textColor="#16232A"
+                android:textSize="16sp"
+                android:fontFamily="@font/inter_medium"
+                android:gravity="center"
+                android:lineSpacingMultiplier="1.3"/>
+        </LinearLayout>
+
+        <!-- Card: Error state -->
+        <LinearLayout
+            android:id="@+id/card_error"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:background="@drawable/bg_loading_card"
+            android:padding="24dp"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Unable to load"
+                android:textColor="#16232A"
+                android:textSize="20sp"
+                android:fontFamily="@font/inter_bold"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- X icon circle -->
+            <FrameLayout
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_marginBottom="16dp">
+                <View
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:background="@drawable/bg_status_error"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="✕"
+                    android:textColor="#FFFFFF"
+                    android:textSize="20sp"
+                    android:fontFamily="@font/inter_bold"
+                    android:textStyle="bold"/>
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Check the URL
+and try again"
+                android:textColor="#16232A"
+                android:textSize="16sp"
+                android:fontFamily="@font/inter_medium"
+                android:gravity="center"
+                android:lineSpacingMultiplier="1.3"/>
+        </LinearLayout>
+
 
             <!-- Switch Active Playlist -->
             <FrameLayout
