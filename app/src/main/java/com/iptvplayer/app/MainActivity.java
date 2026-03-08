@@ -74,6 +74,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private boolean downloadOnStart = true;
     private String pendingUrl = "";
     private boolean isFetching = false; // guard: cegah double tap saat loading
+    private boolean isUpdating = false; // guard: sedang update semua playlist
 
     // ===== SETTINGS =====
     private View btnSettingsExit, btnStartWatch, btnGoPlaylists, btnAddPlaylistSettings;
@@ -105,9 +106,9 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
 
     /** Update semua playlist satu per satu (URL only) */
-    /** Update semua playlist (URL only) — loading overlay styled */
     private void updateAllPlaylists() {
         if (playlists.isEmpty()) return;
+        if (isFetching || isUpdating) return; // cegah race condition dengan download M3U
         java.util.List<Playlist> urlPlaylists = new java.util.ArrayList<>();
         for (Playlist pl : playlists) {
             if (pl.url != null && (pl.url.startsWith("http://") || pl.url.startsWith("https://")))
@@ -117,14 +118,9 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             Toast.makeText(this, "Tidak ada playlist URL untuk diupdate", Toast.LENGTH_SHORT).show();
             return;
         }
-        final int total = urlPlaylists.size();
-        isFetching = true;
-        showLoadingCard(0);
-        if (tvLoadingLabel != null)
-            tvLoadingLabel.setText("\u21bb " + total + " playlist");
-
+        isUpdating = true;
+        showLoading("Mengupdate " + urlPlaylists.size() + " playlist...", "");
         executor.execute(() -> {
-            int totalChannels = 0;
             int success = 0;
             for (Playlist pl : urlPlaylists) {
                 try {
@@ -138,34 +134,16 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                     List<Channel> channels = M3UParser.parse(body);
                     pl.channels = channels;
                     pl.lastUpdated = System.currentTimeMillis();
-                    totalChannels += channels.size();
                     success++;
-                    final int ch = totalChannels;
-                    final int done = success;
-                    handler.post(() -> {
-                        if (tvChCountLoading != null)
-                            tvChCountLoading.setText(ch + " Ch");
-                        if (tvLoadingLabel != null)
-                            tvLoadingLabel.setText("\u21bb " + done + "/" + total + " playlist");
-                    });
                 } catch (Exception ignored) {}
             }
-            final int doneFinal = success;
-            final int chFinal = totalChannels;
+            final int done = success;
             handler.post(() -> {
-                isFetching = false;
+                isUpdating = false;
+                hideLoading();
                 prefs.savePlaylists(playlists);
-                animateProgressToFull(() -> {
-                    showSuccessCard(chFinal);
-                    if (tvChCountLoading != null)
-                        tvChCountLoading.setText(chFinal + " Ch");
-                    handler.postDelayed(() -> {
-                        fadeOutOverlay(() -> {
-                            hideLoading();
-                            rebuildPlaylistList();
-                        });
-                    }, 2000);
-                });
+                rebuildPlaylistList();
+                Toast.makeText(this, done + " playlist berhasil diupdate", Toast.LENGTH_SHORT).show();
             });
         });
     }
@@ -500,8 +478,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         }
         if (epgSourceFileItem != null) {
             epgSourceFileItem.setOnClickListener(v -> {
-                // Langsung buka file picker tanpa pindah halaman dulu
-                // handleEpgFileUri akan menangani overlay loading
+                // Langsung buka file picker — handleEpgFileUri akan tampilkan overlay loading
                 if (epgFilePickerLauncher != null)
                     epgFilePickerLauncher.launch("*/*");
             });
@@ -862,7 +839,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private void handleEpgFileUri(android.net.Uri uri) {
         if (isEpgFetching) return;
         isEpgFetching = true;
-        // Tampilkan loading overlay SEBELUM memulai executor
         showEpgLoadingCard();
 
         executor.execute(() -> {
@@ -878,13 +854,12 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
                 java.io.InputStream is;
                 if (rd >= 2 && (sig[0] & 0xFF) == 0x1F && (sig[1] & 0xFF) == 0x8B) {
-                    // File GZIP — wrap dengan GZIPInputStream
                     is = new java.util.zip.GZIPInputStream(pb, 65536);
                 } else {
                     is = new java.io.BufferedInputStream(pb, 65536);
                 }
 
-                // Streaming parse — tidak ada StringBuilder, aman untuk file 500MB
+                // Streaming parse — aman untuk file 500MB
                 java.util.List<EpgEntry> entries = EpgParser.parse(is);
                 is.close();
 
@@ -898,7 +873,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                     else showEpgErrorCard();
                 });
             } catch (Exception e) {
-                android.util.Log.e("EPG", "handleEpgFileUri error: " + e.getMessage(), e);
+                android.util.Log.e("EPG", "handleEpgFileUri: " + e.getMessage(), e);
                 handler.post(() -> {
                     isEpgFetching = false;
                     showEpgErrorCard();
@@ -906,7 +881,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             }
         });
     }
-
     // ===== SAVE PLAYLIST =====
 
     private void saveName() {
@@ -998,12 +972,32 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             tvName.setTextColor(isActive ? 0xFFFF5B04 : 0xFFE4EEF0);
 
             // ── Edit Nama ──────────────────────────────────────────────────
+            applyMenuPressedStyle(btnEditName);
             btnEditName.setOnClickListener(v -> showEditNameDialog(idx));
 
             // ── Edit URL ───────────────────────────────────────────────────
+            applyMenuPressedStyle(btnEditUrl);
             btnEditUrl.setOnClickListener(v -> showEditUrlDialog(idx));
 
-            // ── Hapus ──────────────────────────────────────────
+            // ── Hapus ──────────────────────────────────────────────────────
+            btnDelete.setOnTouchListener((v, event) -> {
+                switch (event.getAction()) {
+                    case android.view.MotionEvent.ACTION_DOWN:
+                        v.setBackgroundResource(R.drawable.bg_settings_menu_pressed);
+                        ((TextView) v).setTextColor(0xFFFFFFFF);
+                        break;
+                    case android.view.MotionEvent.ACTION_UP:
+                        v.setBackgroundResource(R.drawable.bg_settings_menu_normal);
+                        ((TextView) v).setTextColor(0xFFFF5B04);
+                        v.performClick();
+                        break;
+                    case android.view.MotionEvent.ACTION_CANCEL:
+                        v.setBackgroundResource(R.drawable.bg_settings_menu_normal);
+                        ((TextView) v).setTextColor(0xFFFF5B04);
+                        break;
+                }
+                return true;
+            });
             btnDelete.setOnClickListener(v -> showDeleteConfirm(idx));
 
             playlistListContainer.addView(item);
@@ -1035,44 +1029,66 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     /** Dialog edit nama playlist */
     private void showEditNameDialog(int idx) {
         Playlist pl = playlists.get(idx);
-        showStyledInputDialog("Edit Nama Playlist", pl.name,
-            android.text.InputType.TYPE_CLASS_TEXT,
-            "Nama playlist...", newVal -> {
-                if (!newVal.isEmpty()) {
-                    pl.name = newVal;
-                    prefs.savePlaylists(playlists);
-                    rebuildPlaylistList();
-                    updateSettingsPlaylistName();
-                }
-            });
+        android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this);
+        b.setTitle("Edit Nama");
+
+        final android.widget.EditText et = new android.widget.EditText(this);
+        et.setText(pl.name);
+        et.selectAll();
+        et.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
+        int pad = (int)(16 * getResources().getDisplayMetrics().density);
+        et.setPadding(pad, pad, pad, pad);
+        b.setView(et);
+
+        b.setPositiveButton("Simpan", (d, w) -> {
+            String name = et.getText().toString().trim();
+            if (!name.isEmpty()) {
+                pl.name = name;
+                prefs.savePlaylists(playlists);
+                rebuildPlaylistList();
+                updateSettingsPlaylistName();
+            }
+        });
+        b.setNegativeButton("Batal", null);
+        b.show();
     }
 
-    /** Dialog edit URL — styled */
+    /** Dialog edit URL playlist */
     private void showEditUrlDialog(int idx) {
         Playlist pl = playlists.get(idx);
-        showStyledInputDialog("Edit URL Playlist",
-            pl.url != null ? pl.url : "",
-            android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_URI,
-            "https://...", newVal -> {
-                if (!newVal.isEmpty()) {
-                    pl.url = newVal;
-                    pl.type = (newVal.startsWith("http://") || newVal.startsWith("https://"))
-                            ? "url" : "file";
-                    prefs.savePlaylists(playlists);
-                    rebuildPlaylistList();
-                }
-            });
+        android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this);
+        b.setTitle("Edit URL");
+
+        final android.widget.EditText et = new android.widget.EditText(this);
+        et.setText(pl.url != null ? pl.url : "");
+        et.selectAll();
+        et.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+                | android.text.InputType.TYPE_TEXT_VARIATION_URI);
+        int pad = (int)(16 * getResources().getDisplayMetrics().density);
+        et.setPadding(pad, pad, pad, pad);
+        b.setView(et);
+
+        b.setPositiveButton("Simpan", (d, w) -> {
+            String url = et.getText().toString().trim();
+            if (!url.isEmpty()) {
+                pl.url = url;
+                pl.type = (url.startsWith("http://") || url.startsWith("https://"))
+                        ? "url" : "file";
+                prefs.savePlaylists(playlists);
+                rebuildPlaylistList();
+            }
+        });
+        b.setNegativeButton("Batal", null);
+        b.show();
     }
 
     /** Konfirmasi hapus playlist */
-    /** Konfirmasi hapus — styled */
     private void showDeleteConfirm(int idx) {
         Playlist pl = playlists.get(idx);
-        showStyledConfirmDialog(
-            "Hapus Playlist?",
-            pl.name + " akan dihapus permanen.",
-            "Hapus",
-            () -> {
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("Hapus Playlist?")
+            .setMessage(""" + pl.name + "" akan dihapus permanen.")
+            .setPositiveButton("Hapus", (d, w) -> {
                 playlists.remove(idx);
                 if (currentPlaylistIdx >= playlists.size())
                     currentPlaylistIdx = Math.max(0, playlists.size() - 1);
@@ -1081,25 +1097,47 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 rebuildPlaylistList();
                 updateSettingsPlaylistName();
                 if (playlists.isEmpty()) showPage("welcome");
-            }
-        );
+            })
+            .setNegativeButton("Batal", null)
+            .show();
     }
 
     /** 2x-tap menu style untuk panel bawah playlist page */
     private String playlistSelectedMenu = null;
 
     private void setupPlaylistMenuButton(android.view.View btn, String key) {
-        // Hanya OnClickListener — tidak ada OnTouchListener agar tidak ada double-fire
+        btn.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    if (key.equals(playlistSelectedMenu)) {
+                        v.setBackgroundResource(R.drawable.bg_settings_menu_pressed);
+                        getMenuLabelInPlaylist(v).setTextColor(0xFFFFFFFF);
+                        getMenuIconInPlaylist(v).setVisibility(android.view.View.VISIBLE);
+                    } else {
+                        v.setBackgroundResource(R.drawable.bg_settings_menu_selected);
+                        getMenuLabelInPlaylist(v).setTextColor(0xFF16232A);
+                        getMenuIconInPlaylist(v).setVisibility(android.view.View.VISIBLE);
+                    }
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                    v.performClick();
+                    break;
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    restorePlaylistMenu(v, key);
+                    break;
+            }
+            return true;
+        });
         btn.setOnClickListener(v -> {
             if (key.equals(playlistSelectedMenu)) {
-                // 2nd tap — execute langsung
+                // 2nd tap — execute
                 playlistSelectedMenu = null;
                 restoreAllPlaylistMenus();
                 executePlaylistMenu(key);
             } else {
-                // 1st tap — set highlight, reset yang lain
-                if (playlistSelectedMenu != null) restoreAllPlaylistMenus();
+                // 1st tap — highlight
                 playlistSelectedMenu = key;
+                restoreAllPlaylistMenus();
                 v.setBackgroundResource(R.drawable.bg_settings_menu_selected);
                 getMenuLabelInPlaylist(v).setTextColor(0xFF16232A);
                 getMenuIconInPlaylist(v).setVisibility(android.view.View.VISIBLE);
@@ -1108,17 +1146,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     }
 
     private TextView getMenuLabelInPlaylist(android.view.View btn) {
-        // Cari label pakai ID langsung
-        int id = btn.getId();
-        int labelId = 0;
-        if      (id == R.id.btn_update_playlist)  labelId = R.id.tv_update_label;
-        else if (id == R.id.btn_switch_playlist)  labelId = R.id.tv_switch_label;
-        else if (id == R.id.btn_add_new_playlist) labelId = R.id.tv_add_label;
-        if (labelId != 0) {
-            android.view.View v = btn.findViewById(labelId);
-            if (v instanceof TextView) return (TextView) v;
-        }
-        // Fallback iterate
         if (btn instanceof android.view.ViewGroup) {
             android.view.ViewGroup vg = (android.view.ViewGroup) btn;
             for (int i = 0; i < vg.getChildCount(); i++) {
@@ -1130,18 +1157,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     }
 
     private android.widget.ImageView getMenuIconInPlaylist(android.view.View btn) {
-        // Cari icon pakai ID langsung agar selalu akurat
-        int id = btn.getId();
-        int iconId = 0;
-        if      (id == R.id.btn_update_playlist)  iconId = R.id.ic_update_play;
-        else if (id == R.id.btn_switch_playlist)  iconId = R.id.ic_switch_play;
-        else if (id == R.id.btn_add_new_playlist) iconId = R.id.ic_add_play;
-        if (iconId != 0) {
-            android.view.View v = btn.findViewById(iconId);
-            if (v instanceof android.widget.ImageView)
-                return (android.widget.ImageView) v;
-        }
-        // Fallback iterate
         if (btn instanceof android.view.ViewGroup) {
             android.view.ViewGroup vg = (android.view.ViewGroup) btn;
             for (int i = 0; i < vg.getChildCount(); i++) {
@@ -1215,279 +1230,38 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     // ===== SWITCHER =====
 
-
-    // ───────────────────────────────────────────────────────────────
-    // STYLED DIALOGS — match palette apk (#E4EEF0 card, teal, orange)
-    // ───────────────────────────────────────────────────────────────
-
-    /** Dialog input styled: kartu #E4EEF0, EditText, tombol pill */
-    private void showStyledInputDialog(String title, String currentVal,
-            int inputType, String hint, java.util.function.Consumer<String> onSave) {
-
-        android.app.Dialog dialog = new android.app.Dialog(this);
-        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(
-                new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
-            dialog.getWindow().setDimAmount(0.65f);
-        }
-
-        android.widget.LinearLayout root = new android.widget.LinearLayout(this);
-        root.setOrientation(android.widget.LinearLayout.VERTICAL);
-        root.setBackgroundResource(R.drawable.bg_loading_card);  // #E4EEF0 radius 20dp
-        int p = dp(24);
-        root.setPadding(p, p, p, p);
-
-        // Judul
-        TextView tvTitle = new TextView(this);
-        tvTitle.setText(title);
-        tvTitle.setTextColor(0xFF16232A);
-        tvTitle.setTextSize(16f);
-        tvTitle.setTypeface(null, android.graphics.Typeface.BOLD);
-        tvTitle.setPadding(0, 0, 0, dp(14));
-        root.addView(tvTitle);
-
-        // EditText
-        android.widget.EditText et = new android.widget.EditText(this);
-        et.setText(currentVal);
-        et.setSelection(et.getText().length());
-        et.setInputType(inputType);
-        et.setHint(hint);
-        et.setHintTextColor(0x7016232A);
-        et.setTextColor(0xFF16232A);
-        et.setTextSize(14f);
-        et.setBackgroundResource(R.drawable.bg_name_input_normal);
-        et.setPadding(dp(16), dp(13), dp(16), dp(13));
-        root.addView(et);
-
-        // Spacer
-        android.view.View sp = new android.view.View(this);
-        sp.setLayoutParams(new android.widget.LinearLayout.LayoutParams(1, dp(18)));
-        root.addView(sp);
-
-        // Row tombol
-        android.widget.LinearLayout row = new android.widget.LinearLayout(this);
-        row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-        row.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
-            android.widget.LinearLayout.LayoutParams.MATCH_PARENT, dp(50)));
-
-        // Batal
-        TextView btnBatal = new TextView(this);
-        btnBatal.setText("Batal");
-        btnBatal.setGravity(android.view.Gravity.CENTER);
-        btnBatal.setTextColor(0xFF16232A);
-        btnBatal.setTextSize(14f);
-        btnBatal.setTypeface(null, android.graphics.Typeface.BOLD);
-        android.graphics.drawable.GradientDrawable bgBatal = new android.graphics.drawable.GradientDrawable();
-        bgBatal.setColor(0x1816232A);
-        bgBatal.setCornerRadius(dp(100));
-        btnBatal.setBackground(bgBatal);
-        android.widget.LinearLayout.LayoutParams lpB = new android.widget.LinearLayout.LayoutParams(
-            0, android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1f);
-        lpB.setMarginEnd(dp(8));
-        btnBatal.setLayoutParams(lpB);
-        btnBatal.setOnClickListener(v -> dialog.dismiss());
-        row.addView(btnBatal);
-
-        // Simpan
-        TextView btnSimpan = new TextView(this);
-        btnSimpan.setText("Simpan");
-        btnSimpan.setGravity(android.view.Gravity.CENTER);
-        btnSimpan.setTextColor(0xFFFFFFFF);
-        btnSimpan.setTextSize(14f);
-        btnSimpan.setTypeface(null, android.graphics.Typeface.BOLD);
-        android.graphics.drawable.GradientDrawable bgSimpan = new android.graphics.drawable.GradientDrawable();
-        bgSimpan.setColor(0xFF075056);
-        bgSimpan.setCornerRadius(dp(100));
-        btnSimpan.setBackground(bgSimpan);
-        btnSimpan.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
-            0, android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1f));
-        btnSimpan.setOnClickListener(v -> {
-            String val = et.getText().toString().trim();
-            dialog.dismiss();
-            onSave.accept(val);
-        });
-        row.addView(btnSimpan);
-        root.addView(row);
-
-        // Wrapper dengan margin
-        android.widget.FrameLayout wrap = new android.widget.FrameLayout(this);
-        int m = dp(28);
-        android.widget.FrameLayout.LayoutParams wLp = new android.widget.FrameLayout.LayoutParams(
-            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT);
-        wLp.setMargins(m, 0, m, 0);
-        root.setLayoutParams(wLp);
-        wrap.addView(root);
-
-        dialog.setContentView(wrap);
-        if (dialog.getWindow() != null) {
-            // Pastikan dialog lebar penuh agar margin benar
-            dialog.getWindow().setLayout(
-                android.view.WindowManager.LayoutParams.MATCH_PARENT,
-                android.view.WindowManager.LayoutParams.WRAP_CONTENT);
-        }
-        dialog.show();
-        et.requestFocus();
-        if (dialog.getWindow() != null)
-            dialog.getWindow().setSoftInputMode(
-                android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-    }
-
-    /** Dialog konfirmasi styled */
-    private void showStyledConfirmDialog(String title, String msg,
-            String actionLabel, Runnable onConfirm) {
-
-        android.app.Dialog dialog = new android.app.Dialog(this);
-        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(
-                new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
-            dialog.getWindow().setDimAmount(0.65f);
-        }
-
-        android.widget.LinearLayout root = new android.widget.LinearLayout(this);
-        root.setOrientation(android.widget.LinearLayout.VERTICAL);
-        root.setBackgroundResource(R.drawable.bg_loading_card);
-        int p = dp(24);
-        root.setPadding(p, p, p, p);
-
-        // Judul
-        TextView tvTitle = new TextView(this);
-        tvTitle.setText(title);
-        tvTitle.setTextColor(0xFF16232A);
-        tvTitle.setTextSize(17f);
-        tvTitle.setTypeface(null, android.graphics.Typeface.BOLD);
-        tvTitle.setPadding(0, 0, 0, dp(8));
-        root.addView(tvTitle);
-
-        // Pesan
-        TextView tvMsg = new TextView(this);
-        tvMsg.setText(msg);
-        tvMsg.setTextColor(0x8816232A);
-        tvMsg.setTextSize(13f);
-        tvMsg.setPadding(0, 0, 0, dp(20));
-        root.addView(tvMsg);
-
-        // Row tombol
-        android.widget.LinearLayout row = new android.widget.LinearLayout(this);
-        row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-        row.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
-            android.widget.LinearLayout.LayoutParams.MATCH_PARENT, dp(50)));
-
-        // Batal
-        TextView btnBatal = new TextView(this);
-        btnBatal.setText("Batal");
-        btnBatal.setGravity(android.view.Gravity.CENTER);
-        btnBatal.setTextColor(0xFF16232A);
-        btnBatal.setTextSize(14f);
-        btnBatal.setTypeface(null, android.graphics.Typeface.BOLD);
-        android.graphics.drawable.GradientDrawable bgBatal = new android.graphics.drawable.GradientDrawable();
-        bgBatal.setColor(0x1816232A);
-        bgBatal.setCornerRadius(dp(100));
-        btnBatal.setBackground(bgBatal);
-        android.widget.LinearLayout.LayoutParams lpB = new android.widget.LinearLayout.LayoutParams(
-            0, android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1f);
-        lpB.setMarginEnd(dp(8));
-        btnBatal.setLayoutParams(lpB);
-        btnBatal.setOnClickListener(v -> dialog.dismiss());
-        row.addView(btnBatal);
-
-        // Aksi (Hapus = oranye)
-        TextView btnAksi = new TextView(this);
-        btnAksi.setText(actionLabel);
-        btnAksi.setGravity(android.view.Gravity.CENTER);
-        btnAksi.setTextColor(0xFFFFFFFF);
-        btnAksi.setTextSize(14f);
-        btnAksi.setTypeface(null, android.graphics.Typeface.BOLD);
-        android.graphics.drawable.GradientDrawable bgAksi = new android.graphics.drawable.GradientDrawable();
-        bgAksi.setColor(0xFFFF5B04);
-        bgAksi.setCornerRadius(dp(100));
-        btnAksi.setBackground(bgAksi);
-        btnAksi.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
-            0, android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1f));
-        btnAksi.setOnClickListener(v -> {
-            dialog.dismiss();
-            onConfirm.run();
-        });
-        row.addView(btnAksi);
-        root.addView(row);
-
-        android.widget.FrameLayout wrap = new android.widget.FrameLayout(this);
-        int m = dp(28);
-        android.widget.FrameLayout.LayoutParams wLp = new android.widget.FrameLayout.LayoutParams(
-            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT);
-        wLp.setMargins(m, 0, m, 0);
-        root.setLayoutParams(wLp);
-        wrap.addView(root);
-
-        dialog.setContentView(wrap);
-        dialog.show();
-    }
-
     private void showSwitcher() {
         switcherList.removeAllViews();
         for (int i = 0; i < playlists.size(); i++) {
             final int idx = i;
             Playlist pl = playlists.get(i);
-            boolean active = (idx == currentPlaylistIdx);
 
-            // Card item: LinearLayout horizontal (icon + teks)
-            android.widget.LinearLayout card = new android.widget.LinearLayout(this);
-            card.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-            card.setGravity(android.view.Gravity.CENTER_VERTICAL);
-            card.setPadding(dp(18), dp(16), dp(18), dp(16));
-            card.setBackgroundResource(active
-                ? R.drawable.bg_switcher_item_active
-                : R.drawable.bg_switcher_item);
-            card.setClickable(true);
-            card.setFocusable(true);
+            TextView item = new TextView(this);
+            item.setText("▶  " + pl.name + "\n" + pl.getChannelCount() + " channel");
+            item.setTextColor(0xffffffff);
+            item.setTextSize(15f);
+            item.setPadding(dp(16), dp(14), dp(16), dp(14));
+            item.setLineSpacing(0, 1.3f);
+            int bg = (idx == currentPlaylistIdx) ?
+                    R.drawable.bg_switcher_item_active : R.drawable.bg_switcher_item;
+            item.setBackgroundResource(bg);
+            item.setFocusable(true);
+            item.setClickable(true);
 
-            LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-            cardLp.bottomMargin = dp(10);
-            card.setLayoutParams(cardLp);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = dp(8);
+            item.setLayoutParams(lp);
 
-            // Segitiga play (hanya jika aktif)
-            TextView tvPlay = new TextView(this);
-            tvPlay.setText("▶  ");
-            tvPlay.setTextColor(0xFFFF5B04);
-            tvPlay.setTextSize(13f);
-            tvPlay.setVisibility(active ? android.view.View.VISIBLE : android.view.View.GONE);
-            card.addView(tvPlay);
-
-            // Kolom teks
-            android.widget.LinearLayout col = new android.widget.LinearLayout(this);
-            col.setOrientation(android.widget.LinearLayout.VERTICAL);
-            col.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
-                0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-
-            TextView tvName = new TextView(this);
-            tvName.setText(pl.name);
-            tvName.setTextColor(active ? 0xFFFF5B04 : 0xFFE4EEF0);
-            tvName.setTextSize(15f);
-            tvName.setTypeface(null, android.graphics.Typeface.BOLD);
-            col.addView(tvName);
-
-            TextView tvInfo = new TextView(this);
-            tvInfo.setText(pl.getChannelCount() + " channel");
-            tvInfo.setTextColor(0x80E4EEF0);
-            tvInfo.setTextSize(12f);
-            col.addView(tvInfo);
-            card.addView(col);
-
-            card.setOnClickListener(v -> {
+            item.setOnClickListener(v -> {
                 currentPlaylistIdx = idx;
                 prefs.setCurrentPlaylistIndex(idx);
                 prefs.setCurrentChannelIndex(0);
-                rebuildPlaylistList();
-                updateSettingsPlaylistName();
                 hideSwitcher();
             });
 
-            switcherList.addView(card);
+            switcherList.addView(item);
         }
         switcherBackdrop.setVisibility(View.VISIBLE);
     }
@@ -1771,6 +1545,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     /** Dipanggil setelah sukses import — fade in ke halaman input nama playlist */
     private void proceedAfterImport() {
+        if (isUpdating) return; // jangan navigasi ke "name" saat update playlist
         isFetching = false;
         setUrlButtonEnabled(true);
         // Reset field nama & button Done ke state awal
@@ -2022,8 +1797,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             if (trackW == 0) trackW = 600;
             final int target = (int)(trackW * 0.75f);
             epgProgressAnimator = android.animation.ValueAnimator.ofInt(0, target);
-            epgProgressAnimator.setDuration(180000); // 3 menit untuk file 500MB
-            epgProgressAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(0.3f));
+            epgProgressAnimator.setDuration(8000);
+            epgProgressAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(0.5f));
             epgProgressAnimator.addUpdateListener(a -> {
                 if (epgProgressFill != null) {
                     android.view.ViewGroup.LayoutParams lp = epgProgressFill.getLayoutParams();
@@ -2033,14 +1808,13 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             });
             epgProgressAnimator.start();
 
-            // Counter prog count 0 → estimasi besar untuk file 500MB
-            epgCounterAnimator = android.animation.ValueAnimator.ofInt(0, 500000);
-            epgCounterAnimator.setDuration(180000); // 3 menit estimasi
-            epgCounterAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(0.3f));
+            // Counter prog count 0 → estimasi
+            epgCounterAnimator = android.animation.ValueAnimator.ofInt(0, 50000);
+            epgCounterAnimator.setDuration(90000);
+            epgCounterAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
             epgCounterAnimator.addUpdateListener(a -> {
-                int v = (int) a.getAnimatedValue();
-                String label = v >= 1000 ? (v / 1000) + "K Prog" : v + " Prog";
-                if (tvEpgProgCount != null) tvEpgProgCount.setText(label);
+                if (tvEpgProgCount != null)
+                    tvEpgProgCount.setText(a.getAnimatedValue() + " Prog");
             });
             epgCounterAnimator.start();
         });

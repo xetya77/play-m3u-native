@@ -4,7 +4,6 @@ import android.util.Xml;
 import org.xmlpull.v1.XmlPullParser;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,10 +16,7 @@ import java.util.Locale;
  */
 public class EpgParser {
 
-    /**
-     * Parse dari InputStream (mendukung file besar, GZIP sudah di-unwrap di caller).
-     * Tidak membaca seluruh file ke memori.
-     */
+    /** Parse dari InputStream (mendukung file besar, GZIP sudah di-unwrap di caller). */
     public static List<EpgEntry> parse(InputStream inputStream) {
         List<EpgEntry> entries = new ArrayList<>();
         if (inputStream == null) return entries;
@@ -29,15 +25,12 @@ public class EpgParser {
             parser.setInput(new InputStreamReader(inputStream, "UTF-8"));
             parseInternal(parser, entries);
         } catch (Exception e) {
-            // kembalikan apa yang sudah berhasil
+            android.util.Log.w("EpgParser", "parse(InputStream) partial: " + e.getMessage());
         }
         return entries;
     }
 
-    /**
-     * Parse dari String (backward-compat untuk EPG URL yang sudah di-download).
-     * Untuk string kecil, ini masih oke.
-     */
+    /** Parse dari String (untuk EPG URL yang sudah di-download ke String). */
     public static List<EpgEntry> parse(String xmlContent) {
         List<EpgEntry> entries = new ArrayList<>();
         if (xmlContent == null || xmlContent.trim().isEmpty()) return entries;
@@ -46,7 +39,7 @@ public class EpgParser {
             parser.setInput(new java.io.StringReader(xmlContent));
             parseInternal(parser, entries);
         } catch (Exception e) {
-            // kembalikan apa yang sudah berhasil
+            android.util.Log.w("EpgParser", "parse(String) partial: " + e.getMessage());
         }
         return entries;
     }
@@ -72,9 +65,7 @@ public class EpgParser {
                     inTitle = true;
                 }
             } else if (eventType == XmlPullParser.TEXT) {
-                if (inTitle && title == null) {
-                    title = parser.getText();
-                }
+                if (inTitle && title == null) title = parser.getText();
             } else if (eventType == XmlPullParser.END_TAG) {
                 String tag = parser.getName();
                 if ("title".equals(tag)) {
@@ -83,15 +74,13 @@ public class EpgParser {
                     if (channelId != null && title != null && startMs > 0) {
                         entries.add(new EpgEntry(channelId, title, startMs, stopMs));
                     }
-                    channelId = null;
-                    title = null;
+                    channelId = null; title = null;
                 }
             }
             eventType = parser.next();
         }
     }
 
-    /** Parse waktu XMLTV → epoch ms. Thread-safe. */
     static long parseTime(String s) {
         if (s == null || s.isEmpty()) return 0;
         try {
@@ -113,8 +102,6 @@ public class EpgParser {
                 Date d = sdf.parse(digits);
                 return d != null ? d.getTime() : 0;
             }
-        } catch (Exception e) {
-            return 0;
-        }
+        } catch (Exception e) { return 0; }
     }
 }
