@@ -6,34 +6,37 @@
     android:background="@drawable/bg_edit_dialog"
     android:padding="28dp">
 
+    <!-- Judul: Wild Sand -->
     <TextView
         android:id="@+id/tv_edit_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Edit Playlist"
-        android:textColor="#ffffff"
+        android:textColor="#E4EEF0"
         android:textSize="20sp"
         android:fontFamily="@font/inter_bold"
         android:textStyle="bold"
-        android:layout_marginBottom="8dp"/>
+        android:layout_marginBottom="6dp"/>
 
+    <!-- Subtitle: Wild Sand redup -->
     <TextView
         android:id="@+id/tv_edit_subtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Ubah nama playlist"
-        android:textColor="#8aaad4"
+        android:textColor="#8AACB0"
         android:textSize="13sp"
         android:fontFamily="@font/inter_medium"
         android:layout_marginBottom="24dp"/>
 
+    <!-- Input field -->
     <EditText
         android:id="@+id/et_edit_value"
         android:layout_width="match_parent"
         android:layout_height="54dp"
         android:hint="Masukkan nilai baru..."
-        android:textColorHint="#3a5580"
-        android:textColor="#ffffff"
+        android:textColorHint="#4A6870"
+        android:textColor="#E4EEF0"
         android:textSize="15sp"
         android:fontFamily="@font/inter_medium"
         android:paddingStart="18dp"
@@ -42,19 +45,21 @@
         android:singleLine="true"
         android:layout_marginBottom="24dp"/>
 
+    <!-- Tombol -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="end">
 
+        <!-- Batal: Wild Sand redup -->
         <TextView
             android:id="@+id/btn_edit_cancel"
             android:layout_width="wrap_content"
             android:layout_height="46dp"
             android:gravity="center"
             android:text="Batal"
-            android:textColor="#8aaad4"
+            android:textColor="#8AACB0"
             android:textSize="14sp"
             android:fontFamily="@font/inter_medium"
             android:paddingStart="20dp"
@@ -62,6 +67,7 @@
             android:focusable="true"
             android:clickable="true"/>
 
+        <!-- Simpan: Blaze Orange bg, Mirage text -->
         <TextView
             android:id="@+id/btn_edit_save"
             android:layout_width="wrap_content"

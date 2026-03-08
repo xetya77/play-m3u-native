@@ -20,37 +20,40 @@
         android:gravity="center_vertical"
         android:layout_marginBottom="10dp">
 
+        <!-- Nomor urut: Deep Sea Green gelap + teks Wild Sand -->
         <TextView
             android:id="@+id/tv_pl_number"
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:gravity="center"
             android:text="1"
-            android:textColor="#c8851a"
-            android:textSize="14sp"
+            android:textColor="#E4EEF0"
+            android:textSize="13sp"
             android:fontFamily="@font/inter_bold"
             android:textStyle="bold"
             android:background="@drawable/bg_badge_info"
             android:layout_marginEnd="12dp"/>
 
+        <!-- Nama: Wild Sand -->
         <TextView
             android:id="@+id/tv_pl_name"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#ffffff"
+            android:textColor="#E4EEF0"
             android:textSize="16sp"
             android:fontFamily="@font/inter_bold"
             android:textStyle="bold"
             android:singleLine="true"
             android:ellipsize="end"/>
 
+        <!-- Badge AKTIF: Blaze Orange -->
         <TextView
             android:id="@+id/tv_pl_badge_active"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="AKTIF"
-            android:textColor="#ffffff"
+            android:textColor="#16232A"
             android:textSize="10sp"
             android:fontFamily="@font/inter_bold"
             android:textStyle="bold"
@@ -63,7 +66,7 @@
             android:layout_marginStart="8dp"/>
     </LinearLayout>
 
-    <!-- Info: jumlah channel + status -->
+    <!-- Info: channel count + auto/manual -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -76,15 +79,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="0 channel"
-            android:textColor="#8aaad4"
+            android:textColor="#8AACB0"
             android:textSize="13sp"
             android:fontFamily="@font/inter_medium"/>
 
+        <!-- Separator dot: Blaze Orange -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="  •  "
-            android:textColor="#c8851a"
+            android:textColor="#FF5B04"
             android:textSize="13sp"/>
 
         <TextView
@@ -92,31 +96,32 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Auto update"
-            android:textColor="#8aaad4"
+            android:textColor="#8AACB0"
             android:textSize="13sp"
             android:fontFamily="@font/inter_medium"/>
     </LinearLayout>
 
-    <!-- URL preview -->
+    <!-- URL preview: Wild Sand redup -->
     <TextView
         android:id="@+id/tv_pl_url_preview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="http://..."
-        android:textColor="#3a5580"
+        android:textColor="#4A6870"
         android:textSize="11sp"
         android:fontFamily="@font/inter_regular"
         android:singleLine="true"
         android:ellipsize="middle"
         android:layout_marginBottom="14dp"/>
 
-    <!-- Tombol aksi -->
+    <!-- Tombol aksi: Nama | URL | Hapus -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:weightSum="3">
 
+        <!-- Nama: Deep Sea Green -->
         <TextView
             android:id="@+id/btn_pl_edit_name"
             android:layout_width="0dp"
@@ -124,7 +129,7 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="Nama"
-            android:textColor="#8aaad4"
+            android:textColor="#E4EEF0"
             android:textSize="12sp"
             android:fontFamily="@font/inter_medium"
             android:background="@drawable/selector_btn_action"
@@ -132,6 +137,7 @@
             android:clickable="true"
             android:layout_marginEnd="6dp"/>
 
+        <!-- URL: Deep Sea Green -->
         <TextView
             android:id="@+id/btn_pl_edit_url"
             android:layout_width="0dp"
@@ -139,7 +145,7 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="URL"
-            android:textColor="#8aaad4"
+            android:textColor="#E4EEF0"
             android:textSize="12sp"
             android:fontFamily="@font/inter_medium"
             android:background="@drawable/selector_btn_action"
@@ -147,6 +153,7 @@
             android:clickable="true"
             android:layout_marginEnd="6dp"/>
 
+        <!-- Hapus: merah berbasis Mirage -->
         <TextView
             android:id="@+id/btn_pl_delete"
             android:layout_width="0dp"
@@ -154,7 +161,7 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="Hapus"
-            android:textColor="#cc5555"
+            android:textColor="#FF6B6B"
             android:textSize="12sp"
             android:fontFamily="@font/inter_medium"
             android:background="@drawable/selector_btn_delete"
