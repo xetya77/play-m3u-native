@@ -1,6 +1,8 @@
 package com.iptvplayer.app;
 
 import android.app.Activity;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -83,9 +85,10 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private String settingsSelectedMenu = null;
 
     // ===== PLAYLISTS =====
-    private View btnPlaylistsBack, btnUpdatePlaylist, btnSwitchPlaylist;
+    private View btnPlaylistsBack, btnUpdatePlaylist, btnSwitchPlaylist, btnAddPlaylistMain;
     private LinearLayout playlistListContainer;
     private TextView tvUpdateSuccess;
+    private TextView tvPlaylistHeaderCount;
 
     // ===== SWITCHER =====
     private View switcherBackdrop, btnSwitcherClose;
@@ -227,6 +230,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnSwitchPlaylist = findViewById(R.id.btn_switch_playlist);
         playlistListContainer = findViewById(R.id.playlist_list_container);
         tvUpdateSuccess = findViewById(R.id.tv_update_success);
+        tvPlaylistHeaderCount = (TextView) findViewById(R.id.tv_playlist_header_count);
+        btnAddPlaylistMain = findViewById(R.id.btn_add_playlist_main);
 
         // Switcher
         switcherBackdrop = findViewById(R.id.switcher_backdrop);
@@ -399,6 +404,9 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnPlaylistsBack.setOnClickListener(v -> showPage("settings"));
         btnUpdatePlaylist.setOnClickListener(v -> updateCurrentPlaylist());
         btnSwitchPlaylist.setOnClickListener(v -> showSwitcher());
+        if (btnAddPlaylistMain != null) {
+            btnAddPlaylistMain.setOnClickListener(v -> showPage("source"));
+        }
 
         // Switcher
         switcherBackdrop.setOnClickListener(v -> hideSwitcher());
@@ -759,48 +767,147 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     private void rebuildPlaylistList() {
         playlistListContainer.removeAllViews();
+
+        // Update header count
+        if (tvPlaylistHeaderCount != null) {
+            tvPlaylistHeaderCount.setText(playlists.size() + " playlist tersimpan");
+        }
+
         for (int i = 0; i < playlists.size(); i++) {
             final int idx = i;
             Playlist pl = playlists.get(i);
 
             View item = getLayoutInflater().inflate(R.layout.item_playlist_row, playlistListContainer, false);
+
+            TextView tvNumber = item.findViewById(R.id.tv_pl_number);
             TextView tvName = item.findViewById(R.id.tv_pl_name);
-            TextView tvInfo = item.findViewById(R.id.tv_pl_info);
+            TextView tvChCount = item.findViewById(R.id.tv_pl_ch_count);
+            TextView tvAutoUpdate = item.findViewById(R.id.tv_pl_auto_update);
+            TextView tvUrlPreview = item.findViewById(R.id.tv_pl_url_preview);
+            TextView tvBadgeActive = item.findViewById(R.id.tv_pl_badge_active);
+            TextView btnEditName = item.findViewById(R.id.btn_pl_edit_name);
+            TextView btnEditUrl = item.findViewById(R.id.btn_pl_edit_url);
+            TextView btnDelete = item.findViewById(R.id.btn_pl_delete);
 
+            // Set nomor urut
+            if (tvNumber != null) tvNumber.setText(String.valueOf(i + 1));
+
+            // Set nama
             tvName.setText(pl.name);
-            tvInfo.setText(pl.getChannelCount() + " channel • " +
-                    (pl.downloadOnStart ? "Auto update" : "Manual"));
 
-            if (i < playlists.size() - 1) {
-                // Add divider
-                View divider = new View(this);
-                divider.setLayoutParams(new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, 1));
-                divider.setBackgroundColor(0x14ffffff);
-                playlistListContainer.addView(item);
-                playlistListContainer.addView(divider);
-            } else {
-                playlistListContainer.addView(item);
+            // Set info channel count
+            if (tvChCount != null) tvChCount.setText(pl.getChannelCount() + " channel");
+
+            // Set status auto update
+            if (tvAutoUpdate != null) tvAutoUpdate.setText(pl.downloadOnStart ? "Auto update" : "Manual");
+
+            // Set URL preview
+            if (tvUrlPreview != null) {
+                String urlText = (pl.url != null && !pl.url.isEmpty()) ? pl.url : "(file lokal)";
+                tvUrlPreview.setText(urlText);
             }
 
+            // Tandai badge AKTIF jika ini playlist yang sedang dipakai
+            if (tvBadgeActive != null) {
+                tvBadgeActive.setVisibility(idx == currentPlaylistIdx ? android.view.View.VISIBLE : android.view.View.GONE);
+            }
+
+            // Highlight card jika aktif
+            if (idx == currentPlaylistIdx) {
+                item.setBackgroundResource(R.drawable.bg_playlist_card_active);
+            } else {
+                item.setBackgroundResource(R.drawable.bg_playlist_card);
+            }
+
+            playlistListContainer.addView(item);
+
+            // Klik card = jadikan playlist aktif
             item.setOnClickListener(v -> {
                 currentPlaylistIdx = idx;
                 prefs.setCurrentPlaylistIndex(idx);
+                rebuildPlaylistList();
             });
 
-            item.setOnLongClickListener(v -> {
-                // Long press = delete
-                playlists.remove(idx);
-                if (currentPlaylistIdx >= playlists.size()) {
-                    currentPlaylistIdx = Math.max(0, playlists.size() - 1);
-                }
-                prefs.savePlaylists(playlists);
-                prefs.setCurrentPlaylistIndex(currentPlaylistIdx);
-                rebuildPlaylistList();
-                if (playlists.isEmpty()) showPage("welcome");
-                return true;
-            });
+            // Tombol Edit Nama
+            if (btnEditName != null) {
+                btnEditName.setOnClickListener(v -> showEditDialog(idx, "name"));
+            }
+
+            // Tombol Edit URL
+            if (btnEditUrl != null) {
+                btnEditUrl.setOnClickListener(v -> showEditDialog(idx, "url"));
+            }
+
+            // Tombol Hapus
+            if (btnDelete != null) {
+                btnDelete.setOnClickListener(v -> {
+                    playlists.remove(idx);
+                    if (currentPlaylistIdx >= playlists.size()) {
+                        currentPlaylistIdx = Math.max(0, playlists.size() - 1);
+                    }
+                    prefs.savePlaylists(playlists);
+                    prefs.setCurrentPlaylistIndex(currentPlaylistIdx);
+                    rebuildPlaylistList();
+                    if (playlists.isEmpty()) showPage("welcome");
+                });
+            }
         }
+    }
+
+    /**
+     * Dialog untuk edit nama atau URL playlist
+     * @param idx   index playlist
+     * @param field "name" atau "url"
+     */
+    private void showEditDialog(int idx, String field) {
+        if (idx < 0 || idx >= playlists.size()) return;
+        Playlist pl = playlists.get(idx);
+
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        android.view.View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_playlist, null);
+        builder.setView(dialogView);
+
+        TextView tvTitle = dialogView.findViewById(R.id.tv_edit_title);
+        TextView tvSubtitle = dialogView.findViewById(R.id.tv_edit_subtitle);
+        android.widget.EditText etValue = dialogView.findViewById(R.id.et_edit_value);
+        TextView btnCancel = dialogView.findViewById(R.id.btn_edit_cancel);
+        TextView btnSave = dialogView.findViewById(R.id.btn_edit_save);
+
+        if ("name".equals(field)) {
+            tvTitle.setText("Edit Nama");
+            tvSubtitle.setText("Ubah nama untuk: " + pl.name);
+            etValue.setHint("Nama playlist...");
+            etValue.setText(pl.name);
+        } else {
+            tvTitle.setText("Edit URL");
+            tvSubtitle.setText("Ubah URL untuk: " + pl.name);
+            etValue.setHint("URL playlist M3U...");
+            etValue.setText(pl.url != null ? pl.url : "");
+            etValue.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_URI);
+        }
+
+        android.app.AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+        dialog.show();
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        btnSave.setOnClickListener(v -> {
+            String newValue = etValue.getText().toString().trim();
+            if (newValue.isEmpty()) {
+                Toast.makeText(this, "Tidak boleh kosong", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if ("name".equals(field)) {
+                pl.name = newValue;
+            } else {
+                pl.url = newValue;
+            }
+            prefs.savePlaylists(playlists);
+            rebuildPlaylistList();
+            dialog.dismiss();
+        });
     }
 
     private void updateCurrentPlaylist() {
