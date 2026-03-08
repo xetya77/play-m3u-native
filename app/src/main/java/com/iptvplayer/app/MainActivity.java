@@ -78,24 +78,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     // ===== SETTINGS =====
     private View btnSettingsExit, btnStartWatch, btnGoPlaylists, btnAddPlaylistSettings;
-    private View btnEpg;
     private android.widget.TextView tvSettingsPlaylistName;
 
-    // ===== EPG fields =====
-    private View pageEpgSource;
-    private View pageEpg;
-    private View epgSourceUrlItem, epgSourceFileItem;
-    private androidx.activity.result.ActivityResultLauncher<String> epgFilePickerLauncher;
-    private android.widget.EditText etEpgUrl;
-    private android.widget.TextView btnEpgLoad;
-    private View cardEpgLoading, cardEpgSuccess, cardEpgError;
-    private View epgProgressFill;
-    private android.widget.TextView tvEpgLoadingLabel, tvEpgProgCount, tvEpgSuccessMsg;
-    private boolean isEpgFetching = false;
-    private android.animation.ValueAnimator epgProgressAnimator, epgCounterAnimator;
-    private android.os.Handler epgDotsHandler = new android.os.Handler(android.os.Looper.getMainLooper());
-    private Runnable epgDotsRunnable;
-    private int epgDotsCount = 0;
     // State "first tap" untuk 2x klik: null=belum ada, "start"/"playlists"/"epg"
     private String settingsSelectedMenu = null;
 
@@ -279,20 +263,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnStartWatch   = findViewById(R.id.btn_start_watch);
         btnGoPlaylists  = findViewById(R.id.btn_go_playlists);
         btnAddPlaylistSettings = findViewById(R.id.btn_add_playlist_settings);
-        btnEpg = findViewById(R.id.btn_epg);
-        pageEpgSource   = findViewById(R.id.page_epg_source);
-        epgSourceUrlItem = findViewById(R.id.epg_source_url_item);
-        epgSourceFileItem = findViewById(R.id.epg_source_file_item);
-        pageEpg         = findViewById(R.id.page_epg);
-        etEpgUrl        = findViewById(R.id.et_epg_url);
-        btnEpgLoad      = (android.widget.TextView) findViewById(R.id.btn_epg_load);
-        cardEpgLoading  = findViewById(R.id.card_epg_loading);
-        cardEpgSuccess  = findViewById(R.id.card_epg_success);
-        cardEpgError    = findViewById(R.id.card_epg_error);
-        epgProgressFill = findViewById(R.id.epg_progress_fill);
-        tvEpgLoadingLabel = (android.widget.TextView) findViewById(R.id.tv_epg_loading_label);
-        tvEpgProgCount    = (android.widget.TextView) findViewById(R.id.tv_epg_prog_count);
-        tvEpgSuccessMsg   = (android.widget.TextView) findViewById(R.id.tv_epg_success_msg);
         tvSettingsPlaylistName = findViewById(R.id.tv_settings_playlist_name);
 
         // Playlists
@@ -463,56 +433,15 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnSettingsExit.setOnClickListener(v -> handleExitTap());
         setupSettingsMenuButton(btnStartWatch,   "start");
         setupSettingsMenuButton(btnGoPlaylists,  "playlists");
-        setupSettingsMenuButton(btnEpg,          "epg");
         // Touch: pressed state → orange (page 3 PDF)
         setupMenuPressedState(btnStartWatch,  "start");
         setupMenuPressedState(btnGoPlaylists, "playlists");
-        setupMenuPressedState(btnEpg,         "epg");
         btnAddPlaylistSettings.setOnClickListener(v -> showPageWithTransition("source"));
 
-        // EPG source page listeners
-        if (epgSourceUrlItem != null) {
-            epgSourceUrlItem.setOnClickListener(v -> {
-                showPage("epg");
-            });
-        }
-        if (epgSourceFileItem != null) {
-            epgSourceFileItem.setOnClickListener(v -> {
-                // Langsung buka file picker — handleEpgFileUri akan tampilkan overlay loading
-                if (epgFilePickerLauncher != null)
-                    epgFilePickerLauncher.launch("*/*");
-            });
-        }
-
-        // btn back dari epg url → ke epg source
-        View btnEpgUrlBack = findViewById(R.id.btn_epg_url_back);
-        if (btnEpgUrlBack != null) {
-            btnEpgUrlBack.setOnClickListener(v -> showPage("epg_source"));
-        }
+        // EPG dihapus
 
         // EPG page listeners
-        if (btnEpgLoad != null) {
-            btnEpgLoad.setOnTouchListener((v, event) -> {
-                if (isEpgFetching) return true;
-                switch (event.getAction()) {
-                    case android.view.MotionEvent.ACTION_DOWN:
-                        v.setBackgroundResource(R.drawable.bg_add_playlist_btn_pressed);
-                        ((android.widget.TextView) v).setTextColor(0xFFFFFFFF);
-                        break;
-                    case android.view.MotionEvent.ACTION_UP:
-                        v.setBackgroundResource(R.drawable.bg_add_playlist_btn);
-                        ((android.widget.TextView) v).setTextColor(0xFF16232A);
-                        v.performClick();
-                        break;
-                    case android.view.MotionEvent.ACTION_CANCEL:
-                        v.setBackgroundResource(R.drawable.bg_add_playlist_btn);
-                        ((android.widget.TextView) v).setTextColor(0xFF16232A);
-                        break;
-                }
-                return true;
-            });
-            btnEpgLoad.setOnClickListener(v -> fetchEpg());
-        }
+
 
         // Playlists — back
         btnPlaylistsBack.setOnClickListener(v -> showPage("settings"));
@@ -534,20 +463,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 uri -> {
                     if (uri != null) handleFileUri(uri);
                 });
-        epgFilePickerLauncher = registerForActivityResult(
-                new ActivityResultContracts.GetContent(),
-                uri -> {
-                    if (uri != null) handleEpgFileUri(uri);
-                });
-    }
-
-    // ===== PAGE NAVIGATION =====
-
-    private void showPageWithTransition(String page) {
-        android.view.View currentVisible = null;
-        for (android.view.View v : new android.view.View[]{pageWelcome, pageSource, pageUrl, pageName, pageSettings, pagePlaylists, pageEpgSource, pageEpg}) {
-            if (v != null && v.getVisibility() == android.view.View.VISIBLE) { currentVisible = v; break; }
-        }
         final android.view.View outView = currentVisible;
         if (outView != null) {
             // Pure fade out — tanpa slide
@@ -579,8 +494,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         pageName.setVisibility(View.GONE);
         pageSettings.setVisibility(View.GONE);
         pagePlaylists.setVisibility(View.GONE);
-        if (pageEpgSource != null) pageEpgSource.setVisibility(View.GONE);
-        if (pageEpg != null) pageEpg.setVisibility(View.GONE);
 
         // Add to history
         if (pageHistory.isEmpty() || !pageHistory.get(pageHistory.size() - 1).equals(page)) {
@@ -616,17 +529,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 restoreAllPlaylistMenus();
                 rebuildPlaylistList();
                 break;
-            case "epg_source":
-                if (pageEpgSource != null) pageEpgSource.setVisibility(View.VISIBLE);
-                break;
-            case "epg":
-                if (pageEpg != null) {
-                    pageEpg.setVisibility(View.VISIBLE);
-                    String savedEpg = EpgManager.get(this).getEpgUrl();
-                    if (!savedEpg.isEmpty() && etEpgUrl != null)
-                        etEpgUrl.setText(savedEpg);
-                }
-                break;
+            // case "epg_source" / "epg" dihapus
         }
     }
 
@@ -655,12 +558,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         // Reset exit button ke normal setelah dialog
         if (btnSettingsExit != null)
             btnSettingsExit.setBackgroundResource(R.drawable.bg_exit_btn_normal);
-        new android.app.AlertDialog.Builder(this)
-            .setTitle("Keluar Aplikasi")
-            .setMessage("Yakin ingin keluar?")
-            .setPositiveButton("Keluar", (d, w) -> finish())
-            .setNegativeButton("Batal", null)
-            .show();
+        showStyledConfirm("Keluar Aplikasi", "Yakin ingin keluar?",
+            "Keluar", 0xFFFF5B04, this::finish);
     }
 
     /** Tap pertama X → orange; tap kedua → confirmExit */
@@ -836,51 +735,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         });
     }
 
-    private void handleEpgFileUri(android.net.Uri uri) {
-        if (isEpgFetching) return;
-        isEpgFetching = true;
-        showEpgLoadingCard();
 
-        executor.execute(() -> {
-            try {
-                java.io.InputStream rawIs = getContentResolver().openInputStream(uri);
-                if (rawIs == null) throw new Exception("Cannot open file");
-
-                // Auto-detect GZIP via magic bytes
-                java.io.PushbackInputStream pb = new java.io.PushbackInputStream(rawIs, 2);
-                byte[] sig = new byte[2];
-                int rd = pb.read(sig, 0, 2);
-                pb.unread(sig, 0, rd > 0 ? rd : 0);
-
-                java.io.InputStream is;
-                if (rd >= 2 && (sig[0] & 0xFF) == 0x1F && (sig[1] & 0xFF) == 0x8B) {
-                    is = new java.util.zip.GZIPInputStream(pb, 65536);
-                } else {
-                    is = new java.io.BufferedInputStream(pb, 65536);
-                }
-
-                // Streaming parse — aman untuk file 500MB
-                java.util.List<EpgEntry> entries = EpgParser.parse(is);
-                is.close();
-
-                EpgManager.get(MainActivity.this).loadEpg(entries);
-                EpgManager.get(MainActivity.this).setEpgUrl(uri.toString());
-                int count = entries.size();
-
-                handler.post(() -> {
-                    isEpgFetching = false;
-                    if (count > 0) showEpgSuccessCard(count);
-                    else showEpgErrorCard();
-                });
-            } catch (Exception e) {
-                android.util.Log.e("EPG", "handleEpgFileUri: " + e.getMessage(), e);
-                handler.post(() -> {
-                    isEpgFetching = false;
-                    showEpgErrorCard();
-                });
-            }
-        });
-    }
     // ===== SAVE PLAYLIST =====
 
     private void saveName() {
@@ -1026,69 +881,284 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         });
     }
 
+
+    // ─────────────────────────────────────────────────────────────────
+    //  STYLED DIALOGS — sesuai tema apk (dark teal)
+    // ─────────────────────────────────────────────────────────────────
+
+    /** Dialog input teks bergaya apk */
+    private void showStyledInput(String title, String hint, String initialValue,
+                                 int inputType, java.util.function.Consumer<String> onSave) {
+        android.app.Dialog dlg = new android.app.Dialog(this);
+        dlg.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        if (dlg.getWindow() != null) {
+            dlg.getWindow().setBackgroundDrawable(
+                new android.graphics.drawable.ColorDrawable(0xCC0A1628));
+            dlg.getWindow().setLayout(
+                android.view.WindowManager.LayoutParams.MATCH_PARENT,
+                android.view.WindowManager.LayoutParams.MATCH_PARENT);
+            dlg.getWindow().setDimAmount(0f);
+            dlg.getWindow().setSoftInputMode(
+                android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        }
+
+        // Card tengah
+        android.widget.LinearLayout card = new android.widget.LinearLayout(this);
+        card.setOrientation(android.widget.LinearLayout.VERTICAL);
+        android.graphics.drawable.GradientDrawable cardBg = new android.graphics.drawable.GradientDrawable();
+        cardBg.setColor(0xFF16232A);
+        cardBg.setCornerRadius(dp(20));
+        card.setBackground(cardBg);
+        int cp = dp(24);
+        card.setPadding(cp, cp, cp, cp);
+
+        // Judul
+        android.widget.TextView tvTitle = new android.widget.TextView(this);
+        tvTitle.setText(title);
+        tvTitle.setTextColor(0xFFE4EEF0);
+        tvTitle.setTextSize(17f);
+        tvTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+        tvTitle.setPadding(0, 0, 0, dp(16));
+        card.addView(tvTitle);
+
+        // EditText
+        android.widget.EditText et = new android.widget.EditText(this);
+        et.setText(initialValue);
+        et.setSelection(et.getText().length());
+        et.setInputType(inputType);
+        et.setHint(hint);
+        et.setHintTextColor(0x60E4EEF0);
+        et.setTextColor(0xFFE4EEF0);
+        et.setTextSize(14f);
+        android.graphics.drawable.GradientDrawable etBg = new android.graphics.drawable.GradientDrawable();
+        etBg.setColor(0xFF0D303A);
+        etBg.setCornerRadius(dp(12));
+        etBg.setStroke(dp(1), 0xFF1E5060);
+        et.setBackground(etBg);
+        et.setPadding(dp(16), dp(14), dp(16), dp(14));
+        android.widget.LinearLayout.LayoutParams etLp =
+            new android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+        et.setLayoutParams(etLp);
+        card.addView(et);
+
+        // Spacer
+        android.view.View sp = new android.view.View(this);
+        sp.setLayoutParams(new android.widget.LinearLayout.LayoutParams(1, dp(20)));
+        card.addView(sp);
+
+        // Row tombol
+        android.widget.LinearLayout row = new android.widget.LinearLayout(this);
+        row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        android.widget.LinearLayout.LayoutParams rowLp =
+            new android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, dp(50));
+        row.setLayoutParams(rowLp);
+        row.setWeightSum(2f);
+
+        // Batal
+        android.widget.TextView btnBatal = new android.widget.TextView(this);
+        btnBatal.setText("Batal");
+        btnBatal.setGravity(android.view.Gravity.CENTER);
+        btnBatal.setTextColor(0x99E4EEF0);
+        btnBatal.setTextSize(14f);
+        android.graphics.drawable.GradientDrawable bgBatal = new android.graphics.drawable.GradientDrawable();
+        bgBatal.setColor(0x18E4EEF0);
+        bgBatal.setCornerRadius(dp(100));
+        btnBatal.setBackground(bgBatal);
+        android.widget.LinearLayout.LayoutParams lpBatal =
+            new android.widget.LinearLayout.LayoutParams(0,
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+        lpBatal.setMarginEnd(dp(8));
+        btnBatal.setLayoutParams(lpBatal);
+        btnBatal.setOnClickListener(v2 -> dlg.dismiss());
+        row.addView(btnBatal);
+
+        // Simpan
+        android.widget.TextView btnSimpan = new android.widget.TextView(this);
+        btnSimpan.setText("Simpan");
+        btnSimpan.setGravity(android.view.Gravity.CENTER);
+        btnSimpan.setTextColor(0xFFFFFFFF);
+        btnSimpan.setTextSize(14f);
+        btnSimpan.setTypeface(null, android.graphics.Typeface.BOLD);
+        android.graphics.drawable.GradientDrawable bgSimpan = new android.graphics.drawable.GradientDrawable();
+        bgSimpan.setColor(0xFF075056);
+        bgSimpan.setCornerRadius(dp(100));
+        btnSimpan.setBackground(bgSimpan);
+        btnSimpan.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+            0, android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1f));
+        btnSimpan.setOnClickListener(v2 -> {
+            String val = et.getText().toString().trim();
+            dlg.dismiss();
+            onSave.accept(val);
+        });
+        row.addView(btnSimpan);
+        card.addView(row);
+
+        // Wrapper dengan margin horizontal
+        android.widget.FrameLayout wrap = new android.widget.FrameLayout(this);
+        wrap.setLayoutParams(new android.widget.FrameLayout.LayoutParams(
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
+            android.view.Gravity.CENTER));
+        int m = dp(28);
+        android.widget.FrameLayout.LayoutParams cardLp =
+            new android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT);
+        cardLp.setMargins(m, 0, m, 0);
+        card.setLayoutParams(cardLp);
+        wrap.addView(card);
+
+        dlg.setContentView(wrap);
+        dlg.show();
+        et.requestFocus();
+    }
+
+    /** Dialog konfirmasi bergaya apk */
+    private void showStyledConfirm(String title, String message,
+                                   String actionLabel, int actionColor, Runnable onConfirm) {
+        android.app.Dialog dlg = new android.app.Dialog(this);
+        dlg.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        if (dlg.getWindow() != null) {
+            dlg.getWindow().setBackgroundDrawable(
+                new android.graphics.drawable.ColorDrawable(0xCC0A1628));
+            dlg.getWindow().setLayout(
+                android.view.WindowManager.LayoutParams.MATCH_PARENT,
+                android.view.WindowManager.LayoutParams.MATCH_PARENT);
+            dlg.getWindow().setDimAmount(0f);
+        }
+
+        android.widget.LinearLayout card = new android.widget.LinearLayout(this);
+        card.setOrientation(android.widget.LinearLayout.VERTICAL);
+        android.graphics.drawable.GradientDrawable cardBg = new android.graphics.drawable.GradientDrawable();
+        cardBg.setColor(0xFF16232A);
+        cardBg.setCornerRadius(dp(20));
+        card.setBackground(cardBg);
+        int cp = dp(24);
+        card.setPadding(cp, cp, cp, cp);
+
+        android.widget.TextView tvTitle = new android.widget.TextView(this);
+        tvTitle.setText(title);
+        tvTitle.setTextColor(0xFFE4EEF0);
+        tvTitle.setTextSize(17f);
+        tvTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+        tvTitle.setPadding(0, 0, 0, dp(10));
+        card.addView(tvTitle);
+
+        if (message != null && !message.isEmpty()) {
+            android.widget.TextView tvMsg = new android.widget.TextView(this);
+            tvMsg.setText(message);
+            tvMsg.setTextColor(0x99E4EEF0);
+            tvMsg.setTextSize(14f);
+            tvMsg.setPadding(0, 0, 0, dp(20));
+            card.addView(tvMsg);
+        }
+
+        // Divider
+        android.view.View div = new android.view.View(this);
+        div.setBackgroundColor(0x20E4EEF0);
+        div.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+            android.widget.LinearLayout.LayoutParams.MATCH_PARENT, dp(1)));
+        div.setPadding(0, 0, 0, dp(16));
+        card.addView(div);
+        android.view.View spacer = new android.view.View(this);
+        spacer.setLayoutParams(new android.widget.LinearLayout.LayoutParams(1, dp(16)));
+        card.addView(spacer);
+
+        android.widget.LinearLayout row = new android.widget.LinearLayout(this);
+        row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        row.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+            android.widget.LinearLayout.LayoutParams.MATCH_PARENT, dp(50)));
+        row.setWeightSum(2f);
+
+        android.widget.TextView btnBatal = new android.widget.TextView(this);
+        btnBatal.setText("Batal");
+        btnBatal.setGravity(android.view.Gravity.CENTER);
+        btnBatal.setTextColor(0x99E4EEF0);
+        btnBatal.setTextSize(14f);
+        android.graphics.drawable.GradientDrawable bgBatal = new android.graphics.drawable.GradientDrawable();
+        bgBatal.setColor(0x18E4EEF0);
+        bgBatal.setCornerRadius(dp(100));
+        btnBatal.setBackground(bgBatal);
+        android.widget.LinearLayout.LayoutParams lpBatal =
+            new android.widget.LinearLayout.LayoutParams(0,
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1f);
+        lpBatal.setMarginEnd(dp(8));
+        btnBatal.setLayoutParams(lpBatal);
+        btnBatal.setOnClickListener(v2 -> dlg.dismiss());
+        row.addView(btnBatal);
+
+        android.widget.TextView btnAction = new android.widget.TextView(this);
+        btnAction.setText(actionLabel);
+        btnAction.setGravity(android.view.Gravity.CENTER);
+        btnAction.setTextColor(0xFFFFFFFF);
+        btnAction.setTextSize(14f);
+        btnAction.setTypeface(null, android.graphics.Typeface.BOLD);
+        android.graphics.drawable.GradientDrawable bgAction = new android.graphics.drawable.GradientDrawable();
+        bgAction.setColor(actionColor);
+        bgAction.setCornerRadius(dp(100));
+        btnAction.setBackground(bgAction);
+        btnAction.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+            0, android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1f));
+        btnAction.setOnClickListener(v2 -> { dlg.dismiss(); onConfirm.run(); });
+        row.addView(btnAction);
+        card.addView(row);
+
+        android.widget.FrameLayout wrap = new android.widget.FrameLayout(this);
+        wrap.setLayoutParams(new android.widget.FrameLayout.LayoutParams(
+            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
+            android.view.Gravity.CENTER));
+        int m = dp(28);
+        android.widget.FrameLayout.LayoutParams cardLp =
+            new android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT);
+        cardLp.setMargins(m, 0, m, 0);
+        card.setLayoutParams(cardLp);
+        wrap.addView(card);
+
+        dlg.setContentView(wrap);
+        dlg.show();
+    }
+
     /** Dialog edit nama playlist */
     private void showEditNameDialog(int idx) {
         Playlist pl = playlists.get(idx);
-        android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this);
-        b.setTitle("Edit Nama");
-
-        final android.widget.EditText et = new android.widget.EditText(this);
-        et.setText(pl.name);
-        et.selectAll();
-        et.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
-        int pad = (int)(16 * getResources().getDisplayMetrics().density);
-        et.setPadding(pad, pad, pad, pad);
-        b.setView(et);
-
-        b.setPositiveButton("Simpan", (d, w) -> {
-            String name = et.getText().toString().trim();
-            if (!name.isEmpty()) {
-                pl.name = name;
-                prefs.savePlaylists(playlists);
-                rebuildPlaylistList();
-                updateSettingsPlaylistName();
-            }
-        });
-        b.setNegativeButton("Batal", null);
-        b.show();
+        showStyledInput("Edit Nama Playlist", "Nama playlist...", pl.name,
+            android.text.InputType.TYPE_CLASS_TEXT, name -> {
+                if (!name.isEmpty()) {
+                    pl.name = name;
+                    prefs.savePlaylists(playlists);
+                    rebuildPlaylistList();
+                    updateSettingsPlaylistName();
+                }
+            });
     }
 
     /** Dialog edit URL playlist */
     private void showEditUrlDialog(int idx) {
         Playlist pl = playlists.get(idx);
-        android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this);
-        b.setTitle("Edit URL");
-
-        final android.widget.EditText et = new android.widget.EditText(this);
-        et.setText(pl.url != null ? pl.url : "");
-        et.selectAll();
-        et.setInputType(android.text.InputType.TYPE_CLASS_TEXT
-                | android.text.InputType.TYPE_TEXT_VARIATION_URI);
-        int pad = (int)(16 * getResources().getDisplayMetrics().density);
-        et.setPadding(pad, pad, pad, pad);
-        b.setView(et);
-
-        b.setPositiveButton("Simpan", (d, w) -> {
-            String url = et.getText().toString().trim();
-            if (!url.isEmpty()) {
-                pl.url = url;
-                pl.type = (url.startsWith("http://") || url.startsWith("https://"))
-                        ? "url" : "file";
-                prefs.savePlaylists(playlists);
-                rebuildPlaylistList();
-            }
-        });
-        b.setNegativeButton("Batal", null);
-        b.show();
+        showStyledInput("Edit URL Playlist", "https://...", pl.url != null ? pl.url : "",
+            android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_URI,
+            url -> {
+                if (!url.isEmpty()) {
+                    pl.url = url;
+                    pl.type = (url.startsWith("http://") || url.startsWith("https://"))
+                            ? "url" : "file";
+                    prefs.savePlaylists(playlists);
+                    rebuildPlaylistList();
+                }
+            });
     }
 
     /** Konfirmasi hapus playlist */
     private void showDeleteConfirm(int idx) {
         Playlist pl = playlists.get(idx);
-        new android.app.AlertDialog.Builder(this)
-            .setTitle("Hapus Playlist?")
-            .setMessage(pl.name + " akan dihapus permanen.")
-            .setPositiveButton("Hapus", (d, w) -> {
+        showStyledConfirm("Hapus Playlist?", pl.name + " akan dihapus permanen.",
+            "Hapus", 0xFFC0392B, () -> {
                 playlists.remove(idx);
                 if (currentPlaylistIdx >= playlists.size())
                     currentPlaylistIdx = Math.max(0, playlists.size() - 1);
@@ -1097,9 +1167,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 rebuildPlaylistList();
                 updateSettingsPlaylistName();
                 if (playlists.isEmpty()) showPage("welcome");
-            })
-            .setNegativeButton("Batal", null)
-            .show();
+            });
     }
 
     /** 2x-tap menu style untuk panel bawah playlist page */
@@ -1618,7 +1686,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     /** Reset semua menu ke state normal */
     private void resetAllSettingsMenus() {
-        for (String key : new String[]{"start", "playlists", "epg"}) {
+        for (String key : new String[]{"start", "playlists"}) {
             View b = getMenuBtn(key);
             if (b != null) {
                 b.setBackgroundResource(R.drawable.bg_settings_menu_normal);
@@ -1631,7 +1699,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         switch (key) {
             case "start":     return btnStartWatch;
             case "playlists": return btnGoPlaylists;
-            case "epg":       return btnEpg;
+
         }
         return null;
     }
@@ -1643,8 +1711,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 labelId = R.id.tv_start_label; iconId = R.id.ic_start_play; break;
             case "playlists":
                 labelId = R.id.tv_playlist_label; iconId = R.id.ic_playlist_play; break;
-            case "epg":
-                labelId = R.id.tv_epg_label; iconId = R.id.ic_epg_play; break;
+
             default: return;
         }
         android.widget.TextView lbl = pageSettings != null ? pageSettings.findViewById(labelId) : null;
@@ -1694,205 +1761,28 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             case "playlists":
                 showPageWithTransition("playlists");
                 break;
-            case "epg":
-                showEpgDialog();
-                break;
+
         }
     }
 
-    /** Buka halaman pilihan sumber EPG */
-    private void showEpgDialog() {
-        showPageWithTransition("epg_source");
-    }
+
+
 
         // ===================================================================
     // ===================== EPG FETCH & ANIMATION =======================
     // ===================================================================
 
-    private void fetchEpg() {
-        if (isEpgFetching) return;
-        String url = etEpgUrl != null ? etEpgUrl.getText().toString().trim() : "";
-        if (url.isEmpty()) {
-            android.widget.Toast.makeText(this, "Masukkan URL EPG terlebih dahulu", android.widget.Toast.LENGTH_SHORT).show();
-            return;
-        }
-        if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            showEpgErrorCard(); return;
-        }
-        try { new java.net.URL(url).toURI(); } catch (Exception e) { showEpgErrorCard(); return; }
 
-        isEpgFetching = true;
-        EpgManager.get(this).setEpgUrl(url);
-        showEpgLoadingCard();
 
-        executor.execute(() -> {
-            try {
-                okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
-                        .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                        .readTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
-                        .build();
-                okhttp3.Request req = new okhttp3.Request.Builder().url(url).build();
-                okhttp3.Response resp = client.newCall(req).execute();
-                if (!resp.isSuccessful()) throw new java.io.IOException("HTTP " + resp.code());
-                String body = resp.body().string();
 
-                // Parse XMLTV di background thread
-                java.util.List<EpgEntry> entries = EpgParser.parse(body);
-                EpgManager.get(MainActivity.this).loadEpg(entries);
-                int count = entries.size();
 
-                handler.post(() -> {
-                    isEpgFetching = false;
-                    if (count > 0) showEpgSuccessCard(count);
-                    else showEpgErrorCard();
-                });
-            } catch (Exception e) {
-                handler.post(() -> {
-                    isEpgFetching = false;
-                    showEpgErrorCard();
-                });
-            }
-        });
-    }
 
-    private void showEpgLoadingCard() {
-        if (loadingOverlay == null) return;
-        // Sembunyikan card playlist, tampilkan card EPG
-        if (cardLoading  != null) cardLoading.setVisibility(View.GONE);
-        if (cardSuccess  != null) cardSuccess.setVisibility(View.GONE);
-        if (cardError    != null) cardError.setVisibility(View.GONE);
-        cardEpgLoading.setVisibility(View.VISIBLE);
-        cardEpgLoading.setAlpha(0f);
-        cardEpgSuccess.setVisibility(View.GONE);
-        cardEpgError.setVisibility(View.GONE);
 
-        loadingOverlay.setAlpha(0f);
-        loadingOverlay.setVisibility(View.VISIBLE);
-        loadingOverlay.animate().alpha(1f).setDuration(250).withEndAction(() -> {
-            cardEpgLoading.animate().alpha(1f).setDuration(300).start();
-        }).start();
 
-        startEpgDotsAnimation();
-        startEpgProgressAnimation();
-    }
 
-    private void startEpgDotsAnimation() {
-        epgDotsCount = 0;
-        if (epgDotsRunnable != null) epgDotsHandler.removeCallbacks(epgDotsRunnable);
-        epgDotsRunnable = new Runnable() {
-            @Override public void run() {
-                epgDotsCount = (epgDotsCount + 1) % 4;
-                String dots = epgDotsCount == 0 ? "" : epgDotsCount == 1 ? "." : epgDotsCount == 2 ? ".." : "...";
-                if (tvEpgLoadingLabel != null) tvEpgLoadingLabel.setText("+ Loading EPG" + dots);
-                epgDotsHandler.postDelayed(this, 500);
-            }
-        };
-        epgDotsHandler.postDelayed(epgDotsRunnable, 500);
-    }
 
-    private void startEpgProgressAnimation() {
-        if (epgProgressFill == null) return;
-        epgProgressFill.post(() -> {
-            int trackW = ((android.view.View) epgProgressFill.getParent()).getWidth();
-            if (trackW == 0) trackW = 600;
-            final int target = (int)(trackW * 0.75f);
-            epgProgressAnimator = android.animation.ValueAnimator.ofInt(0, target);
-            epgProgressAnimator.setDuration(8000);
-            epgProgressAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(0.5f));
-            epgProgressAnimator.addUpdateListener(a -> {
-                if (epgProgressFill != null) {
-                    android.view.ViewGroup.LayoutParams lp = epgProgressFill.getLayoutParams();
-                    lp.width = (int) a.getAnimatedValue();
-                    epgProgressFill.setLayoutParams(lp);
-                }
-            });
-            epgProgressAnimator.start();
 
-            // Counter prog count 0 → estimasi
-            epgCounterAnimator = android.animation.ValueAnimator.ofInt(0, 50000);
-            epgCounterAnimator.setDuration(90000);
-            epgCounterAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
-            epgCounterAnimator.addUpdateListener(a -> {
-                if (tvEpgProgCount != null)
-                    tvEpgProgCount.setText(a.getAnimatedValue() + " Prog");
-            });
-            epgCounterAnimator.start();
-        });
-    }
 
-    private void showEpgSuccessCard(int count) {
-        if (epgDotsRunnable != null) epgDotsHandler.removeCallbacks(epgDotsRunnable);
-        if (epgProgressAnimator != null) epgProgressAnimator.cancel();
-        if (epgCounterAnimator != null) epgCounterAnimator.cancel();
-
-        // Animasi progress ke 100%
-        if (epgProgressFill != null) {
-            epgProgressFill.post(() -> {
-                int trackW = ((android.view.View) epgProgressFill.getParent()).getWidth();
-                if (trackW == 0) trackW = 600;
-                android.animation.ValueAnimator anim = android.animation.ValueAnimator.ofInt(
-                        epgProgressFill.getLayoutParams().width, trackW);
-                anim.setDuration(1200);
-                anim.setInterpolator(new android.view.animation.DecelerateInterpolator(1.5f));
-                anim.addUpdateListener(a -> {
-                    android.view.ViewGroup.LayoutParams lp = epgProgressFill.getLayoutParams();
-                    lp.width = (int) a.getAnimatedValue();
-                    epgProgressFill.setLayoutParams(lp);
-                });
-                anim.start();
-            });
-        }
-        if (tvEpgProgCount != null) tvEpgProgCount.setText(count + " Prog");
-        if (tvEpgSuccessMsg != null) tvEpgSuccessMsg.setText(count + " programmes imported.");
-
-        handler.postDelayed(() -> {
-            cardEpgLoading.animate().alpha(0f).setDuration(250).withEndAction(() -> {
-                cardEpgLoading.setVisibility(View.GONE);
-                cardEpgSuccess.setAlpha(0f);
-                cardEpgSuccess.setVisibility(View.VISIBLE);
-                cardEpgSuccess.animate().alpha(1f).setDuration(350).start();
-            }).start();
-        }, 1400);
-
-        handler.postDelayed(() -> {
-            loadingOverlay.animate().alpha(0f).setDuration(300).withEndAction(() -> {
-                loadingOverlay.setVisibility(View.GONE);
-                cardEpgLoading.setVisibility(View.GONE);
-                cardEpgSuccess.setVisibility(View.GONE);
-                cardEpgError.setVisibility(View.GONE);
-                // Kembali ke settings
-                showPageWithTransition("settings");
-            }).start();
-        }, 4000);
-    }
-
-    private void showEpgErrorCard() {
-        if (epgDotsRunnable != null) epgDotsHandler.removeCallbacks(epgDotsRunnable);
-        if (epgProgressAnimator != null) epgProgressAnimator.cancel();
-        if (epgCounterAnimator != null) epgCounterAnimator.cancel();
-        isEpgFetching = false;
-
-        if (!loadingOverlay.isShown()) {
-            // Error sebelum loading overlay muncul (validasi URL)
-            loadingOverlay.setAlpha(0f);
-            loadingOverlay.setVisibility(View.VISIBLE);
-            loadingOverlay.animate().alpha(1f).setDuration(200).start();
-        }
-        cardEpgLoading.setVisibility(View.GONE);
-        cardEpgSuccess.setVisibility(View.GONE);
-        cardEpgError.setAlpha(0f);
-        cardEpgError.setVisibility(View.VISIBLE);
-        cardEpgError.animate().alpha(1f).setDuration(300).start();
-
-        handler.postDelayed(() -> {
-            loadingOverlay.animate().alpha(0f).setDuration(300).withEndAction(() -> {
-                loadingOverlay.setVisibility(View.GONE);
-                cardEpgLoading.setVisibility(View.GONE);
-                cardEpgSuccess.setVisibility(View.GONE);
-                cardEpgError.setVisibility(View.GONE);
-            }).start();
-        }, 2500);
-    }
 
         /** Simpan playlist otomatis tanpa meminta nama — nama diambil dari URL atau auto-generate */
     private void autoSavePlaylist() {
