@@ -1,1 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_dark">#0a1628</color>
+    <color name="bg_card">#112244</color>
+    <color name="bg_card2">#162a50</color>
+    <color name="accent">#c8851a</color>
+    <color name="accent2">#e09820</color>
+    <color name="text_white">#ffffff</color>
+    <color name="text_muted">#8aaad4</color>
+    <color name="text_desc">#ccd6ec</color>
+    <color name="divider">#14ffffff</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
 
+    <!-- Welcome screen baru -->
+    <color name="welcome_bg">#E4EEF0</color>
+    <color name="welcome_dark">#16232A</color>
+    <color name="welcome_btn">#075056</color>
+    <color name="welcome_btn_pressed">#FF5B04</color>
+</resources>
