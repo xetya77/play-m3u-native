@@ -1087,7 +1087,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         Playlist pl = playlists.get(idx);
         new android.app.AlertDialog.Builder(this)
             .setTitle("Hapus Playlist?")
-            .setMessage(""" + pl.name + "" akan dihapus permanen.")
+            .setMessage(pl.name + " akan dihapus permanen.")
             .setPositiveButton("Hapus", (d, w) -> {
                 playlists.remove(idx);
                 if (currentPlaylistIdx >= playlists.size())
