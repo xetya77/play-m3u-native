@@ -500,7 +500,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         }
         if (epgSourceFileItem != null) {
             epgSourceFileItem.setOnClickListener(v -> {
-                showPage("settings"); // tutup dulu
+                // Langsung buka file picker tanpa pindah halaman dulu
+                // handleEpgFileUri akan menangani overlay loading
                 if (epgFilePickerLauncher != null)
                     epgFilePickerLauncher.launch("*/*");
             });
@@ -861,20 +862,33 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private void handleEpgFileUri(android.net.Uri uri) {
         if (isEpgFetching) return;
         isEpgFetching = true;
+        // Tampilkan loading overlay SEBELUM memulai executor
         showEpgLoadingCard();
 
         executor.execute(() -> {
             try {
-                java.io.InputStream is = getContentResolver().openInputStream(uri);
-                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is));
-                StringBuilder sb = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) sb.append(line).append("\n");
-                reader.close();
+                java.io.InputStream rawIs = getContentResolver().openInputStream(uri);
+                if (rawIs == null) throw new Exception("Cannot open file");
 
-                java.util.List<EpgEntry> entries = EpgParser.parse(sb.toString());
+                // Auto-detect GZIP via magic bytes
+                java.io.PushbackInputStream pb = new java.io.PushbackInputStream(rawIs, 2);
+                byte[] sig = new byte[2];
+                int rd = pb.read(sig, 0, 2);
+                pb.unread(sig, 0, rd > 0 ? rd : 0);
+
+                java.io.InputStream is;
+                if (rd >= 2 && (sig[0] & 0xFF) == 0x1F && (sig[1] & 0xFF) == 0x8B) {
+                    // File GZIP — wrap dengan GZIPInputStream
+                    is = new java.util.zip.GZIPInputStream(pb, 65536);
+                } else {
+                    is = new java.io.BufferedInputStream(pb, 65536);
+                }
+
+                // Streaming parse — tidak ada StringBuilder, aman untuk file 500MB
+                java.util.List<EpgEntry> entries = EpgParser.parse(is);
+                is.close();
+
                 EpgManager.get(MainActivity.this).loadEpg(entries);
-                // Simpan path URI sebagai referensi (opsional)
                 EpgManager.get(MainActivity.this).setEpgUrl(uri.toString());
                 int count = entries.size();
 
@@ -884,6 +898,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                     else showEpgErrorCard();
                 });
             } catch (Exception e) {
+                android.util.Log.e("EPG", "handleEpgFileUri error: " + e.getMessage(), e);
                 handler.post(() -> {
                     isEpgFetching = false;
                     showEpgErrorCard();
@@ -983,32 +998,12 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             tvName.setTextColor(isActive ? 0xFFFF5B04 : 0xFFE4EEF0);
 
             // ── Edit Nama ──────────────────────────────────────────────────
-            applyMenuPressedStyle(btnEditName);
             btnEditName.setOnClickListener(v -> showEditNameDialog(idx));
 
             // ── Edit URL ───────────────────────────────────────────────────
-            applyMenuPressedStyle(btnEditUrl);
             btnEditUrl.setOnClickListener(v -> showEditUrlDialog(idx));
 
-            // ── Hapus ──────────────────────────────────────────────────────
-            btnDelete.setOnTouchListener((v, event) -> {
-                switch (event.getAction()) {
-                    case android.view.MotionEvent.ACTION_DOWN:
-                        v.setBackgroundResource(R.drawable.bg_settings_menu_pressed);
-                        ((TextView) v).setTextColor(0xFFFFFFFF);
-                        break;
-                    case android.view.MotionEvent.ACTION_UP:
-                        v.setBackgroundResource(R.drawable.bg_settings_menu_normal);
-                        ((TextView) v).setTextColor(0xFFFF5B04);
-                        v.performClick();
-                        break;
-                    case android.view.MotionEvent.ACTION_CANCEL:
-                        v.setBackgroundResource(R.drawable.bg_settings_menu_normal);
-                        ((TextView) v).setTextColor(0xFFFF5B04);
-                        break;
-                }
-                return true;
-            });
+            // ── Hapus ──────────────────────────────────────────
             btnDelete.setOnClickListener(v -> showDeleteConfirm(idx));
 
             playlistListContainer.addView(item);
@@ -1094,38 +1089,17 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     private String playlistSelectedMenu = null;
 
     private void setupPlaylistMenuButton(android.view.View btn, String key) {
-        btn.setOnTouchListener((v, event) -> {
-            switch (event.getAction()) {
-                case android.view.MotionEvent.ACTION_DOWN:
-                    if (key.equals(playlistSelectedMenu)) {
-                        v.setBackgroundResource(R.drawable.bg_settings_menu_pressed);
-                        getMenuLabelInPlaylist(v).setTextColor(0xFFFFFFFF);
-                        getMenuIconInPlaylist(v).setVisibility(android.view.View.VISIBLE);
-                    } else {
-                        v.setBackgroundResource(R.drawable.bg_settings_menu_selected);
-                        getMenuLabelInPlaylist(v).setTextColor(0xFF16232A);
-                        getMenuIconInPlaylist(v).setVisibility(android.view.View.VISIBLE);
-                    }
-                    break;
-                case android.view.MotionEvent.ACTION_UP:
-                    v.performClick();
-                    break;
-                case android.view.MotionEvent.ACTION_CANCEL:
-                    restorePlaylistMenu(v, key);
-                    break;
-            }
-            return true;
-        });
+        // Hanya OnClickListener — tidak ada OnTouchListener agar tidak ada double-fire
         btn.setOnClickListener(v -> {
             if (key.equals(playlistSelectedMenu)) {
-                // 2nd tap — execute
+                // 2nd tap — execute langsung
                 playlistSelectedMenu = null;
                 restoreAllPlaylistMenus();
                 executePlaylistMenu(key);
             } else {
-                // 1st tap — highlight
+                // 1st tap — set highlight, reset yang lain
+                if (playlistSelectedMenu != null) restoreAllPlaylistMenus();
                 playlistSelectedMenu = key;
-                restoreAllPlaylistMenus();
                 v.setBackgroundResource(R.drawable.bg_settings_menu_selected);
                 getMenuLabelInPlaylist(v).setTextColor(0xFF16232A);
                 getMenuIconInPlaylist(v).setVisibility(android.view.View.VISIBLE);
@@ -1347,6 +1321,12 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         wrap.addView(root);
 
         dialog.setContentView(wrap);
+        if (dialog.getWindow() != null) {
+            // Pastikan dialog lebar penuh agar margin benar
+            dialog.getWindow().setLayout(
+                android.view.WindowManager.LayoutParams.MATCH_PARENT,
+                android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        }
         dialog.show();
         et.requestFocus();
         if (dialog.getWindow() != null)
@@ -2042,8 +2022,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             if (trackW == 0) trackW = 600;
             final int target = (int)(trackW * 0.75f);
             epgProgressAnimator = android.animation.ValueAnimator.ofInt(0, target);
-            epgProgressAnimator.setDuration(8000);
-            epgProgressAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(0.5f));
+            epgProgressAnimator.setDuration(180000); // 3 menit untuk file 500MB
+            epgProgressAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(0.3f));
             epgProgressAnimator.addUpdateListener(a -> {
                 if (epgProgressFill != null) {
                     android.view.ViewGroup.LayoutParams lp = epgProgressFill.getLayoutParams();
@@ -2053,13 +2033,14 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             });
             epgProgressAnimator.start();
 
-            // Counter prog count 0 → estimasi
-            epgCounterAnimator = android.animation.ValueAnimator.ofInt(0, 50000);
-            epgCounterAnimator.setDuration(90000);
-            epgCounterAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
+            // Counter prog count 0 → estimasi besar untuk file 500MB
+            epgCounterAnimator = android.animation.ValueAnimator.ofInt(0, 500000);
+            epgCounterAnimator.setDuration(180000); // 3 menit estimasi
+            epgCounterAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator(0.3f));
             epgCounterAnimator.addUpdateListener(a -> {
-                if (tvEpgProgCount != null)
-                    tvEpgProgCount.setText(a.getAnimatedValue() + " Prog");
+                int v = (int) a.getAnimatedValue();
+                String label = v >= 1000 ? (v / 1000) + "K Prog" : v + " Prog";
+                if (tvEpgProgCount != null) tvEpgProgCount.setText(label);
             });
             epgCounterAnimator.start();
         });
