@@ -111,6 +111,7 @@ public class PlayerActivity extends Activity {
 
     private Handler handler = new Handler(Looper.getMainLooper());
     private Runnable chInfoHideRunnable, numClearRunnable, swipeHintHideRunnable;
+    private Runnable clockRunnable, bitrateRunnable, dominoRunnable, epgRefreshRunnable;
     private int dominoPhase = 0;
     private long lastTapTime = 0;
 

@@ -151,6 +151,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     // ===== STATE =====
     private List<String> pageHistory = new ArrayList<>();
+    private View currentVisible = null;
     private List<Playlist> playlists = new ArrayList<>();
     private int currentPlaylistIdx = 0;
 
@@ -463,6 +464,9 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 uri -> {
                     if (uri != null) handleFileUri(uri);
                 });
+    }
+
+    private void showPageWithTransition(String page) {
         final android.view.View outView = currentVisible;
         if (outView != null) {
             // Pure fade out — tanpa slide
