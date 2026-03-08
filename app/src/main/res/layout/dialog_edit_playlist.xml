@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_edit_dialog"
+    android:padding="28dp">
+
+    <TextView
+        android:id="@+id/tv_edit_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Edit Playlist"
+        android:textColor="#ffffff"
+        android:textSize="20sp"
+        android:fontFamily="@font/inter_bold"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:id="@+id/tv_edit_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ubah nama playlist"
+        android:textColor="#8aaad4"
+        android:textSize="13sp"
+        android:fontFamily="@font/inter_medium"
+        android:layout_marginBottom="24dp"/>
+
+    <EditText
+        android:id="@+id/et_edit_value"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:hint="Masukkan nilai baru..."
+        android:textColorHint="#3a5580"
+        android:textColor="#ffffff"
+        android:textSize="15sp"
+        android:fontFamily="@font/inter_medium"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:background="@drawable/bg_input"
+        android:singleLine="true"
+        android:layout_marginBottom="24dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <TextView
+            android:id="@+id/btn_edit_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="46dp"
+            android:gravity="center"
+            android:text="Batal"
+            android:textColor="#8aaad4"
+            android:textSize="14sp"
+            android:fontFamily="@font/inter_medium"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:focusable="true"
+            android:clickable="true"/>
+
+        <TextView
+            android:id="@+id/btn_edit_save"
+            android:layout_width="wrap_content"
+            android:layout_height="46dp"
+            android:gravity="center"
+            android:text="Simpan"
+            android:textColor="#16232A"
+            android:textSize="14sp"
+            android:fontFamily="@font/inter_bold"
+            android:textStyle="bold"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:background="@drawable/bg_btn_add_pl"
+            android:focusable="true"
+            android:clickable="true"
+            android:layout_marginStart="8dp"/>
+    </LinearLayout>
+</LinearLayout>
