@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_edit_dialog"
+    android:padding="28dp">
+
+    <!-- Judul -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Keluar Aplikasi"
+        android:textColor="#E4EEF0"
+        android:textSize="20sp"
+        android:fontFamily="@font/inter_bold"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
+
+    <!-- Pesan -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Yakin ingin keluar?"
+        android:textColor="#8AACB0"
+        android:textSize="14sp"
+        android:fontFamily="@font/inter_medium"
+        android:layout_marginBottom="28dp"/>
+
+    <!-- Tombol -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <!-- Batal -->
+        <TextView
+            android:id="@+id/btn_exit_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:gravity="center"
+            android:text="Batal"
+            android:textColor="#8AACB0"
+            android:textSize="14sp"
+            android:fontFamily="@font/inter_medium"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:focusable="true"
+            android:clickable="true"/>
+
+        <!-- Keluar — Blaze Orange -->
+        <TextView
+            android:id="@+id/btn_exit_confirm"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:gravity="center"
+            android:text="Keluar"
+            android:textColor="#16232A"
+            android:textSize="14sp"
+            android:fontFamily="@font/inter_bold"
+            android:textStyle="bold"
+            android:paddingStart="28dp"
+            android:paddingEnd="28dp"
+            android:background="@drawable/bg_btn_add_pl"
+            android:focusable="true"
+            android:clickable="true"
+            android:layout_marginStart="8dp"/>
+    </LinearLayout>
+
+</LinearLayout>
