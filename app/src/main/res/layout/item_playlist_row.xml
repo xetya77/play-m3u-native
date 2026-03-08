@@ -1,29 +1,165 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/playlist_card_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingLeft="24dp"
-    android:paddingRight="24dp"
-    android:paddingTop="22dp"
-    android:paddingBottom="22dp"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginBottom="10dp"
+    android:background="@drawable/bg_playlist_card"
+    android:padding="18dp"
     android:focusable="true"
-    android:clickable="true"
-    android:background="@drawable/selector_settings_item">
+    android:clickable="true">
 
-    <TextView
-        android:id="@+id/tv_pl_name"
+    <!-- Baris atas: Nomor + Nama + badge AKTIF -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/text_white"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="4dp"/>
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="10dp">
 
-    <TextView
-        android:id="@+id/tv_pl_info"
+        <TextView
+            android:id="@+id/tv_pl_number"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:gravity="center"
+            android:text="1"
+            android:textColor="#c8851a"
+            android:textSize="14sp"
+            android:fontFamily="@font/inter_bold"
+            android:textStyle="bold"
+            android:background="@drawable/bg_badge_info"
+            android:layout_marginEnd="12dp"/>
+
+        <TextView
+            android:id="@+id/tv_pl_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="#ffffff"
+            android:textSize="16sp"
+            android:fontFamily="@font/inter_bold"
+            android:textStyle="bold"
+            android:singleLine="true"
+            android:ellipsize="end"/>
+
+        <TextView
+            android:id="@+id/tv_pl_badge_active"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="AKTIF"
+            android:textColor="#ffffff"
+            android:textSize="10sp"
+            android:fontFamily="@font/inter_bold"
+            android:textStyle="bold"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:background="@drawable/bg_badge_active"
+            android:visibility="gone"
+            android:layout_marginStart="8dp"/>
+    </LinearLayout>
+
+    <!-- Info: jumlah channel + status -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#b3ffffff"
-        android:textSize="13sp"/>
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:id="@+id/tv_pl_ch_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0 channel"
+            android:textColor="#8aaad4"
+            android:textSize="13sp"
+            android:fontFamily="@font/inter_medium"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="  •  "
+            android:textColor="#c8851a"
+            android:textSize="13sp"/>
+
+        <TextView
+            android:id="@+id/tv_pl_auto_update"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Auto update"
+            android:textColor="#8aaad4"
+            android:textSize="13sp"
+            android:fontFamily="@font/inter_medium"/>
+    </LinearLayout>
+
+    <!-- URL preview -->
+    <TextView
+        android:id="@+id/tv_pl_url_preview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="http://..."
+        android:textColor="#3a5580"
+        android:textSize="11sp"
+        android:fontFamily="@font/inter_regular"
+        android:singleLine="true"
+        android:ellipsize="middle"
+        android:layout_marginBottom="14dp"/>
+
+    <!-- Tombol aksi -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="3">
+
+        <TextView
+            android:id="@+id/btn_pl_edit_name"
+            android:layout_width="0dp"
+            android:layout_height="38dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Nama"
+            android:textColor="#8aaad4"
+            android:textSize="12sp"
+            android:fontFamily="@font/inter_medium"
+            android:background="@drawable/selector_btn_action"
+            android:focusable="true"
+            android:clickable="true"
+            android:layout_marginEnd="6dp"/>
+
+        <TextView
+            android:id="@+id/btn_pl_edit_url"
+            android:layout_width="0dp"
+            android:layout_height="38dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="URL"
+            android:textColor="#8aaad4"
+            android:textSize="12sp"
+            android:fontFamily="@font/inter_medium"
+            android:background="@drawable/selector_btn_action"
+            android:focusable="true"
+            android:clickable="true"
+            android:layout_marginEnd="6dp"/>
+
+        <TextView
+            android:id="@+id/btn_pl_delete"
+            android:layout_width="0dp"
+            android:layout_height="38dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Hapus"
+            android:textColor="#cc5555"
+            android:textSize="12sp"
+            android:fontFamily="@font/inter_medium"
+            android:background="@drawable/selector_btn_delete"
+            android:focusable="true"
+            android:clickable="true"/>
+    </LinearLayout>
+
 </LinearLayout>
