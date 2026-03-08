@@ -1056,6 +1056,45 @@ and try again"
         <TextView android:id="@+id/tv_update_success"
             android:layout_width="0dp" android:layout_height="0dp"
             android:visibility="gone"/>
+        <!-- Hidden stubs for page_settings and settings views -->
+        <LinearLayout android:id="@+id/page_settings"
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:orientation="vertical" android:visibility="gone">
+            <TextView android:id="@+id/tv_settings_playlist_name"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:visibility="gone"/>
+            <View android:id="@+id/btn_settings_exit"
+                android:layout_width="0dp" android:layout_height="0dp"
+                android:visibility="gone"/>
+            <View android:id="@+id/btn_start_watch"
+                android:layout_width="0dp" android:layout_height="0dp"
+                android:visibility="gone"/>
+            <View android:id="@+id/btn_go_playlists"
+                android:layout_width="0dp" android:layout_height="0dp"
+                android:visibility="gone"/>
+            <View android:id="@+id/btn_add_playlist_settings"
+                android:layout_width="0dp" android:layout_height="0dp"
+                android:visibility="gone"/>
+            <TextView android:id="@+id/tv_start_label"
+                android:layout_width="0dp" android:layout_height="0dp"
+                android:visibility="gone"/>
+            <ImageView android:id="@+id/ic_start_play"
+                android:layout_width="0dp" android:layout_height="0dp"
+                android:visibility="gone"/>
+            <TextView android:id="@+id/tv_playlist_label"
+                android:layout_width="0dp" android:layout_height="0dp"
+                android:visibility="gone"/>
+            <ImageView android:id="@+id/ic_playlist_play"
+                android:layout_width="0dp" android:layout_height="0dp"
+                android:visibility="gone"/>
+        </LinearLayout>
+        <!-- Hidden stubs for loading text views -->
+        <TextView android:id="@+id/tv_loading_text"
+            android:layout_width="0dp" android:layout_height="0dp"
+            android:visibility="gone"/>
+        <TextView android:id="@+id/tv_loading_sub"
+            android:layout_width="0dp" android:layout_height="0dp"
+            android:visibility="gone"/>
     </FrameLayout>
 
     <!-- ===== PLAYLIST SWITCHER MODAL (bottom-sheet) ===== -->
