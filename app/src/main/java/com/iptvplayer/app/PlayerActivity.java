@@ -225,31 +225,66 @@ public class PlayerActivity extends Activity {
     private void autoLoadEpgIfNeeded() {
         EpgManager mgr = EpgManager.get(this);
         if (mgr.isLoaded()) {
-            // Sudah ada data — langsung update EPG text channel aktif
+            // Data sudah ada — langsung refresh tampilan
             refreshEpgText();
             return;
         }
         String url = mgr.getEpgUrl();
         if (url == null || url.isEmpty()) return;
 
-        // Fetch di background tanpa UI loading
-        new Thread(() -> {
-            try {
-                okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
-                        .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                        .readTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
-                        .build();
-                okhttp3.Request req = new okhttp3.Request.Builder().url(url).build();
-                okhttp3.Response resp = client.newCall(req).execute();
-                if (resp.isSuccessful() && resp.body() != null) {
-                    String body = resp.body().string();
-                    java.util.List<EpgEntry> entries = EpgParser.parse(body);
+        // Pilih strategi load berdasarkan skema URL
+        if (url.startsWith("content://") || url.startsWith("file://")) {
+            // EPG dari file lokal — baca via ContentResolver (stream, tidak ke String)
+            new Thread(() -> {
+                try {
+                    android.net.Uri uri = android.net.Uri.parse(url);
+                    java.io.InputStream rawIs = getContentResolver().openInputStream(uri);
+                    if (rawIs == null) return;
+
+                    // Auto-detect GZIP
+                    java.io.PushbackInputStream pb = new java.io.PushbackInputStream(rawIs, 2);
+                    byte[] sig = new byte[2];
+                    int rd = pb.read(sig, 0, 2);
+                    pb.unread(sig, 0, rd > 0 ? rd : 0);
+                    java.io.InputStream is;
+                    if (rd >= 2 && (sig[0] & 0xFF) == 0x1F && (sig[1] & 0xFF) == 0x8B) {
+                        is = new java.util.zip.GZIPInputStream(pb, 65536);
+                    } else {
+                        is = new java.io.BufferedInputStream(pb, 65536);
+                    }
+
+                    java.util.List<EpgEntry> entries = EpgParser.parse(is);
+                    is.close();
                     mgr.loadEpg(entries);
-                    // Refresh EPG text di main thread setelah load selesai
                     handler.post(PlayerActivity.this::refreshEpgText);
+                } catch (Exception e) {
+                    android.util.Log.e("EPG", "autoLoad file error: " + e.getMessage());
                 }
-            } catch (Exception ignored) {}
-        }).start();
+            }).start();
+        } else {
+            // EPG dari URL HTTP — fetch via OkHttp
+            new Thread(() -> {
+                try {
+                    okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
+                            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                            .readTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
+                            .build();
+                    okhttp3.Request req = new okhttp3.Request.Builder().url(url).build();
+                    okhttp3.Response resp = client.newCall(req).execute();
+                    if (resp.isSuccessful() && resp.body() != null) {
+                        // Untuk URL, gunakan InputStream agar tidak OOM jika file besar
+                        java.io.InputStream is =
+                            new java.io.BufferedInputStream(resp.body().byteStream(), 65536);
+                        java.util.List<EpgEntry> entries = EpgParser.parse(is);
+                        is.close();
+                        mgr.loadEpg(entries);
+                        handler.post(PlayerActivity.this::refreshEpgText);
+                    }
+                } catch (Exception e) {
+                    android.util.Log.e("EPG", "autoLoad http error: " + e.getMessage());
+                }
+            }).start();
+        }
     }
 
     /** Update tv_ch_epg untuk channel yang sedang aktif */
@@ -407,10 +442,11 @@ public class PlayerActivity extends Activity {
         epgRefreshRunnable = new Runnable() {
             @Override public void run() {
                 refreshEpgText();
-                handler.postDelayed(this, 60_000);
+                handler.postDelayed(this, 30_000); // setiap 30 detik
             }
         };
-        handler.postDelayed(epgRefreshRunnable, 60_000);
+        // Refresh segera setelah 2 detik (beri waktu EPG load)
+        handler.postDelayed(epgRefreshRunnable, 2_000);
     }
     private String getErrorMessage(androidx.media3.common.PlaybackException e) {
         int c = e.errorCode;
