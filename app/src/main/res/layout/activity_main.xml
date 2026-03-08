@@ -980,26 +980,22 @@ this playlist?"
                 android:fontFamily="@font/inter_bold"
                 android:textStyle="bold"/>
 
-            <!-- Tombol X kembali ke settings -->
-            <FrameLayout
+            <!-- Tombol ← kembali ke settings — tidak pakai circle agar tidak terpotong -->
+            <TextView
                 android:id="@+id/btn_playlists_back"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
-                android:background="@drawable/bg_exit_btn_normal"
+                android:text="&#8592;"
+                android:textColor="#E4EEF0"
+                android:textSize="30sp"
+                android:fontFamily="@font/inter_bold"
+                android:paddingStart="20dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
                 android:clickable="true"
-                android:focusable="true">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:text="✕"
-                    android:textColor="#E4EEF0"
-                    android:textSize="16sp"
-                    android:fontFamily="@font/inter_bold"
-                    android:textStyle="bold"/>
-            </FrameLayout>
+                android:focusable="true"/>
         </RelativeLayout>
 
         <!-- ── Daftar playlist (scrollable) ── -->
