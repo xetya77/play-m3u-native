@@ -268,7 +268,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         sourceFileItem.setOnClickListener(v -> selectSource("file"));
 
         // URL
-        btnUrlBack.setOnClickListener(v -> showPage("source"));
+        btnUrlBack.setOnClickListener(v -> showPageWithTransition("source"));
         btnUrlClear.setOnClickListener(v -> { etUrl.setText(""); tvChCountUrl.setText(""); pendingChannels.clear(); });
         btnUrlNext.setOnClickListener(v -> fetchPlaylist());
         btnUrlNext.setOnTouchListener((v, event) -> {
@@ -319,7 +319,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         });
 
         // Name
-        btnNameBack.setOnClickListener(v -> showPage("url"));
+        btnNameBack.setOnClickListener(v -> showPageWithTransition("url"));
         btnNameClear.setOnClickListener(v -> etName.setText(""));
         // Done button: default #E4EEF0 teks gelap; saat ada teks → bg #FF5B04 teks putih
         btnNameSave.setOnClickListener(v -> saveName());
@@ -401,11 +401,11 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnAddPlaylistSettings.setOnClickListener(v -> showPageWithTransition("source"));
 
         // Playlists
-        btnPlaylistsBack.setOnClickListener(v -> showPage("settings"));
+        btnPlaylistsBack.setOnClickListener(v -> showPageWithTransition("settings"));
         btnUpdatePlaylist.setOnClickListener(v -> updateCurrentPlaylist());
         btnSwitchPlaylist.setOnClickListener(v -> showSwitcher());
         if (btnAddPlaylistMain != null) {
-            btnAddPlaylistMain.setOnClickListener(v -> showPage("source"));
+            btnAddPlaylistMain.setOnClickListener(v -> showPageWithTransition("source"));
         }
 
         // Switcher
@@ -687,7 +687,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                     pendingChannels = channels;
                     tvChCountUrl.setText(channels.size() + " channel ditemukan");
                     if (!channels.isEmpty()) {
-                        showPage("name");
+                        showPageWithTransition("name");
                     } else {
                         Toast.makeText(this, "Tidak ada channel ditemukan", Toast.LENGTH_LONG).show();
                     }
@@ -723,7 +723,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         etName.setText("");
         pendingUrl = "";
 
-        showPage("settings");
+        showPageWithTransition("settings");
         updateSettingsPlaylistName();
     }
 
@@ -848,7 +848,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                     prefs.savePlaylists(playlists);
                     prefs.setCurrentPlaylistIndex(currentPlaylistIdx);
                     rebuildPlaylistList();
-                    if (playlists.isEmpty()) showPage("welcome");
+                    if (playlists.isEmpty()) showPageWithTransition("welcome");
                 });
             }
         }
