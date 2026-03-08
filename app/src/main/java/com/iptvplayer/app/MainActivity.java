@@ -520,12 +520,22 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         // Reset exit button ke normal setelah dialog
         if (btnSettingsExit != null)
             btnSettingsExit.setBackgroundResource(R.drawable.bg_exit_btn_normal);
-        new android.app.AlertDialog.Builder(this)
-            .setTitle("Keluar Aplikasi")
-            .setMessage("Yakin ingin keluar?")
-            .setPositiveButton("Keluar", (d, w) -> finish())
-            .setNegativeButton("Batal", null)
-            .show();
+
+        // Custom dialog pakai palette
+        android.view.View dialogView = getLayoutInflater().inflate(R.layout.dialog_exit, null);
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setView(dialogView);
+        android.app.AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(
+                new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+        dialog.show();
+
+        TextView btnCancel  = dialogView.findViewById(R.id.btn_exit_cancel);
+        TextView btnConfirm = dialogView.findViewById(R.id.btn_exit_confirm);
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        btnConfirm.setOnClickListener(v -> { dialog.dismiss(); finish(); });
     }
 
     /** Tap pertama X → orange; tap kedua → confirmExit */
