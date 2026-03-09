@@ -9,9 +9,17 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <!-- YouTube Player via WebView — loadDataWithBaseURL dengan origin youtube.com -->
+    <!-- YouTube Player via WebView — buka langsung m.youtube.com tanpa embed -->
     <WebView
         android:id="@+id/youtube_webview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:background="#000000"/>
+
+    <!-- Container untuk fullscreen video dari WebChromeClient.onShowCustomView -->
+    <FrameLayout
+        android:id="@+id/youtube_fullscreen_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
