@@ -539,7 +539,13 @@ public class PlayerActivity extends AppCompatActivity {
                 conn.setRequestProperty("Accept", "application/json");
 
                 java.io.InputStream is = conn.getInputStream();
-                String json = new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                // Baca InputStream manual — kompatibel dengan minSdk 21
+                // readAllBytes() baru ada di API 33, tidak bisa dipakai
+                java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                byte[] buf = new byte[4096];
+                int n;
+                while ((n = is.read(buf)) != -1) baos.write(buf, 0, n);
+                String json = baos.toString("UTF-8");
                 is.close();
 
                 // Parse video IDs dari JSON
