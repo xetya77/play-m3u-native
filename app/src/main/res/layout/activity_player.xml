@@ -9,25 +9,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <!-- YouTube Player — hanya tampil saat channel adalah URL YouTube -->
-    <com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
-        android:id="@+id/youtube_player_view"
+    <!-- YouTube Player via WebView — loadDataWithBaseURL dengan origin youtube.com -->
+    <WebView
+        android:id="@+id/youtube_webview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone"
         android:background="#000000"/>
-
-    <!-- Overlay transparan di atas YouTubePlayerView khusus untuk intercept swipe.
-         Hanya aktif saat YouTube mode. Area kiri/kanan/atas/bawah 80dp
-         sebagai zona swipe — tengah dibiarkan pass-through via clickable=false -->
-    <View
-        android:id="@+id/youtube_swipe_overlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"
-        android:background="#00000000"
-        android:clickable="false"
-        android:focusable="false"/>
 
     <View android:id="@+id/black_flash"
         android:layout_width="match_parent" android:layout_height="match_parent"
