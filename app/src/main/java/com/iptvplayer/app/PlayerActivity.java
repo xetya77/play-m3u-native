@@ -377,10 +377,12 @@ public class PlayerActivity extends AppCompatActivity {
         ws.setSupportZoom(false);
         ws.setBuiltInZoomControls(false);
         ws.setDisplayZoomControls(false);
-        // User agent TV/desktop — YouTube IFrame API bekerja lebih baik
+        // WAJIB: Pakai UA desktop Chrome — YouTube blokir embed jika deteksi WebView
+        // Ciri WebView yang diblokir: ada "; wv" di UA atau tidak ada "Chrome/"
+        // Desktop UA = tidak ada "wv", tidak ada "Mobile" → YouTube izinkan embed
         ws.setUserAgentString(
-            "Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 " +
-            "(KHTML, like Gecko) Chrome/120.0.6099.230 Mobile Safari/537.36");
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+            "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
 
         youtubeWebView.setWebChromeClient(new WebChromeClient() {
             @Override
@@ -414,38 +416,37 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(android.webkit.WebView view, String url) {
                 if (!isYouTubeMode) return;
-                // Inject setelah halaman embed load:
-                // 1. Sembunyikan semua UI YouTube (header, kontrol, watermark)
-                // 2. Unmute video dan play
-                view.postDelayed(() -> {
-                    view.evaluateJavascript(
-                        "(function(){" +
-                        // Sembunyikan semua UI YouTube
-                        "  var s=document.createElement('style');" +
-                        "  s.textContent='" +
-                        "    .ytp-chrome-top,.ytp-chrome-bottom,.ytp-gradient-top," +
-                        "    .ytp-gradient-bottom,.ytp-watermark,.ytp-title-text," +
-                        "    .ytp-share-button,.ytp-watch-later-button," +
-                        "    .ytp-pause-overlay,.ytp-endscreen-content," +
-                        "    .ytp-ce-element,.iv-branding{display:none!important}" +
-                        "    video{width:100%!important;height:100%!important;object-fit:contain}" +
-                        "    body,html{margin:0;padding:0;overflow:hidden;background:#000}" +
-                        "  ';" +
-                        "  document.head.appendChild(s);" +
-                        // Unmute dan play
-                        "  var v=document.querySelector('video');" +
-                        "  if(v){v.muted=false;v.volume=1;v.play();}" +
-                        "})();", null);
-                }, 800);
-                // Coba lagi setelah 2s untuk memastikan elemen sudah ada
-                view.postDelayed(() -> {
-                    if (!isYouTubeMode) return;
-                    view.evaluateJavascript(
-                        "(function(){" +
-                        "  var v=document.querySelector('video');" +
-                        "  if(v&&v.muted){v.muted=false;v.volume=1;v.play();}" +
-                        "})();", null);
-                }, 2500);
+                if (url == null || url.equals("about:blank")) return;
+                // JS yang diinjek setelah embed YouTube load:
+                // - Sembunyikan SEMUA elemen UI YouTube via CSS
+                // - Paksa video fill layar penuh
+                // - Unmute dan play
+                // Dijalankan 3x (800ms, 1500ms, 3000ms) karena YouTube render bertahap
+                String js =
+                    "(function(){" +
+                    "try{" +
+                    // Inject CSS — sembunyikan semua UI YouTube
+                    "var s=document.getElementById('__hide_yt_ui__');" +
+                    "if(!s){s=document.createElement('style');s.id='__hide_yt_ui__';document.head.appendChild(s);}" +
+                    "s.textContent=" +
+                    "'.ytp-chrome-top,.ytp-chrome-bottom,.ytp-gradient-top,.ytp-gradient-bottom," +
+                    ".ytp-watermark,.ytp-title,.ytp-share-button,.ytp-watch-later-button," +
+                    ".ytp-pause-overlay,.ytp-endscreen-content,.ytp-ce-element,.iv-branding," +
+                    ".ytp-spinner,.ytp-bezel-wrapper,.ytp-contextmenu," +
+                    ".annotation,#movie_player .ytp-chrome-controls{display:none!important}" +
+                    "body,html,#movie_player,.html5-video-container{margin:0!important;padding:0!important;" +
+                    "background:#000!important;overflow:hidden!important;width:100%!important;height:100%!important}" +
+                    "video{position:fixed!important;top:0!important;left:0!important;" +
+                    "width:100%!important;height:100%!important;object-fit:contain!important;z-index:1!important}';" +
+                    // Unmute + play video element langsung
+                    "var v=document.querySelector('video');" +
+                    "if(v){v.muted=false;v.volume=1;" +
+                    "if(v.paused)v.play().catch(function(){});}" +
+                    "}catch(e){}" +
+                    "})();";
+                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(js, null); }, 800);
+                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(js, null); }, 1800);
+                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(js, null); }, 3500);
             }
         });
     }
@@ -465,13 +466,15 @@ public class PlayerActivity extends AppCompatActivity {
         youtubeWebView.setVisibility(View.VISIBLE);
         videoLoading.setVisibility(View.GONE);
 
-        // Embed URL langsung — ini yang paling reliable di Android WebView
-        // controls=0: sembunyikan kontrol | autoplay=1 | mute=0
-        // playsinline=1: tidak auto-fullscreen native (kita handle sendiri)
-        // rel=0: tidak tampil video terkait | iv_load_policy=3: sembunyikan anotasi
+        // Desktop UA + embed URL = YouTube tidak blokir (tidak kena error 152/153)
+        // controls=0: sembunyikan kontrol bawaan YouTube
+        // disablekb=1: remote/keyboard tidak bisa kontrol player langsung
+        // fs=0: sembunyikan tombol fullscreen YouTube (kita sudah fullscreen sendiri)
+        // playsinline=0: biarkan video fill container
         String url = "https://www.youtube.com/embed/" + videoId
-                + "?autoplay=1&controls=0&mute=0&playsinline=1"
-                + "&rel=0&iv_load_policy=3&modestbranding=1&enablejsapi=1";
+                + "?autoplay=1&controls=0&mute=0&playsinline=0"
+                + "&rel=0&iv_load_policy=3&modestbranding=1"
+                + "&fs=0&disablekb=1";
         youtubeWebView.loadUrl(url);
     }
 
