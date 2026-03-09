@@ -5,6 +5,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -54,6 +58,8 @@ public class PlayerActivity extends Activity {
     // Player
     private PlayerView playerView;
     private ExoPlayer player;
+    private WebView youtubeWebView;
+    private boolean isYouTubeMode = false;
     private View videoLoading, blackFlash;
     private View bar1, bar2, bar3;
     private TextView tvLoadingMsg;
@@ -151,6 +157,8 @@ public class PlayerActivity extends Activity {
 
     private void bindViews() {
         playerView        = findViewById(R.id.player_view);
+        youtubeWebView    = findViewById(R.id.youtube_webview);
+        setupYouTubeWebView();
         videoLoading      = findViewById(R.id.video_loading);
         blackFlash        = findViewById(R.id.black_flash);
         bar1              = findViewById(R.id.bar1);
@@ -317,6 +325,105 @@ public class PlayerActivity extends Activity {
         if (bar1 != null) bar1.animate().alpha(p[0]).setDuration(180).start();
         if (bar2 != null) bar2.animate().alpha(p[1]).setDuration(180).start();
         if (bar3 != null) bar3.animate().alpha(p[2]).setDuration(180).start();
+    }
+
+    // ===== YOUTUBE WEBVIEW =====
+    @android.annotation.SuppressLint("SetJavaScriptEnabled")
+    private void setupYouTubeWebView() {
+        WebSettings ws = youtubeWebView.getSettings();
+        ws.setJavaScriptEnabled(true);
+        ws.setDomStorageEnabled(true);
+        ws.setMediaPlaybackRequiresUserGesture(false);
+        ws.setLoadWithOverviewMode(true);
+        ws.setUseWideViewPort(true);
+        ws.setBuiltInZoomControls(false);
+        ws.setDisplayZoomControls(false);
+        ws.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        youtubeWebView.setWebViewClient(new WebViewClient() {
+            @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                // Tetap di WebView, jangan buka browser eksternal
+                return false;
+            }
+        });
+        youtubeWebView.setWebChromeClient(new WebChromeClient());
+        // Touch di WebView tetap bisa trigger gesture channel
+        youtubeWebView.setOnTouchListener((v, e) -> {
+            gestureDetector.onTouchEvent(e);
+            return false; // false = WebView tetap proses touch-nya (scroll, tap)
+        });
+    }
+
+    /** Ekstrak YouTube video/live ID dari berbagai format URL YouTube */
+    private String extractYouTubeId(String url) {
+        // Format: youtu.be/ID
+        java.util.regex.Matcher m = java.util.regex.Pattern
+            .compile("youtu\.be/([a-zA-Z0-9_-]{11})")
+            .matcher(url);
+        if (m.find()) return m.group(1);
+
+        // Format: youtube.com/watch?v=ID
+        m = java.util.regex.Pattern
+            .compile("[?&]v=([a-zA-Z0-9_-]{11})")
+            .matcher(url);
+        if (m.find()) return m.group(1);
+
+        // Format: youtube.com/live/ID atau /embed/ID atau /shorts/ID
+        m = java.util.regex.Pattern
+            .compile("youtube\.com/(?:live|embed|shorts)/([a-zA-Z0-9_-]{11})")
+            .matcher(url);
+        if (m.find()) return m.group(1);
+
+        return null;
+    }
+
+    /** Cek apakah URL adalah YouTube */
+    private boolean isYouTubeUrl(String url) {
+        if (url == null) return false;
+        String lower = url.toLowerCase();
+        return (lower.contains("youtube.com") || lower.contains("youtu.be"))
+               && extractYouTubeId(url) != null;
+    }
+
+    /** Putar YouTube via IFrame API dalam WebView */
+    private void playYouTube(String videoId) {
+        isYouTubeMode = true;
+        // Sembunyikan ExoPlayer, tampilkan WebView
+        playerView.setVisibility(android.view.View.GONE);
+        youtubeWebView.setVisibility(android.view.View.VISIBLE);
+
+        String html = "<!DOCTYPE html><html><head>"
+            + "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+            + "<style>*{margin:0;padding:0;background:#000}"
+            + "html,body,#player{width:100%;height:100vh;overflow:hidden}</style>"
+            + "</head><body>"
+            + "<div id='player'></div>"
+            + "<script src='https://www.youtube.com/iframe_api'></script>"
+            + "<script>"
+            + "var player;"
+            + "function onYouTubeIframeAPIReady(){"
+            + "  player=new YT.Player('player',{"
+            + "    videoId:'" + videoId + "',"
+            + "    playerVars:{autoplay:1,controls:1,modestbranding:1,rel:0,fs:1,playsinline:1},"
+            + "    events:{onReady:function(e){e.target.playVideo();}}"
+            + "  });"
+            + "}"
+            + "</script></body></html>";
+
+        youtubeWebView.loadDataWithBaseURL(
+            "https://www.youtube.com", html, "text/html", "UTF-8", null);
+
+        // Sembunyikan loading — WebView handle sendiri
+        videoLoading.setVisibility(android.view.View.GONE);
+    }
+
+    /** Kembali ke mode ExoPlayer normal */
+    private void switchToExoMode() {
+        if (isYouTubeMode) {
+            isYouTubeMode = false;
+            youtubeWebView.setVisibility(android.view.View.GONE);
+            youtubeWebView.loadUrl("about:blank"); // Hentikan video YouTube
+            playerView.setVisibility(android.view.View.VISIBLE);
+        }
     }
 
     // ===== PLAYER =====
@@ -656,6 +763,21 @@ public class PlayerActivity extends Activity {
         videoLoading.setVisibility(View.VISIBLE);
         tvLoadingMsg.setText("Memuat...");
         updateChInfo(ch, idx);
+        // Cek YouTube dulu — jika ya, gunakan WebView bukan ExoPlayer
+        if (isYouTubeUrl(ch.url)) {
+            String videoId = extractYouTubeId(ch.url);
+            if (videoId != null) {
+                switchToExoMode(); // reset state dulu
+                playYouTube(videoId);
+                channelAdapter.setActiveIndex(idx);
+                showChInfo();
+                return;
+            }
+        }
+
+        // Bukan YouTube — pastikan ExoPlayer aktif
+        switchToExoMode();
+
         try {
             player.stop();
             String ua = (ch.userAgent != null && !ch.userAgent.isEmpty()) ? ch.userAgent
@@ -857,9 +979,9 @@ public class PlayerActivity extends Activity {
     }
 
     // ===== LIFECYCLE =====
-    @Override protected void onPause()  { super.onPause();  if (player != null) player.pause(); }
+    @Override protected void onPause()  { super.onPause();  if (player != null) player.pause(); if (youtubeWebView != null) youtubeWebView.onPause(); }
     @Override protected void onResume() {
-        super.onResume(); if (player != null) player.play();
+        super.onResume(); if (player != null) { if (!isYouTubeMode) player.play(); } if (youtubeWebView != null) youtubeWebView.onResume();
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
                 View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
@@ -868,6 +990,7 @@ public class PlayerActivity extends Activity {
     @Override protected void onDestroy() {
         super.onDestroy();
         if (player != null) { player.release(); player = null; }
+        if (youtubeWebView != null) { youtubeWebView.destroy(); youtubeWebView = null; }
         handler.removeCallbacksAndMessages(null);
     }
     @Override public void onBackPressed() {
