@@ -904,7 +904,6 @@ public class PlayerActivity extends AppCompatActivity {
 
     // ===== TV REMOTE =====
     @Override
-    @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         // Saat YouTube mode, YouTubePlayerView menyerap semua key event
         // — kita intercept dulu agar remote/keyboard tetap bisa ganti channel
