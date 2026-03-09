@@ -380,8 +380,9 @@ public class PlayerActivity extends AppCompatActivity {
         // WAJIB: Pakai UA desktop Chrome — YouTube blokir embed jika deteksi WebView
         // Ciri WebView yang diblokir: ada "; wv" di UA atau tidak ada "Chrome/"
         // Desktop UA = tidak ada "wv", tidak ada "Mobile" → YouTube izinkan embed
+        // youtube-nocookie.com tidak cek UA — pakai TV UA agar layout lebih bersih
         ws.setUserAgentString(
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+            "Mozilla/5.0 (Linux; Android 10; Android TV) AppleWebKit/537.36 " +
             "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
 
         youtubeWebView.setWebChromeClient(new WebChromeClient() {
@@ -471,10 +472,11 @@ public class PlayerActivity extends AppCompatActivity {
         // disablekb=1: remote/keyboard tidak bisa kontrol player langsung
         // fs=0: sembunyikan tombol fullscreen YouTube (kita sudah fullscreen sendiri)
         // playsinline=0: biarkan video fill container
-        String url = "https://www.youtube.com/embed/" + videoId
-                + "?autoplay=1&controls=0&mute=0&playsinline=0"
-                + "&rel=0&iv_load_policy=3&modestbranding=1"
-                + "&fs=0&disablekb=1";
+        // Pakai youtube-nocookie.com — sama persis seperti web MultiTube kamu
+        // Domain ini tidak cek origin/cookie → tidak kena error 152/153 di WebView
+        String url = "https://www.youtube-nocookie.com/embed/" + videoId
+                + "?autoplay=1&controls=0&mute=0&playsinline=1"
+                + "&rel=0&iv_load_policy=3&modestbranding=1&fs=0&disablekb=1";
         youtubeWebView.loadUrl(url);
     }
 
