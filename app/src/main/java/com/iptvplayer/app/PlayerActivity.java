@@ -423,14 +423,12 @@ public class PlayerActivity extends AppCompatActivity {
                 // - Paksa video fill layar penuh
                 // - Unmute dan play
                 // Dijalankan 3x (800ms, 1500ms, 3000ms) karena YouTube render bertahap
-                String js =
+                // CSS: sembunyikan semua UI YouTube
+                String cssJs =
                     "(function(){" +
-                    "try{" +
-                    // Inject CSS — sembunyikan semua UI YouTube
-                    "var s=document.getElementById('__hide_yt_ui__');" +
-                    "if(!s){s=document.createElement('style');s.id='__hide_yt_ui__';document.head.appendChild(s);}" +
-                    "s.textContent=" +
-                    "'.ytp-chrome-top,.ytp-chrome-bottom,.ytp-gradient-top,.ytp-gradient-bottom," +
+                    "var s=document.getElementById('__hyt__');" +
+                    "if(!s){s=document.createElement('style');s.id='__hyt__';document.head.appendChild(s);}" +
+                    "s.textContent='.ytp-chrome-top,.ytp-chrome-bottom,.ytp-gradient-top,.ytp-gradient-bottom," +
                     ".ytp-watermark,.ytp-title,.ytp-share-button,.ytp-watch-later-button," +
                     ".ytp-pause-overlay,.ytp-endscreen-content,.ytp-ce-element,.iv-branding," +
                     ".ytp-spinner,.ytp-bezel-wrapper,.ytp-contextmenu," +
@@ -439,15 +437,28 @@ public class PlayerActivity extends AppCompatActivity {
                     "background:#000!important;overflow:hidden!important;width:100%!important;height:100%!important}" +
                     "video{position:fixed!important;top:0!important;left:0!important;" +
                     "width:100%!important;height:100%!important;object-fit:contain!important;z-index:1!important}';" +
-                    // Unmute + play video element langsung
-                    "var v=document.querySelector('video');" +
-                    "if(v){v.muted=false;v.volume=1;" +
-                    "if(v.paused)v.play().catch(function(){});}" +
-                    "}catch(e){}" +
                     "})();";
-                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(js, null); }, 800);
-                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(js, null); }, 1800);
-                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(js, null); }, 3500);
+                // JS unmute: tunggu video benar-benar playing baru unmute
+                // Ini kunci agar tidak error 153 — autoplay mute dulu, lalu unmute via JS
+                String unmuteJs =
+                    "(function(){" +
+                    "var v=document.querySelector('video');" +
+                    "if(!v)return;" +
+                    "var doUnmute=function(){v.muted=false;v.volume=1;};" +
+                    "if(!v.paused&&!v.muted){return;}" + // sudah unmute, skip
+                    "if(!v.paused){doUnmute();return;}" + // sudah play, langsung unmute
+                    // Belum play — pasang event listener sekali
+                    "v.addEventListener('playing',function handler(){" +
+                    "v.removeEventListener('playing',handler);" +
+                    "doUnmute();" +
+                    "},{once:true});" +
+                    // Fallback: coba play dulu
+                    "v.play().then(function(){doUnmute();}).catch(function(){});" +
+                    "})();";
+                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(cssJs, null); }, 500);
+                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(unmuteJs, null); }, 1000);
+                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(cssJs + unmuteJs, null); }, 2500);
+                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(unmuteJs, null); }, 4000);
             }
         });
     }
@@ -472,10 +483,11 @@ public class PlayerActivity extends AppCompatActivity {
         // disablekb=1: remote/keyboard tidak bisa kontrol player langsung
         // fs=0: sembunyikan tombol fullscreen YouTube (kita sudah fullscreen sendiri)
         // playsinline=0: biarkan video fill container
-        // Pakai youtube-nocookie.com — sama persis seperti web MultiTube kamu
-        // Domain ini tidak cek origin/cookie → tidak kena error 152/153 di WebView
+        // WAJIB: mute=1 dulu agar autoplay berhasil di Android WebView
+        // (browser/WebView blokir autoplay dengan suara → error 153)
+        // Setelah video berjalan, JS di onPageFinished akan unmute otomatis
         String url = "https://www.youtube-nocookie.com/embed/" + videoId
-                + "?autoplay=1&controls=0&mute=0&playsinline=1"
+                + "?autoplay=1&controls=0&mute=1&playsinline=1"
                 + "&rel=0&iv_load_policy=3&modestbranding=1&fs=0&disablekb=1";
         youtubeWebView.loadUrl(url);
     }
