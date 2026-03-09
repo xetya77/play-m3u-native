@@ -572,8 +572,11 @@ public class PlayerActivity extends AppCompatActivity {
                 });
             } catch (Exception e) {
                 runOnUiThread(() -> {
-                    tvLoadingMsg.setText("Gagal memuat playlist");
+                    // Tampilkan error — jangan finish() atau balik ke settings
+                    isYouTubeMode = true;
+                    youtubeWebView.setVisibility(View.VISIBLE);
                     videoLoading.setVisibility(View.VISIBLE);
+                    tvLoadingMsg.setText("Gagal memuat playlist: " + e.getMessage());
                 });
             }
         }).start();
@@ -963,7 +966,10 @@ public class PlayerActivity extends AppCompatActivity {
             String videoId    = extractYouTubeId(ch.url);
 
             if (playlistId != null) {
-                // URL playlist → fetch daftar video via API lalu putar
+                // URL playlist → tampilkan loading, fetch via API, lalu putar
+                isYouTubeMode = true;
+                youtubeWebView.setVisibility(View.VISIBLE);
+                videoLoading.setVisibility(View.VISIBLE);
                 ytPlaylistId = playlistId;
                 ytPlaylistVideoIds.clear();
                 ytPlaylistCurrentIdx = 0;
