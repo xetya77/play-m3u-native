@@ -63,6 +63,11 @@ public class PlayerActivity extends AppCompatActivity {
     private ExoPlayer player;
     private WebView youtubeWebView;
     private boolean isYouTubeMode = false;
+    // Playlist YouTube
+    private static final String YT_API_KEY = "AIzaSyATLSrkqWdfkdzYN8hciMcQi9yYxcrL184";
+    private List<String> ytPlaylistVideoIds = new ArrayList<>();
+    private int ytPlaylistCurrentIdx = 0;
+    private String ytPlaylistId = null; // null = bukan playlist mode
     private View videoLoading, blackFlash;
     private View bar1, bar2, bar3;
     private TextView tvLoadingMsg;
@@ -357,12 +362,25 @@ public class PlayerActivity extends AppCompatActivity {
         return null;
     }
 
-    /** Cek apakah URL adalah YouTube */
+    /** Ekstrak playlist ID dari URL YouTube */
+    private String extractYouTubePlaylistId(String url) {
+        if (url == null) return null;
+        java.util.regex.Matcher m = java.util.regex.Pattern
+            .compile("[?&]list=([a-zA-Z0-9_-]+)")
+            .matcher(url);
+        return m.find() ? m.group(1) : null;
+    }
+
+    /** Cek apakah URL adalah YouTube (video atau playlist) */
     private boolean isYouTubeUrl(String url) {
         if (url == null) return false;
         String lower = url.toLowerCase();
-        return (lower.contains("youtube.com") || lower.contains("youtu.be"))
-               && extractYouTubeId(url) != null;
+        if (!lower.contains("youtube.com") && !lower.contains("youtu.be")) return false;
+        // Video biasa
+        if (extractYouTubeId(url) != null) return true;
+        // Playlist murni (tidak ada v=ID, hanya list=PL...)
+        if (lower.contains("playlist?list=") || lower.contains("&list=") || lower.contains("?list=")) return true;
+        return false;
     }
 
     /** Setup WebView sekali saat onCreate */
@@ -471,10 +489,21 @@ public class PlayerActivity extends AppCompatActivity {
                     "}catch(e){}" +
                     "})();";
 
+                // JS deteksi video selesai → otomatis next jika playlist mode
+                String endedJs =
+                    "(function(){" +
+                    "var v=document.querySelector('video');" +
+                    "if(!v||v.__ytEndedSet)return;" +
+                    "v.__ytEndedSet=true;" +
+                    "v.addEventListener('ended',function(){" +
+                    "window.AndroidInterface&&window.AndroidInterface.onVideoEnded();" +
+                    "});" +
+                    "})();";
+
                 // Inject bertahap karena YouTube render secara async
                 view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(js, null); }, 800);
-                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(js, null); }, 2000);
-                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(js, null); }, 4000);
+                view.postDelayed(() -> { if (isYouTubeMode) { view.evaluateJavascript(js, null); view.evaluateJavascript(endedJs, null); } }, 2000);
+                view.postDelayed(() -> { if (isYouTubeMode) { view.evaluateJavascript(js, null); view.evaluateJavascript(endedJs, null); } }, 4000);
             }
         });
     }
@@ -488,6 +517,78 @@ public class PlayerActivity extends AppCompatActivity {
      * Putar YouTube via embed URL langsung — tidak ada UI YouTube,
      * autoplay + unmute, tidak bisa di-pause dari layar.
      */
+    /**
+     * Fetch semua video ID dari playlist via YouTube Data API v3.
+     * pageToken = null untuk halaman pertama, lanjut recursif untuk halaman berikutnya.
+     */
+    private void fetchYouTubePlaylist(String playlistId, String pageToken) {
+        tvLoadingMsg.setText("Memuat playlist...");
+        videoLoading.setVisibility(View.VISIBLE);
+
+        String url = "https://www.googleapis.com/youtube/v3/playlistItems"
+            + "?part=contentDetails&maxResults=50&playlistId=" + playlistId
+            + "&key=" + YT_API_KEY
+            + (pageToken != null ? "&pageToken=" + pageToken : "");
+
+        new Thread(() -> {
+            try {
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection)
+                    new java.net.URL(url).openConnection();
+                conn.setConnectTimeout(10000);
+                conn.setReadTimeout(10000);
+                conn.setRequestProperty("Accept", "application/json");
+
+                java.io.InputStream is = conn.getInputStream();
+                String json = new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                is.close();
+
+                // Parse video IDs dari JSON
+                java.util.regex.Matcher m = java.util.regex.Pattern
+                    .compile(""videoId"\s*:\s*"([a-zA-Z0-9_-]{11})"")
+                    .matcher(json);
+                List<String> ids = new ArrayList<>();
+                while (m.find()) ids.add(m.group(1));
+
+                // Cek nextPageToken untuk halaman berikutnya
+                java.util.regex.Matcher np = java.util.regex.Pattern
+                    .compile(""nextPageToken"\s*:\s*"([^"]+)"")
+                    .matcher(json);
+                String nextToken = np.find() ? np.group(1) : null;
+
+                runOnUiThread(() -> {
+                    ytPlaylistVideoIds.addAll(ids);
+                    if (nextToken != null) {
+                        // Masih ada halaman berikutnya — fetch lagi
+                        fetchYouTubePlaylist(playlistId, nextToken);
+                    } else {
+                        // Semua video sudah terkumpul — putar dari awal
+                        if (!ytPlaylistVideoIds.isEmpty()) {
+                            ytPlaylistCurrentIdx = 0;
+                            playYouTube(ytPlaylistVideoIds.get(0));
+                        } else {
+                            tvLoadingMsg.setText("Playlist kosong atau tidak tersedia");
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    tvLoadingMsg.setText("Gagal memuat playlist");
+                    videoLoading.setVisibility(View.VISIBLE);
+                });
+            }
+        }).start();
+    }
+
+    /** Putar video berikutnya dalam playlist */
+    private void playNextYtPlaylistItem() {
+        if (ytPlaylistVideoIds.isEmpty()) return;
+        ytPlaylistCurrentIdx++;
+        if (ytPlaylistCurrentIdx >= ytPlaylistVideoIds.size()) ytPlaylistCurrentIdx = 0;
+        playYouTube(ytPlaylistVideoIds.get(ytPlaylistCurrentIdx));
+    }
+
+
+
     private void playYouTube(final String videoId) {
         isYouTubeMode = true;
         playerView.setVisibility(View.GONE);
@@ -853,16 +954,27 @@ public class PlayerActivity extends AppCompatActivity {
         updateChInfo(ch, idx);
         // Cek YouTube dulu — jika ya, gunakan WebView bukan ExoPlayer
         if (isYouTubeUrl(ch.url)) {
-            String videoId = extractYouTubeId(ch.url);
-            if (videoId != null) {
-                // Selalu stop ExoPlayer dulu sebelum masuk YouTube mode
-                player.stop();
-                playerView.setVisibility(View.GONE);
+            player.stop();
+            playerView.setVisibility(View.GONE);
+            channelAdapter.setActiveIndex(idx);
+            showChInfo();
+
+            String playlistId = extractYouTubePlaylistId(ch.url);
+            String videoId    = extractYouTubeId(ch.url);
+
+            if (playlistId != null) {
+                // URL playlist → fetch daftar video via API lalu putar
+                ytPlaylistId = playlistId;
+                ytPlaylistVideoIds.clear();
+                ytPlaylistCurrentIdx = 0;
+                fetchYouTubePlaylist(playlistId, null);
+            } else if (videoId != null) {
+                // Video biasa
+                ytPlaylistId = null;
+                ytPlaylistVideoIds.clear();
                 playYouTube(videoId);
-                channelAdapter.setActiveIndex(idx);
-                showChInfo();
-                return;
             }
+            return;
         }
 
         // Bukan YouTube — switch ke ExoPlayer (reset WebView jika sedang YouTube mode)
@@ -1055,13 +1167,10 @@ public class PlayerActivity extends AppCompatActivity {
                 }
                 return true;
             case KeyEvent.KEYCODE_DPAD_LEFT:
-                // Tekan 1x → buka daftar channel
-                // Tekan 2x (panel sudah buka) → buka kategori
                 if (!panelOpen && !categoryFullOpen)      openPanel();
                 else if (panelOpen && !categoryFullOpen)  openCategoryFull();
                 return true;
             case KeyEvent.KEYCODE_DPAD_RIGHT:
-                // Kanan = tutup/kembali
                 if (categoryFullOpen) closeCategoryFull();
                 else if (panelOpen)   hidePanel();
                 return true;
@@ -1147,6 +1256,16 @@ public class PlayerActivity extends AppCompatActivity {
                     youtubeWebView.setVisibility(View.GONE);
                     videoLoading.setVisibility(View.VISIBLE);
                     tvLoadingMsg.setText("Siaran tidak tersedia");
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void onVideoEnded() {
+            runOnUiThread(() -> {
+                // Playlist mode → otomatis lanjut ke video berikutnya
+                if (isYouTubeMode && !ytPlaylistVideoIds.isEmpty()) {
+                    playNextYtPlaylistItem();
                 }
             });
         }
