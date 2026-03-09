@@ -64,6 +64,7 @@ public class PlayerActivity extends AppCompatActivity {
     private boolean ytListenerAdded = false; // pastikan listener hanya ditambah sekali
     private View videoLoading, blackFlash;
     private View bar1, bar2, bar3;
+    private View youtubeSwipeOverlay;
     private TextView tvLoadingMsg;
 
     // Clock
@@ -164,6 +165,7 @@ public class PlayerActivity extends AppCompatActivity {
         videoLoading      = findViewById(R.id.video_loading);
         blackFlash        = findViewById(R.id.black_flash);
         bar1              = findViewById(R.id.bar1);
+        youtubeSwipeOverlay = findViewById(R.id.youtube_swipe_overlay);
         bar2              = findViewById(R.id.bar2);
         bar3              = findViewById(R.id.bar3);
         tvLoadingMsg      = findViewById(R.id.tv_loading_msg);
@@ -367,14 +369,8 @@ public class PlayerActivity extends AppCompatActivity {
         isYouTubeMode = true;
         playerView.setVisibility(View.GONE);
         youtubePlayerView.setVisibility(View.VISIBLE);
+        youtubeSwipeOverlay.setVisibility(View.VISIBLE);
         videoLoading.setVisibility(View.GONE);
-
-        // Forward touch ke gestureDetector agar swipe ganti channel tetap bisa
-        youtubePlayerView.setOnTouchListener((v, e) -> {
-            gestureDetector.onTouchEvent(e);
-            // return false agar YouTubePlayerView tetap bisa proses tap/kontrol
-            return false;
-        });
 
         if (activeYouTubePlayer != null) {
             // Player sudah siap — langsung load tanpa tambah listener baru
@@ -412,9 +408,9 @@ public class PlayerActivity extends AppCompatActivity {
             isYouTubeMode = false;
             if (activeYouTubePlayer != null) {
                 activeYouTubePlayer.pause();
-                // Tidak di-null — agar tidak perlu tambah listener baru saat balik ke YouTube
             }
             youtubePlayerView.setVisibility(View.GONE);
+            youtubeSwipeOverlay.setVisibility(View.GONE);
             playerView.setVisibility(View.VISIBLE);
         }
     }
@@ -907,6 +903,16 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     // ===== TV REMOTE =====
+    // Activity-level touch intercept — dijalankan SEBELUM view hierarchy (termasuk WebView internal YouTubePlayerView)
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (isYouTubeMode && !panelOpen && !categoryFullOpen) {
+            gestureDetector.onTouchEvent(event);
+            // Tetap pass event ke bawah agar kontrol YouTube bisa diklik
+        }
+        return super.dispatchTouchEvent(event);
+    }
+
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         // Saat YouTube mode, YouTubePlayerView menyerap semua key event
