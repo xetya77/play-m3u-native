@@ -380,10 +380,12 @@ public class PlayerActivity extends AppCompatActivity {
         // WAJIB: Pakai UA desktop Chrome — YouTube blokir embed jika deteksi WebView
         // Ciri WebView yang diblokir: ada "; wv" di UA atau tidak ada "Chrome/"
         // Desktop UA = tidak ada "wv", tidak ada "Mobile" → YouTube izinkan embed
-        // youtube-nocookie.com tidak cek UA — pakai TV UA agar layout lebih bersih
+        // WAJIB: Windows desktop Chrome UA
+        // YouTube blokir embed jika UA mengandung "Android", "wv", atau tidak ada "Chrome/"
+        // Desktop UA = paling aman, tidak pernah diblokir YouTube untuk embed
         ws.setUserAgentString(
-            "Mozilla/5.0 (Linux; Android 10; Android TV) AppleWebKit/537.36 " +
-            "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+            "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
 
         youtubeWebView.setWebChromeClient(new WebChromeClient() {
             @Override
