@@ -9,6 +9,14 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
+    <!-- YouTube WebView — hanya tampil saat channel adalah URL YouTube -->
+    <WebView
+        android:id="@+id/youtube_webview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:background="#000000"/>
+
     <View android:id="@+id/black_flash"
         android:layout_width="match_parent" android:layout_height="match_parent"
         android:background="@color/black" android:alpha="0" android:visibility="invisible"/>
