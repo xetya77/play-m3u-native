@@ -49,4 +49,7 @@ dependencies {
 
     // JSON
     implementation 'com.google.code.gson:gson:2.10.1'
+
+    // YouTube Player (AndroidYouTubePlayer - handles embed restrictions)
+    implementation 'com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0'
 }
