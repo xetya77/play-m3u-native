@@ -61,6 +61,7 @@ public class PlayerActivity extends AppCompatActivity {
     private YouTubePlayerView youtubePlayerView;
     private YouTubePlayer activeYouTubePlayer = null;
     private boolean isYouTubeMode = false;
+    private boolean ytListenerAdded = false; // pastikan listener hanya ditambah sekali
     private View videoLoading, blackFlash;
     private View bar1, bar2, bar3;
     private TextView tvLoadingMsg;
@@ -362,48 +363,47 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     /** Putar YouTube via AndroidYouTubePlayer */
-    private void playYouTube(final String videoId, final String originalUrl) {
+    private void playYouTube(final String videoId) {
         isYouTubeMode = true;
         playerView.setVisibility(View.GONE);
         youtubePlayerView.setVisibility(View.VISIBLE);
         videoLoading.setVisibility(View.GONE);
 
-        // Forward touch dari YouTubePlayerView ke gestureDetector agar swipe tetap bisa
+        // Forward touch ke gestureDetector agar swipe ganti channel tetap bisa
         youtubePlayerView.setOnTouchListener((v, e) -> {
             gestureDetector.onTouchEvent(e);
-            return false; // false = biarkan YouTubePlayerView juga proses touchnya
+            // return false agar YouTubePlayerView tetap bisa proses tap/kontrol
+            return false;
         });
 
         if (activeYouTubePlayer != null) {
+            // Player sudah siap — langsung load tanpa tambah listener baru
             activeYouTubePlayer.loadVideo(videoId, 0);
             return;
         }
 
-        youtubePlayerView.addYouTubePlayerListener(new AbstractYouTubePlayerListener() {
-            @Override
-            public void onReady(YouTubePlayer youTubePlayer) {
-                activeYouTubePlayer = youTubePlayer;
-                youTubePlayer.loadVideo(videoId, 0);
-            }
-
-            @Override
-            public void onError(YouTubePlayer youTubePlayer,
-                    com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerError error) {
-                // Video tidak bisa diembed (error 152 dll) — buka di YouTube app
-                switchToExoMode();
-                android.content.Intent intent = new android.content.Intent(
-                        android.content.Intent.ACTION_VIEW,
-                        android.net.Uri.parse(originalUrl));
-                intent.setPackage("com.google.android.youtube");
-                if (intent.resolveActivity(getPackageManager()) != null) {
-                    startActivity(intent);
-                } else {
-                    // YouTube app tidak ada — buka di browser
-                    intent.setPackage(null);
-                    startActivity(intent);
+        // Listener hanya ditambah SEKALI seumur hidup activity
+        if (!ytListenerAdded) {
+            ytListenerAdded = true;
+            youtubePlayerView.addYouTubePlayerListener(new AbstractYouTubePlayerListener() {
+                @Override
+                public void onReady(YouTubePlayer youTubePlayer) {
+                    activeYouTubePlayer = youTubePlayer;
+                    youTubePlayer.loadVideo(videoId, 0);
                 }
-            }
-        });
+
+                @Override
+                public void onError(YouTubePlayer youTubePlayer,
+                        com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerError error) {
+                    // Video tidak bisa diputar (embed diblokir, dll)
+                    // Tampilkan pesan saja — jangan lempar ke app lain
+                    runOnUiThread(() -> {
+                        videoLoading.setVisibility(View.VISIBLE);
+                        tvLoadingMsg.setText("Siaran tidak tersedia");
+                    });
+                }
+            });
+        }
     }
 
     /** Kembali ke mode ExoPlayer normal */
@@ -412,7 +412,7 @@ public class PlayerActivity extends AppCompatActivity {
             isYouTubeMode = false;
             if (activeYouTubePlayer != null) {
                 activeYouTubePlayer.pause();
-                activeYouTubePlayer = null; // reset agar listener fresh saat channel berikutnya
+                // Tidak di-null — agar tidak perlu tambah listener baru saat balik ke YouTube
             }
             youtubePlayerView.setVisibility(View.GONE);
             playerView.setVisibility(View.VISIBLE);
@@ -756,12 +756,16 @@ public class PlayerActivity extends AppCompatActivity {
         videoLoading.setVisibility(View.VISIBLE);
         tvLoadingMsg.setText("Memuat...");
         updateChInfo(ch, idx);
-        // Cek YouTube dulu — jika ya, gunakan WebView bukan ExoPlayer
+        // Cek YouTube dulu — jika ya, gunakan YouTubePlayer bukan ExoPlayer
         if (isYouTubeUrl(ch.url)) {
             String videoId = extractYouTubeId(ch.url);
             if (videoId != null) {
-                switchToExoMode(); // reset state dulu
-                playYouTube(videoId, ch.url);
+                // Kalau sedang di ExoPlayer mode, hentikan player dulu
+                if (!isYouTubeMode) {
+                    player.stop();
+                    playerView.setVisibility(View.GONE);
+                }
+                playYouTube(videoId);
                 channelAdapter.setActiveIndex(idx);
                 showChInfo();
                 return;
