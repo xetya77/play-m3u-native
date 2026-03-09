@@ -302,11 +302,13 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         });
         etUrl.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
-                // Fokus: bg terang, teks gelap
+                // Fokus: bg putih #E4EEF0, teks & hint gelap Mirage
                 etUrl.setTextColor(0xFF16232A);
+                etUrl.setHintTextColor(0x8016232A); // Mirage 50% opacity
             } else {
-                // Unfocus: bg gelap, teks terang #E4EEF0
+                // Unfocus: bg gelap Mirage, teks & hint terang Wild Sand
                 etUrl.setTextColor(0xFFE4EEF0);
+                etUrl.setHintTextColor(0x80E4EEF0); // Wild Sand 50% opacity
             }
         });
 
