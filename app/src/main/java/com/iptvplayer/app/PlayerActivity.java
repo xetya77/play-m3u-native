@@ -8,6 +8,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
+import android.webkit.JavascriptInterface;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -54,6 +55,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import androidx.appcompat.app.AppCompatActivity;
 
 @OptIn(markerClass = UnstableApi.class)
+@android.annotation.SuppressLint("SetJavaScriptEnabled")
 public class PlayerActivity extends AppCompatActivity {
 
     // Player
@@ -160,6 +162,7 @@ public class PlayerActivity extends AppCompatActivity {
         playerView        = findViewById(R.id.player_view);
         youtubeWebView         = findViewById(R.id.youtube_webview);
         youtubeFullscreenContainer = findViewById(R.id.youtube_fullscreen_container);
+        youtubeWebView.addJavascriptInterface(new YouTubeAndroidInterface(), "AndroidInterface");
         setupYouTubeWebView();
         videoLoading      = findViewById(R.id.video_loading);
         blackFlash        = findViewById(R.id.black_flash);
@@ -363,7 +366,6 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     /** Setup WebView sekali saat onCreate */
-    /** Setup WebView sekali saat onCreate */
     private void setupYouTubeWebView() {
         WebSettings ws = youtubeWebView.getSettings();
         ws.setJavaScriptEnabled(true);
@@ -375,7 +377,7 @@ public class PlayerActivity extends AppCompatActivity {
         ws.setSupportZoom(false);
         ws.setBuiltInZoomControls(false);
         ws.setDisplayZoomControls(false);
-        // User agent mobile biasa — agar YouTube sajikan mobile player
+        // User agent TV/desktop — YouTube IFrame API bekerja lebih baik
         ws.setUserAgentString(
             "Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 " +
             "(KHTML, like Gecko) Chrome/120.0.6099.230 Mobile Safari/537.36");
@@ -383,7 +385,6 @@ public class PlayerActivity extends AppCompatActivity {
         youtubeWebView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onShowCustomView(View view, CustomViewCallback callback) {
-                // Tangani fullscreen request dari YouTube player
                 youtubeWebView.setVisibility(View.GONE);
                 if (youtubeFullscreenContainer != null) {
                     youtubeFullscreenContainer.setVisibility(View.VISIBLE);
@@ -407,36 +408,8 @@ public class PlayerActivity extends AppCompatActivity {
         youtubeWebView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(android.webkit.WebView view, String url) {
-                // Navigasi tetap di WebView kecuali bukan youtube
-                return !url.contains("youtube.com") && !url.contains("youtu.be");
-            }
-            @Override
-            public void onPageFinished(android.webkit.WebView view, String url) {
-                // Setelah halaman load: klik play, unmute, fullscreen via JS
-                view.postDelayed(() -> {
-                    // 1. Klik tombol play jika ada
-                    view.evaluateJavascript(
-                        "(function(){" +
-                        "  var btn = document.querySelector('button.ytp-large-play-button')" +
-                        "         || document.querySelector('.ytp-play-button')" +
-                        "         || document.querySelector('[aria-label=\"Play\"]');" +
-                        "  if(btn) btn.click();" +
-                        "})();", null);
-                    // 2. Unmute
-                    view.evaluateJavascript(
-                        "(function(){" +
-                        "  var v = document.querySelector('video');" +
-                        "  if(v){ v.muted=false; v.play(); }" +
-                        "})();", null);
-                    // 3. Klik fullscreen button
-                    view.evaluateJavascript(
-                        "(function(){" +
-                        "  var fs = document.querySelector('.ytp-fullscreen-button')" +
-                        "         || document.querySelector('[aria-label=\"Full screen\"]')" +
-                        "         || document.querySelector('[aria-label=\"Fullscreen\"]');" +
-                        "  if(fs && !document.fullscreenElement) fs.click();" +
-                        "})();", null);
-                }, 1500);
+                // Semua navigasi tetap di WebView
+                return false;
             }
         });
     }
@@ -446,23 +419,97 @@ public class PlayerActivity extends AppCompatActivity {
     private WebChromeClient.CustomViewCallback youtubeFullscreenCallback = null;
     private android.widget.FrameLayout youtubeFullscreenContainer;
 
-    /** Putar YouTube langsung di m.youtube.com — tidak pakai embed, tidak ada error 152 */
+    /**
+     * Putar YouTube via IFrame API — semua UI YouTube disembunyikan,
+     * autoplay + unmute dari awal, tidak bisa di-pause/seek dari layar
+     * (hanya bisa ganti channel via swipe/remote seperti TV).
+     */
     private void playYouTube(final String videoId) {
         isYouTubeMode = true;
         playerView.setVisibility(View.GONE);
         youtubeWebView.setVisibility(View.VISIBLE);
         videoLoading.setVisibility(View.GONE);
 
-        // Buka langsung URL mobile YouTube — sama seperti buka di browser
-        String url = "https://m.youtube.com/watch?v=" + videoId + "&autoplay=1";
-        youtubeWebView.loadUrl(url);
+        // HTML dengan YouTube IFrame API:
+        // - controls=0  : sembunyikan semua kontrol player
+        // - disablekb=1 : disable keyboard (biar remote tidak interfere)
+        // - fs=0        : sembunyikan tombol fullscreen (kita fullscreen via Android)
+        // - iv_load_policy=3 : sembunyikan anotasi
+        // - rel=0       : tidak tampilkan video terkait
+        // - autoplay=1  : autoplay langsung
+        // - mute=0      : tidak mute (akan di-unmute via JS setelah ready)
+        // CSS menyembunyikan semua elemen UI YouTube yang tersisa
+        String html =
+            "<!DOCTYPE html>" +
+            "<html>" +
+            "<head>" +
+            "<meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1'>" +
+            "<style>" +
+            "  *{margin:0;padding:0;box-sizing:border-box;background:#000;overflow:hidden}" +
+            "  html,body{width:100%;height:100%;background:#000}" +
+            "  #player{position:absolute;top:0;left:0;width:100%;height:100%;border:none}" +
+            "  /* Sembunyikan semua UI YouTube yang tersisa */" +
+            "  .ytp-chrome-top,.ytp-chrome-bottom,.ytp-gradient-top," +
+            "  .ytp-gradient-bottom,.ytp-watermark,.ytp-title," +
+            "  .ytp-share-button,.ytp-watch-later-button," +
+            "  .ytp-button:not(.ytp-play-button){display:none!important}" +
+            "</style>" +
+            "</head>" +
+            "<body>" +
+            "<div id='player'></div>" +
+            "<script>" +
+            "var tag=document.createElement('script');" +
+            "tag.src='https://www.youtube.com/iframe_api';" +
+            "document.head.appendChild(tag);" +
+            "var player;" +
+            "function onYouTubeIframeAPIReady(){" +
+            "  player=new YT.Player('player',{" +
+            "    videoId:'" + videoId + "'," +
+            "    playerVars:{" +
+            "      autoplay:1," +
+            "      mute:0," +
+            "      controls:0," +
+            "      disablekb:1," +
+            "      fs:0," +
+            "      iv_load_policy:3," +
+            "      rel:0," +
+            "      playsinline:1," +
+            "      modestbranding:1," +
+            "      origin:window.location.origin" +
+            "    }," +
+            "    events:{" +
+            "      onReady:function(e){" +
+            "        e.target.unMute();" +
+            "        e.target.setVolume(100);" +
+            "        e.target.playVideo();" +
+            "      }," +
+            "      onStateChange:function(e){" +
+            "        // Jika video di-pause (state=2), langsung play lagi" +
+            "        // Ini membuat video tidak bisa di-pause dari layar" +
+            "        if(e.data===2) setTimeout(function(){e.target.playVideo();},300);" +
+            "      }," +
+            "      onError:function(e){" +
+            "        // Kirim error ke Android" +
+            "        window.AndroidInterface && window.AndroidInterface.onYouTubeError(e.data);" +
+            "      }" +
+            "    }" +
+            "  });" +
+            "}" +
+            // Intercept semua touch/click pada halaman — hanya teruskan ke player
+            // sehingga swipe tetap bisa ditangkap oleh dispatchTouchEvent di Activity
+            "document.addEventListener('touchmove',function(e){e.preventDefault();},{passive:false});" +
+            "</script>" +
+            "</body>" +
+            "</html>";
+
+        youtubeWebView.loadDataWithBaseURL(
+            "https://www.youtube.com", html, "text/html", "utf-8", null);
     }
 
     /** Kembali ke mode ExoPlayer normal */
     private void switchToExoMode() {
         if (isYouTubeMode) {
             isYouTubeMode = false;
-            // Jika fullscreen aktif, tutup dulu
             if (youtubeFullscreenCallback != null) {
                 youtubeFullscreenCallback.onCustomViewHidden();
             }
@@ -1075,6 +1122,23 @@ public class PlayerActivity extends AppCompatActivity {
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         startActivity(intent);
         // Jangan finish() PlayerActivity — biarkan di back stack agar bisa balik ke player
+    }
+
+    /**
+     * Interface dipanggil dari JavaScript YouTube IFrame API
+     * untuk mengirim event error ke Android.
+     */
+    private class YouTubeAndroidInterface {
+        @JavascriptInterface
+        public void onYouTubeError(int errorCode) {
+            runOnUiThread(() -> {
+                if (isYouTubeMode) {
+                    youtubeWebView.setVisibility(View.GONE);
+                    videoLoading.setVisibility(View.VISIBLE);
+                    tvLoadingMsg.setText("Siaran tidak tersedia");
+                }
+            });
+        }
     }
 
 }
