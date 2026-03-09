@@ -420,29 +420,61 @@ public class PlayerActivity extends AppCompatActivity {
             public void onPageFinished(android.webkit.WebView view, String url) {
                 if (!isYouTubeMode) return;
                 if (url == null || url.equals("about:blank")) return;
-                // Inject CSS: sembunyikan semua UI YouTube, paksa video fullscreen
-                // Unmute dilakukan user via tombol Volume/OK — bukan otomatis
-                String cssJs =
+
+                // JS komprehensif untuk halaman youtube.com/watch:
+                // 1. Sembunyikan semua UI (header, sidebar, comments, ads, controls)
+                // 2. Paksa video fill layar penuh
+                // 3. Klik tombol fullscreen YouTube secara otomatis
+                // 4. Play video jika belum playing
+                String js =
                     "(function(){" +
+                    // === INJECT CSS: sembunyikan semua elemen non-video ===
                     "var s=document.getElementById('__hyt__');" +
                     "if(!s){s=document.createElement('style');s.id='__hyt__';document.head.appendChild(s);}" +
                     "s.textContent=" +
-                    "'.ytp-chrome-top,.ytp-chrome-bottom,.ytp-gradient-top,.ytp-gradient-bottom," +
-                    ".ytp-watermark,.ytp-title,.ytp-share-button,.ytp-watch-later-button," +
-                    ".ytp-pause-overlay,.ytp-endscreen-content,.ytp-ce-element,.iv-branding," +
-                    ".ytp-spinner,.ytp-bezel-wrapper,.ytp-contextmenu,.ytp-unmute," +
-                    ".ytp-mute-button,.annotation,#movie_player .ytp-chrome-controls{display:none!important}" +
-                    "body,html,#movie_player,.html5-video-container,.html5-main-video{" +
-                    "margin:0!important;padding:0!important;background:#000!important;" +
-                    "overflow:hidden!important;width:100%!important;height:100%!important}" +
+                    // Sembunyikan header, sidebar, comments, ads, related, footer
+                    "'#masthead,#masthead-container,ytd-masthead," +
+                    "#secondary,#related,ytd-watch-next-secondary-results-renderer," +
+                    "#comments,ytd-comments,#below,#info,#meta,#description," +
+                    "ytd-merch-shelf-renderer,ytd-item-section-renderer," +
+                    "#chat,ytd-live-chat-frame,tp-yt-paper-dialog," +
+                    ".ytp-chrome-top,.ytp-chrome-bottom,.ytp-gradient-top,.ytp-gradient-bottom," +
+                    ".ytp-watermark,.ytp-share-button,.ytp-watch-later-button," +
+                    ".ytp-pause-overlay,.ytp-endscreen-content,.ytp-ce-element," +
+                    ".ytp-unmute,.ytp-mute-button,.iv-branding,.annotation," +
+                    "#movie_player .ytp-chrome-controls," +
+                    "ytd-app>*:not(#content),#page-manager>*:not(ytd-watch-flexy)," +
+                    "ytd-watch-flexy #panels,ytd-watch-flexy #player-ads," +
+                    "ytd-watch-flexy #watch-below-the-fold{display:none!important}" +
+                    // Paksa video dan player fill layar penuh
+                    "html,body{margin:0!important;padding:0!important;overflow:hidden!important;" +
+                    "background:#000!important;width:100%!important;height:100%!important}" +
+                    "#movie_player,#player-container,ytd-watch-flexy," +
+                    "#player-container-outer,#player-container-inner," +
+                    ".html5-video-container,.html5-main-video," +
+                    "#content,#page-manager,ytd-app{" +
+                    "width:100%!important;height:100%!important;" +
+                    "max-width:100%!important;max-height:100%!important;" +
+                    "margin:0!important;padding:0!important;background:#000!important}" +
                     "video{position:fixed!important;top:0!important;left:0!important;" +
                     "width:100%!important;height:100%!important;" +
-                    "object-fit:contain!important;z-index:1!important}';" +
+                    "object-fit:contain!important;z-index:9999!important}';" +
+                    // === FULLSCREEN: klik tombol fullscreen YouTube ===
+                    "try{" +
+                    "var fs=document.querySelector('.ytp-fullscreen-button');" +
+                    "if(fs&&!document.fullscreenElement){fs.click();}" +
+                    "}catch(e){}" +
+                    // === PLAY: pastikan video berjalan ===
+                    "try{" +
+                    "var v=document.querySelector('video');" +
+                    "if(v&&v.paused){v.play().catch(function(){});}" +
+                    "}catch(e){}" +
                     "})();";
-                // Inject 3x karena YouTube render elemen secara bertahap
-                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(cssJs, null); }, 500);
-                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(cssJs, null); }, 1800);
-                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(cssJs, null); }, 4000);
+
+                // Inject bertahap karena YouTube render secara async
+                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(js, null); }, 800);
+                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(js, null); }, 2000);
+                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(js, null); }, 4000);
             }
         });
     }
@@ -462,17 +494,9 @@ public class PlayerActivity extends AppCompatActivity {
         youtubeWebView.setVisibility(View.VISIBLE);
         videoLoading.setVisibility(View.GONE);
 
-        // Desktop UA + embed URL = YouTube tidak blokir (tidak kena error 152/153)
-        // controls=0: sembunyikan kontrol bawaan YouTube
-        // disablekb=1: remote/keyboard tidak bisa kontrol player langsung
-        // fs=0: sembunyikan tombol fullscreen YouTube (kita sudah fullscreen sendiri)
-        // playsinline=0: biarkan video fill container
-        // WAJIB: mute=1 dulu agar autoplay berhasil di Android WebView
-        // (browser/WebView blokir autoplay dengan suara → error 153)
-        // Setelah video berjalan, JS di onPageFinished akan unmute otomatis
-        String url = "https://www.youtube-nocookie.com/embed/" + videoId
-                + "?autoplay=1&controls=0&mute=1&playsinline=1"
-                + "&rel=0&iv_load_policy=3&modestbranding=1&fs=0&disablekb=1";
+        // Pakai halaman watch biasa — tidak kena error 152/153 karena bukan embed
+        // UA desktop agar YouTube tidak redirect ke m.youtube.com (mobile UI sulit di-inject)
+        String url = "https://www.youtube.com/watch?v=" + videoId + "&autoplay=1";
         youtubeWebView.loadUrl(url);
     }
 
