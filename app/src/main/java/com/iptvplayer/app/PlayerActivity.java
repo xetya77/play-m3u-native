@@ -489,13 +489,32 @@ public class PlayerActivity extends AppCompatActivity {
                     "}catch(e){}" +
                     "})();";
 
-                // JS deteksi video selesai → otomatis next jika playlist mode
+                // JS deteksi video selesai + blokir autoplay YouTube
+                // Agar setelah video habis, yang kontrol next adalah kita (bukan YouTube)
                 String endedJs =
                     "(function(){" +
+                    // Paksa loop=false agar tidak loop sendiri
                     "var v=document.querySelector('video');" +
-                    "if(!v||v.__ytEndedSet)return;" +
+                    "if(!v)return;" +
+                    // Reset flag jika video baru (src berubah)
+                    "if(v.__ytSrc&&v.__ytSrc!==v.src){v.__ytEndedSet=false;}" +
+                    "v.__ytSrc=v.src;" +
+                    "if(v.__ytEndedSet)return;" +
                     "v.__ytEndedSet=true;" +
+                    // Nonaktifkan autoplay attribute bawaan YouTube
+                    "v.autoplay=false;" +
+                    // Sembunyikan endscreen & overlay 'up next' yang bisa di-klik user
+                    "var st=document.getElementById('__hyt_end__');" +
+                    "if(!st){st=document.createElement('style');" +
+                    "st.id='__hyt_end__';document.head.appendChild(st);}" +
+                    "st.textContent='.ytp-endscreen-content,.ytp-ce-element," +
+                    ".ytp-autonav-endscreen,.ytp-upnext,.ytp-upnext-autoplay," +
+                    "ytd-compact-autoplay-renderer,.ytd-watch-next-secondary-results-renderer" +
+                    "{display:none!important;pointer-events:none!important}';" +
+                    // Saat video selesai → kita yang putar berikutnya, bukan YouTube
                     "v.addEventListener('ended',function(){" +
+                    "// Pause segera supaya YouTube tidak sempat autoplay sendiri" +
+                    "v.pause();" +
                     "window.AndroidInterface&&window.AndroidInterface.onVideoEnded();" +
                     "});" +
                     "})();";
@@ -606,7 +625,9 @@ public class PlayerActivity extends AppCompatActivity {
 
         // Pakai halaman watch biasa — tidak kena error 152/153 karena bukan embed
         // UA desktop agar YouTube tidak redirect ke m.youtube.com (mobile UI sulit di-inject)
-        String url = "https://www.youtube.com/watch?v=" + videoId + "&autoplay=1";
+        // rel=0: matikan related videos di akhir
+        // autoplay=1 tetap agar video langsung mulai tanpa perlu klik
+        String url = "https://www.youtube.com/watch?v=" + videoId + "&autoplay=1&rel=0";
         youtubeWebView.loadUrl(url);
     }
 
