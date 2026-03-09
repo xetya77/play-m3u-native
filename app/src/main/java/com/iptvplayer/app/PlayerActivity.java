@@ -4,9 +4,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer;
-import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener;
-import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -58,13 +59,10 @@ public class PlayerActivity extends AppCompatActivity {
     // Player
     private PlayerView playerView;
     private ExoPlayer player;
-    private YouTubePlayerView youtubePlayerView;
-    private YouTubePlayer activeYouTubePlayer = null;
+    private WebView youtubeWebView;
     private boolean isYouTubeMode = false;
-    private boolean ytListenerAdded = false; // pastikan listener hanya ditambah sekali
     private View videoLoading, blackFlash;
     private View bar1, bar2, bar3;
-    private View youtubeSwipeOverlay;
     private TextView tvLoadingMsg;
 
     // Clock
@@ -160,12 +158,11 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void bindViews() {
         playerView        = findViewById(R.id.player_view);
-        youtubePlayerView = findViewById(R.id.youtube_player_view);
-        getLifecycle().addObserver(youtubePlayerView);
+        youtubeWebView     = findViewById(R.id.youtube_webview);
+        setupYouTubeWebView();
         videoLoading      = findViewById(R.id.video_loading);
         blackFlash        = findViewById(R.id.black_flash);
         bar1              = findViewById(R.id.bar1);
-        youtubeSwipeOverlay = findViewById(R.id.youtube_swipe_overlay);
         bar2              = findViewById(R.id.bar2);
         bar3              = findViewById(R.id.bar3);
         tvLoadingMsg      = findViewById(R.id.tv_loading_msg);
@@ -364,56 +361,61 @@ public class PlayerActivity extends AppCompatActivity {
                && extractYouTubeId(url) != null;
     }
 
-    /** Putar YouTube via AndroidYouTubePlayer */
+    /** Setup WebView sekali saat onCreate */
+    private void setupYouTubeWebView() {
+        WebSettings ws = youtubeWebView.getSettings();
+        ws.setJavaScriptEnabled(true);
+        ws.setDomStorageEnabled(true);
+        ws.setMediaPlaybackRequiresUserGesture(false);
+        ws.setLoadWithOverviewMode(true);
+        ws.setUseWideViewPort(true);
+        ws.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        ws.setUserAgentString(
+            "Mozilla/5.0 (Linux; Android 10; TV) AppleWebKit/537.36 " +
+            "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+
+        youtubeWebView.setWebChromeClient(new WebChromeClient());
+        youtubeWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(android.webkit.WebView view, String url) {
+                return false; // semua navigasi tetap di WebView
+            }
+        });
+    }
+
+    /** Putar YouTube via WebView IFrame — sama seperti web MultiTube */
     private void playYouTube(final String videoId) {
         isYouTubeMode = true;
         playerView.setVisibility(View.GONE);
-        youtubePlayerView.setVisibility(View.VISIBLE);
-        youtubeSwipeOverlay.setVisibility(View.VISIBLE);
+        youtubeWebView.setVisibility(View.VISIBLE);
         videoLoading.setVisibility(View.GONE);
 
-        if (activeYouTubePlayer != null) {
-            // Player sudah siap — langsung load tanpa tambah listener baru
-            activeYouTubePlayer.loadVideo(videoId, 0);
-            return;
-        }
+        String html =
+            "<!DOCTYPE html><html><head>" +
+            "<style>*{margin:0;padding:0;background:#000}" +
+            "body,html{width:100%;height:100%}" +
+            "iframe{width:100%;height:100%;border:none}" +
+            "</style></head><body>" +
+            "<iframe src=\"https://www.youtube.com/embed/" + videoId +
+            "?autoplay=1&playsinline=1&rel=0&modestbranding=1\" " +
+            "allow=\"autoplay;encrypted-media;fullscreen\" allowfullscreen></iframe>" +
+            "</body></html>";
 
-        // Listener hanya ditambah SEKALI seumur hidup activity
-        if (!ytListenerAdded) {
-            ytListenerAdded = true;
-            youtubePlayerView.addYouTubePlayerListener(new AbstractYouTubePlayerListener() {
-                @Override
-                public void onReady(YouTubePlayer youTubePlayer) {
-                    activeYouTubePlayer = youTubePlayer;
-                    youTubePlayer.loadVideo(videoId, 0);
-                }
-
-                @Override
-                public void onError(YouTubePlayer youTubePlayer,
-                        com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerError error) {
-                    // Video tidak bisa diputar (embed diblokir, dll)
-                    // Tampilkan pesan saja — jangan lempar ke app lain
-                    runOnUiThread(() -> {
-                        videoLoading.setVisibility(View.VISIBLE);
-                        tvLoadingMsg.setText("Siaran tidak tersedia");
-                    });
-                }
-            });
-        }
+        // loadDataWithBaseURL dgn origin youtube.com — kunci agar embed tidak diblokir (error 152)
+        youtubeWebView.loadDataWithBaseURL(
+            "https://www.youtube.com", html, "text/html", "utf-8", null);
     }
 
     /** Kembali ke mode ExoPlayer normal */
     private void switchToExoMode() {
         if (isYouTubeMode) {
             isYouTubeMode = false;
-            if (activeYouTubePlayer != null) {
-                activeYouTubePlayer.pause();
-            }
-            youtubePlayerView.setVisibility(View.GONE);
-            youtubeSwipeOverlay.setVisibility(View.GONE);
+            youtubeWebView.loadUrl("about:blank");
+            youtubeWebView.setVisibility(View.GONE);
             playerView.setVisibility(View.VISIBLE);
         }
     }
+
 
     // ===== PLAYER =====
     private void setupPlayer() {
@@ -903,7 +905,7 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     // ===== TV REMOTE =====
-    // Activity-level touch intercept — dijalankan SEBELUM view hierarchy (termasuk WebView internal YouTubePlayerView)
+    // Activity-level touch intercept — dijalankan SEBELUM view hierarchy (termasuk WebView YouTube)
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
         if (isYouTubeMode && !panelOpen && !categoryFullOpen) {
@@ -915,7 +917,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        // Saat YouTube mode, YouTubePlayerView menyerap semua key event
+        // Saat YouTube mode, WebView menyerap semua key event
         // — kita intercept dulu agar remote/keyboard tetap bisa ganti channel
         if (isYouTubeMode && event.getAction() == KeyEvent.ACTION_DOWN) {
             if (onKeyDown(event.getKeyCode(), event)) return true;
@@ -992,7 +994,7 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     // ===== LIFECYCLE =====
-    @Override protected void onPause()  { super.onPause();  if (player != null) player.pause(); if (activeYouTubePlayer != null && isYouTubeMode) activeYouTubePlayer.pause(); }
+    @Override protected void onPause()  { super.onPause();  if (player != null) player.pause(); if (isYouTubeMode) youtubeWebView.onPause(); }
     @Override protected void onResume() {
         super.onResume(); if (player != null) { if (!isYouTubeMode) player.play(); }
         getWindow().getDecorView().setSystemUiVisibility(
@@ -1003,7 +1005,7 @@ public class PlayerActivity extends AppCompatActivity {
     @Override protected void onDestroy() {
         super.onDestroy();
         if (player != null) { player.release(); player = null; }
-        youtubePlayerView.release();
+        youtubeWebView.destroy();
         handler.removeCallbacksAndMessages(null);
     }
     @Override public void onBackPressed() {
