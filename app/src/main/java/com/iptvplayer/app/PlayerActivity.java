@@ -544,14 +544,14 @@ public class PlayerActivity extends AppCompatActivity {
 
                 // Parse video IDs dari JSON
                 java.util.regex.Matcher m = java.util.regex.Pattern
-                    .compile(""videoId"\s*:\s*"([a-zA-Z0-9_-]{11})"")
+                    .compile("\"videoId\"\\s*:\\s*\"([a-zA-Z0-9_-]{11})\"")
                     .matcher(json);
                 List<String> ids = new ArrayList<>();
                 while (m.find()) ids.add(m.group(1));
 
                 // Cek nextPageToken untuk halaman berikutnya
                 java.util.regex.Matcher np = java.util.regex.Pattern
-                    .compile(""nextPageToken"\s*:\s*"([^"]+)"")
+                    .compile("\"nextPageToken\"\\s*:\\s*\"([^\"]+)\"")
                     .matcher(json);
                 String nextToken = np.find() ? np.group(1) : null;
 
