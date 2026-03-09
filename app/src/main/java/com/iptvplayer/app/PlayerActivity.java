@@ -411,6 +411,42 @@ public class PlayerActivity extends AppCompatActivity {
                 // Semua navigasi tetap di WebView
                 return false;
             }
+            @Override
+            public void onPageFinished(android.webkit.WebView view, String url) {
+                if (!isYouTubeMode) return;
+                // Inject setelah halaman embed load:
+                // 1. Sembunyikan semua UI YouTube (header, kontrol, watermark)
+                // 2. Unmute video dan play
+                view.postDelayed(() -> {
+                    view.evaluateJavascript(
+                        "(function(){" +
+                        // Sembunyikan semua UI YouTube
+                        "  var s=document.createElement('style');" +
+                        "  s.textContent='" +
+                        "    .ytp-chrome-top,.ytp-chrome-bottom,.ytp-gradient-top," +
+                        "    .ytp-gradient-bottom,.ytp-watermark,.ytp-title-text," +
+                        "    .ytp-share-button,.ytp-watch-later-button," +
+                        "    .ytp-pause-overlay,.ytp-endscreen-content," +
+                        "    .ytp-ce-element,.iv-branding{display:none!important}" +
+                        "    video{width:100%!important;height:100%!important;object-fit:contain}" +
+                        "    body,html{margin:0;padding:0;overflow:hidden;background:#000}" +
+                        "  ';" +
+                        "  document.head.appendChild(s);" +
+                        // Unmute dan play
+                        "  var v=document.querySelector('video');" +
+                        "  if(v){v.muted=false;v.volume=1;v.play();}" +
+                        "})();", null);
+                }, 800);
+                // Coba lagi setelah 2s untuk memastikan elemen sudah ada
+                view.postDelayed(() -> {
+                    if (!isYouTubeMode) return;
+                    view.evaluateJavascript(
+                        "(function(){" +
+                        "  var v=document.querySelector('video');" +
+                        "  if(v&&v.muted){v.muted=false;v.volume=1;v.play();}" +
+                        "})();", null);
+                }, 2500);
+            }
         });
     }
 
@@ -420,9 +456,8 @@ public class PlayerActivity extends AppCompatActivity {
     private android.widget.FrameLayout youtubeFullscreenContainer;
 
     /**
-     * Putar YouTube via IFrame API — semua UI YouTube disembunyikan,
-     * autoplay + unmute dari awal, tidak bisa di-pause/seek dari layar
-     * (hanya bisa ganti channel via swipe/remote seperti TV).
+     * Putar YouTube via embed URL langsung — tidak ada UI YouTube,
+     * autoplay + unmute, tidak bisa di-pause dari layar.
      */
     private void playYouTube(final String videoId) {
         isYouTubeMode = true;
@@ -430,80 +465,14 @@ public class PlayerActivity extends AppCompatActivity {
         youtubeWebView.setVisibility(View.VISIBLE);
         videoLoading.setVisibility(View.GONE);
 
-        // HTML dengan YouTube IFrame API:
-        // - controls=0  : sembunyikan semua kontrol player
-        // - disablekb=1 : disable keyboard (biar remote tidak interfere)
-        // - fs=0        : sembunyikan tombol fullscreen (kita fullscreen via Android)
-        // - iv_load_policy=3 : sembunyikan anotasi
-        // - rel=0       : tidak tampilkan video terkait
-        // - autoplay=1  : autoplay langsung
-        // - mute=0      : tidak mute (akan di-unmute via JS setelah ready)
-        // CSS menyembunyikan semua elemen UI YouTube yang tersisa
-        String html =
-            "<!DOCTYPE html>" +
-            "<html>" +
-            "<head>" +
-            "<meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1'>" +
-            "<style>" +
-            "  *{margin:0;padding:0;box-sizing:border-box;background:#000;overflow:hidden}" +
-            "  html,body{width:100%;height:100%;background:#000}" +
-            "  #player{position:absolute;top:0;left:0;width:100%;height:100%;border:none}" +
-            "  /* Sembunyikan semua UI YouTube yang tersisa */" +
-            "  .ytp-chrome-top,.ytp-chrome-bottom,.ytp-gradient-top," +
-            "  .ytp-gradient-bottom,.ytp-watermark,.ytp-title," +
-            "  .ytp-share-button,.ytp-watch-later-button," +
-            "  .ytp-button:not(.ytp-play-button){display:none!important}" +
-            "</style>" +
-            "</head>" +
-            "<body>" +
-            "<div id='player'></div>" +
-            "<script>" +
-            "var tag=document.createElement('script');" +
-            "tag.src='https://www.youtube.com/iframe_api';" +
-            "document.head.appendChild(tag);" +
-            "var player;" +
-            "function onYouTubeIframeAPIReady(){" +
-            "  player=new YT.Player('player',{" +
-            "    videoId:'" + videoId + "'," +
-            "    playerVars:{" +
-            "      autoplay:1," +
-            "      mute:0," +
-            "      controls:0," +
-            "      disablekb:1," +
-            "      fs:0," +
-            "      iv_load_policy:3," +
-            "      rel:0," +
-            "      playsinline:1," +
-            "      modestbranding:1," +
-            "      origin:window.location.origin" +
-            "    }," +
-            "    events:{" +
-            "      onReady:function(e){" +
-            "        e.target.unMute();" +
-            "        e.target.setVolume(100);" +
-            "        e.target.playVideo();" +
-            "      }," +
-            "      onStateChange:function(e){" +
-            "        // Jika video di-pause (state=2), langsung play lagi" +
-            "        // Ini membuat video tidak bisa di-pause dari layar" +
-            "        if(e.data===2) setTimeout(function(){e.target.playVideo();},300);" +
-            "      }," +
-            "      onError:function(e){" +
-            "        // Kirim error ke Android" +
-            "        window.AndroidInterface && window.AndroidInterface.onYouTubeError(e.data);" +
-            "      }" +
-            "    }" +
-            "  });" +
-            "}" +
-            // Intercept semua touch/click pada halaman — hanya teruskan ke player
-            // sehingga swipe tetap bisa ditangkap oleh dispatchTouchEvent di Activity
-            "document.addEventListener('touchmove',function(e){e.preventDefault();},{passive:false});" +
-            "</script>" +
-            "</body>" +
-            "</html>";
-
-        youtubeWebView.loadDataWithBaseURL(
-            "https://www.youtube.com", html, "text/html", "utf-8", null);
+        // Embed URL langsung — ini yang paling reliable di Android WebView
+        // controls=0: sembunyikan kontrol | autoplay=1 | mute=0
+        // playsinline=1: tidak auto-fullscreen native (kita handle sendiri)
+        // rel=0: tidak tampil video terkait | iv_load_policy=3: sembunyikan anotasi
+        String url = "https://www.youtube.com/embed/" + videoId
+                + "?autoplay=1&controls=0&mute=0&playsinline=1"
+                + "&rel=0&iv_load_policy=3&modestbranding=1&enablejsapi=1";
+        youtubeWebView.loadUrl(url);
     }
 
     /** Kembali ke mode ExoPlayer normal */
@@ -857,15 +826,13 @@ public class PlayerActivity extends AppCompatActivity {
         videoLoading.setVisibility(View.VISIBLE);
         tvLoadingMsg.setText("Memuat...");
         updateChInfo(ch, idx);
-        // Cek YouTube dulu — jika ya, gunakan YouTubePlayer bukan ExoPlayer
+        // Cek YouTube dulu — jika ya, gunakan WebView bukan ExoPlayer
         if (isYouTubeUrl(ch.url)) {
             String videoId = extractYouTubeId(ch.url);
             if (videoId != null) {
-                // Kalau sedang di ExoPlayer mode, hentikan player dulu
-                if (!isYouTubeMode) {
-                    player.stop();
-                    playerView.setVisibility(View.GONE);
-                }
+                // Selalu stop ExoPlayer dulu sebelum masuk YouTube mode
+                player.stop();
+                playerView.setVisibility(View.GONE);
                 playYouTube(videoId);
                 channelAdapter.setActiveIndex(idx);
                 showChInfo();
@@ -873,7 +840,7 @@ public class PlayerActivity extends AppCompatActivity {
             }
         }
 
-        // Bukan YouTube — pastikan ExoPlayer aktif
+        // Bukan YouTube — switch ke ExoPlayer (reset WebView jika sedang YouTube mode)
         switchToExoMode();
 
         try {
