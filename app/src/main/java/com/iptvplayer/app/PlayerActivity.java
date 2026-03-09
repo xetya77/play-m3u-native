@@ -418,47 +418,29 @@ public class PlayerActivity extends AppCompatActivity {
             public void onPageFinished(android.webkit.WebView view, String url) {
                 if (!isYouTubeMode) return;
                 if (url == null || url.equals("about:blank")) return;
-                // JS yang diinjek setelah embed YouTube load:
-                // - Sembunyikan SEMUA elemen UI YouTube via CSS
-                // - Paksa video fill layar penuh
-                // - Unmute dan play
-                // Dijalankan 3x (800ms, 1500ms, 3000ms) karena YouTube render bertahap
-                // CSS: sembunyikan semua UI YouTube
+                // Inject CSS: sembunyikan semua UI YouTube, paksa video fullscreen
+                // Unmute dilakukan user via tombol Volume/OK — bukan otomatis
                 String cssJs =
                     "(function(){" +
                     "var s=document.getElementById('__hyt__');" +
                     "if(!s){s=document.createElement('style');s.id='__hyt__';document.head.appendChild(s);}" +
-                    "s.textContent='.ytp-chrome-top,.ytp-chrome-bottom,.ytp-gradient-top,.ytp-gradient-bottom," +
+                    "s.textContent=" +
+                    "'.ytp-chrome-top,.ytp-chrome-bottom,.ytp-gradient-top,.ytp-gradient-bottom," +
                     ".ytp-watermark,.ytp-title,.ytp-share-button,.ytp-watch-later-button," +
                     ".ytp-pause-overlay,.ytp-endscreen-content,.ytp-ce-element,.iv-branding," +
-                    ".ytp-spinner,.ytp-bezel-wrapper,.ytp-contextmenu," +
-                    ".annotation,#movie_player .ytp-chrome-controls{display:none!important}" +
-                    "body,html,#movie_player,.html5-video-container{margin:0!important;padding:0!important;" +
-                    "background:#000!important;overflow:hidden!important;width:100%!important;height:100%!important}" +
+                    ".ytp-spinner,.ytp-bezel-wrapper,.ytp-contextmenu,.ytp-unmute," +
+                    ".ytp-mute-button,.annotation,#movie_player .ytp-chrome-controls{display:none!important}" +
+                    "body,html,#movie_player,.html5-video-container,.html5-main-video{" +
+                    "margin:0!important;padding:0!important;background:#000!important;" +
+                    "overflow:hidden!important;width:100%!important;height:100%!important}" +
                     "video{position:fixed!important;top:0!important;left:0!important;" +
-                    "width:100%!important;height:100%!important;object-fit:contain!important;z-index:1!important}';" +
+                    "width:100%!important;height:100%!important;" +
+                    "object-fit:contain!important;z-index:1!important}';" +
                     "})();";
-                // JS unmute: tunggu video benar-benar playing baru unmute
-                // Ini kunci agar tidak error 153 — autoplay mute dulu, lalu unmute via JS
-                String unmuteJs =
-                    "(function(){" +
-                    "var v=document.querySelector('video');" +
-                    "if(!v)return;" +
-                    "var doUnmute=function(){v.muted=false;v.volume=1;};" +
-                    "if(!v.paused&&!v.muted){return;}" + // sudah unmute, skip
-                    "if(!v.paused){doUnmute();return;}" + // sudah play, langsung unmute
-                    // Belum play — pasang event listener sekali
-                    "v.addEventListener('playing',function handler(){" +
-                    "v.removeEventListener('playing',handler);" +
-                    "doUnmute();" +
-                    "},{once:true});" +
-                    // Fallback: coba play dulu
-                    "v.play().then(function(){doUnmute();}).catch(function(){});" +
-                    "})();";
+                // Inject 3x karena YouTube render elemen secara bertahap
                 view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(cssJs, null); }, 500);
-                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(unmuteJs, null); }, 1000);
-                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(cssJs + unmuteJs, null); }, 2500);
-                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(unmuteJs, null); }, 4000);
+                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(cssJs, null); }, 1800);
+                view.postDelayed(() -> { if (isYouTubeMode) view.evaluateJavascript(cssJs, null); }, 4000);
             }
         });
     }
@@ -1004,10 +986,29 @@ public class PlayerActivity extends AppCompatActivity {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        // Saat YouTube mode, WebView menyerap semua key event
-        // — kita intercept dulu agar remote/keyboard tetap bisa ganti channel
-        if (isYouTubeMode && event.getAction() == KeyEvent.ACTION_DOWN) {
-            if (onKeyDown(event.getKeyCode(), event)) return true;
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            int kc = event.getKeyCode();
+            // Volume Up/Down/OK saat YouTube mode → unmute video
+            // (autoplay harus mute dulu, user unmute manual via remote/HP)
+            if (isYouTubeMode &&
+                (kc == KeyEvent.KEYCODE_VOLUME_UP ||
+                 kc == KeyEvent.KEYCODE_VOLUME_DOWN ||
+                 kc == KeyEvent.KEYCODE_DPAD_CENTER ||
+                 kc == KeyEvent.KEYCODE_ENTER)) {
+                youtubeWebView.evaluateJavascript(
+                    "(function(){var v=document.querySelector('video');" +
+                    "if(v&&v.muted){v.muted=false;v.volume=1;" +
+                    "var s=document.getElementById('__hyt__');" +
+                    "if(s)s.textContent+='.ytp-unmute{display:none!important}';}})();", null);
+                // Volume Up/Down tetap diteruskan ke sistem agar volume bar muncul
+                if (kc == KeyEvent.KEYCODE_VOLUME_UP || kc == KeyEvent.KEYCODE_VOLUME_DOWN) {
+                    return super.dispatchKeyEvent(event);
+                }
+            }
+            // Intercept semua key saat YouTube mode agar remote bisa ganti channel
+            if (isYouTubeMode) {
+                if (onKeyDown(kc, event)) return true;
+            }
         }
         return super.dispatchKeyEvent(event);
     }
