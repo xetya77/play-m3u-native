@@ -357,7 +357,7 @@ public class PlayerActivity extends Activity {
     private String extractYouTubeId(String url) {
         // Format: youtu.be/ID
         java.util.regex.Matcher m = java.util.regex.Pattern
-            .compile("youtu\.be/([a-zA-Z0-9_-]{11})")
+            .compile("youtu\\.be/([a-zA-Z0-9_-]{11})")
             .matcher(url);
         if (m.find()) return m.group(1);
 
@@ -369,7 +369,7 @@ public class PlayerActivity extends Activity {
 
         // Format: youtube.com/live/ID atau /embed/ID atau /shorts/ID
         m = java.util.regex.Pattern
-            .compile("youtube\.com/(?:live|embed|shorts)/([a-zA-Z0-9_-]{11})")
+            .compile("youtube\\.com/(?:live|embed|shorts)/([a-zA-Z0-9_-]{11})")
             .matcher(url);
         if (m.find()) return m.group(1);
 
