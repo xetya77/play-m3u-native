@@ -46,7 +46,9 @@
             android:fontFamily="@font/inter_medium"
             android:paddingStart="24dp"
             android:paddingEnd="24dp"
+            android:background="@drawable/bg_btn_dialog_cancel"
             android:focusable="true"
+            android:focusableInTouchMode="false"
             android:clickable="true"/>
 
         <!-- Keluar — Blaze Orange -->
