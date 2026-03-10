@@ -43,7 +43,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Welcome to"
+                android:text="@string/welcome_to"
                 android:textColor="#60163A2A"
                 android:textSize="15sp"
                 android:fontFamily="@font/inter_bold"
@@ -69,7 +69,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Stream your M3U playlists\nin one place."
+                android:text="@string/welcome_tagline"
                 android:textColor="@color/welcome_dark"
                 android:textSize="13sp"
                 android:gravity="start"
@@ -93,7 +93,7 @@
                 android:layout_width="240dp"
                 android:layout_height="64dp"
                 android:gravity="center"
-                android:text="Get Started"
+                android:text="@string/welcome_get_started"
                 android:textColor="@color/welcome_bg"
                 android:textSize="20sp"
                 android:fontFamily="@font/inter_medium"
@@ -105,7 +105,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="Press OK to start"
+                android:text="@string/welcome_press_ok"
                 android:textColor="@color/welcome_dark"
                 android:textSize="12sp"
                 android:textStyle="italic"
@@ -160,7 +160,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Import M3U\nfrom where?"
+                android:text="@string/source_heading"
                 android:textColor="#16232A"
                 android:textSize="26sp"
                 android:fontFamily="@font/inter_bold"
@@ -201,7 +201,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Link/URL"
+                    android:text="@string/source_option_url"
                     android:textColor="#E4EEF0"
                     android:textSize="20sp"
                     android:fontFamily="@font/inter_medium"/>
@@ -232,7 +232,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Local File"
+                    android:text="@string/source_option_file"
                     android:textColor="#E4EEF0"
                     android:textSize="20sp"
                     android:fontFamily="@font/inter_medium"/>
@@ -245,7 +245,7 @@
                 android:layout_width="160dp"
                 android:layout_height="56dp"
                 android:gravity="center"
-                android:text="Next step"
+                android:text="@string/source_next"
                 android:textColor="#E4EEF0"
                 android:textSize="14sp"
                 android:fontFamily="@font/inter_medium"
@@ -258,7 +258,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Choose one to continue"
+                android:text="@string/source_note"
                 android:textColor="#16232A"
                 android:textSize="11sp"
                 android:textStyle="italic"
@@ -305,7 +305,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="What's your\nM3U URL?"
+                android:text="@string/url_heading"
                 android:textColor="#E4EEF0"
                 android:textSize="26sp"
                 android:fontFamily="@font/inter_bold"
@@ -316,7 +316,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="Paste the direct link to your\nM3U playlist and press Add."
+                android:text="@string/url_bottom_note"
                 android:textColor="#E4EEF0"
                 android:textSize="12sp"
                 android:fontFamily="@font/inter_medium"
@@ -339,7 +339,7 @@
                 android:id="@+id/et_url"
                 android:layout_width="match_parent"
                 android:layout_height="72dp"
-                android:hint="Enter playlist URL..."
+                android:hint="@string/url_hint"
                 android:textColorHint="#80E4EEF0"
                 android:textColor="#E4EEF0"
                 android:textSize="14sp"
@@ -355,7 +355,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Enable auto refresh?"
+                android:text="@string/url_auto_refresh"
                 android:textColor="#E4EEF0"
                 android:textSize="15sp"
                 android:fontFamily="@font/inter_bold"
@@ -383,7 +383,7 @@
                     android:layout_height="60dp"
                     android:layout_gravity="start"
                     android:gravity="center"
-                    android:text="Yes"
+                    android:text="@string/toggle_yes"
                     android:textColor="#E4EEF0"
                     android:textSize="16sp"
                     android:fontFamily="@font/inter_bold"
@@ -396,7 +396,7 @@
                     android:layout_height="60dp"
                     android:layout_gravity="end"
                     android:gravity="center"
-                    android:text="No"
+                    android:text="@string/toggle_no"
                     android:textColor="#E4EEF0"
                     android:textSize="16sp"
                     android:fontFamily="@font/inter_bold"
@@ -409,7 +409,7 @@
                 android:id="@+id/tv_ch_count_url"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="The playlist will update each time you open the app."
+                android:text="@string/url_auto_refresh_note"
                 android:textColor="#E4EEF0"
                 android:textSize="10sp"
                 android:fontFamily="@font/inter_medium"
@@ -422,7 +422,7 @@
                 android:layout_width="180dp"
                 android:layout_height="58dp"
                 android:gravity="center"
-                android:text="Add playlist"
+                android:text="@string/url_add_playlist"
                 android:textColor="#16232A"
                 android:textSize="14sp"
                 android:fontFamily="@font/inter_medium"
@@ -474,7 +474,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="What should we\ncall this playlist?"
+                android:text="@string/name_heading"
                 android:textColor="#E4EEF0"
                 android:textSize="24sp"
                 android:fontFamily="@font/inter_bold"
@@ -485,7 +485,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="Give it a name to keep\nthings organized."
+                android:text="@string/name_footer"
                 android:textColor="#80E4EEF0"
                 android:textSize="12sp"
                 android:fontFamily="@font/inter_regular"
@@ -508,7 +508,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="72dp"
                 android:background="@drawable/selector_name_input"
-                android:hint="Enter playlist name..."
+                android:hint="@string/name_hint"
                 android:textColorHint="#80E4EEF0"
                 android:textColor="#E4EEF0"
                 android:textSize="15sp"
@@ -526,7 +526,7 @@
                 android:layout_width="180dp"
                 android:layout_height="58dp"
                 android:gravity="center"
-                android:text="Done"
+                android:text="@string/name_done"
                 android:textColor="#16232A"
                 android:textSize="16sp"
                 android:fontFamily="@font/inter_medium"
@@ -665,7 +665,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:text="Start"
+                        android:text="@string/settings_start"
                         android:textColor="#E4EEF0"
                         android:textSize="18sp"
                         android:fontFamily="@font/inter_medium"/>
@@ -696,7 +696,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:text="Playlist"
+                        android:text="@string/settings_playlist_menu"
                         android:textColor="#E4EEF0"
                         android:textSize="18sp"
                         android:fontFamily="@font/inter_medium"/>
@@ -727,7 +727,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
-                        android:text="EPG"
+                        android:text="@string/settings_epg"
                         android:textColor="#E4EEF0"
                         android:textSize="18sp"
                         android:fontFamily="@font/inter_medium"/>
@@ -775,7 +775,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Playlist"
+                android:text="@string/settings_playlist_menu"
                 android:textColor="#E4EEF0"
                 android:textSize="22sp"
                 android:fontFamily="@font/inter_bold"
@@ -821,7 +821,7 @@
                 android:id="@+id/tv_update_success"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="&#10003;  Playlist berhasil diperbarui"
+                android:text="@string/playlists_updated"
                 android:textColor="#16232A"
                 android:textSize="13sp"
                 android:fontFamily="@font/inter_medium"
@@ -848,7 +848,7 @@
                     android:layout_height="44dp"
                     android:layout_weight="1"
                     android:gravity="center"
-                    android:text="Refresh Semua"
+                    android:text="@string/playlists_refresh_all"
                     android:textColor="#E4EEF0"
                     android:textSize="12sp"
                     android:fontFamily="@font/inter_medium"
@@ -863,7 +863,7 @@
                     android:layout_height="44dp"
                     android:layout_weight="1"
                     android:gravity="center"
-                    android:text="Ganti Utama"
+                    android:text="@string/playlists_switch_main"
                     android:textColor="#E4EEF0"
                     android:textSize="12sp"
                     android:fontFamily="@font/inter_medium"
@@ -878,7 +878,7 @@
                     android:layout_height="44dp"
                     android:layout_weight="1"
                     android:gravity="center"
-                    android:text="+ Tambah"
+                    android:text="@string/playlists_empty_add"
                     android:textColor="#16232A"
                     android:textSize="12sp"
                     android:fontFamily="@font/inter_bold"
@@ -916,7 +916,7 @@
                 android:id="@+id/tv_loading_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="+ Adding Playlist..."
+                android:text="@string/loading_adding"
                 android:textColor="#607D8B"
                 android:textSize="13sp"
                 android:fontFamily="@font/inter_medium"
@@ -948,7 +948,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Available"
+                    android:text="@string/loading_available"
                     android:textColor="#16232A"
                     android:textSize="28sp"
                     android:fontFamily="@font/inter_bold"
@@ -997,7 +997,7 @@
             android:gravity="center"
             android:visibility="gone">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Playlist added" android:textColor="#16232A" android:textSize="20sp"
+                android:text="@string/status_added" android:textColor="#16232A" android:textSize="20sp"
                 android:fontFamily="@font/inter_bold" android:textStyle="bold" android:layout_marginBottom="16dp"/>
             <FrameLayout android:layout_width="52dp" android:layout_height="52dp" android:layout_marginBottom="16dp">
                 <View android:layout_width="52dp" android:layout_height="52dp" android:background="@drawable/bg_status_success"/>
@@ -1022,7 +1022,7 @@
             android:gravity="center"
             android:visibility="gone">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Unable to load" android:textColor="#16232A" android:textSize="20sp"
+                android:text="@string/status_error_title" android:textColor="#16232A" android:textSize="20sp"
                 android:fontFamily="@font/inter_bold" android:textStyle="bold" android:layout_marginBottom="16dp"/>
             <FrameLayout android:layout_width="52dp" android:layout_height="52dp" android:layout_marginBottom="16dp">
                 <View android:layout_width="52dp" android:layout_height="52dp" android:background="@drawable/bg_status_error"/>
@@ -1031,7 +1031,7 @@
                     android:textSize="20sp" android:fontFamily="@font/inter_bold" android:textStyle="bold"/>
             </FrameLayout>
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Check the URL&#10;and try again" android:textColor="#16232A"
+                android:text="@string/status_error_hint" android:textColor="#16232A"
                 android:textSize="16sp" android:fontFamily="@font/inter_medium"
                 android:gravity="center" android:lineSpacingMultiplier="1.3"/>
         </LinearLayout>
@@ -1062,7 +1062,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Pilih Playlist"
+                android:text="@string/playlist_switcher_title"
                 android:textColor="#E4EEF0"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -1084,7 +1084,7 @@
                 android:id="@+id/btn_switcher_close"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Tutup"
+                android:text="@string/playlist_switcher_close"
                 android:textColor="#8AACB0"
                 android:textSize="14sp"
                 android:gravity="center"
