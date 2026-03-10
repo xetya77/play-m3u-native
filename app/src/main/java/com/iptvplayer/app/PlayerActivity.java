@@ -489,34 +489,45 @@ public class PlayerActivity extends AppCompatActivity {
                     "}catch(e){}" +
                     "})();";
 
-                // JS deteksi video selesai + blokir autoplay YouTube
-                // Agar setelah video habis, yang kontrol next adalah kita (bukan YouTube)
+                // JS deteksi video selesai via polling — lebih reliable dari event 'ended'
+                // Alasan: YouTube me-load video baru ke element yang sama sehingga
+                // event 'ended' sering tidak terpicu, yang terpicu adalah 'emptied'/'pause'
                 String endedJs =
                     "(function(){" +
-                    // Paksa loop=false agar tidak loop sendiri
-                    "var v=document.querySelector('video');" +
-                    "if(!v)return;" +
-                    // Reset flag jika video baru (src berubah)
-                    "if(v.__ytSrc&&v.__ytSrc!==v.src){v.__ytEndedSet=false;}" +
-                    "v.__ytSrc=v.src;" +
-                    "if(v.__ytEndedSet)return;" +
-                    "v.__ytEndedSet=true;" +
-                    // Nonaktifkan autoplay attribute bawaan YouTube
-                    "v.autoplay=false;" +
-                    // Sembunyikan endscreen & overlay 'up next' yang bisa di-klik user
-                    "var st=document.getElementById('__hyt_end__');" +
-                    "if(!st){st=document.createElement('style');" +
-                    "st.id='__hyt_end__';document.head.appendChild(st);}" +
-                    "st.textContent='.ytp-endscreen-content,.ytp-ce-element," +
+                    // Hanya pasang 1 interval per halaman
+                    "if(window.__ytPollActive)return;" +
+                    "window.__ytPollActive=true;" +
+                    // Simpan URL video yang sedang kita putar (diset dari Android saat loadUrl)
+                    "var lastSrc='';" +
+                    "var notified=false;" +
+                    "setInterval(function(){" +
+                    "  var v=document.querySelector('video');" +
+                    "  if(!v||!window.AndroidInterface)return;" +
+                    // Matikan autoplay & loop bawaan YouTube
+                    "  v.loop=false;" +
+                    "  v.autoplay=false;" +
+                    // Deteksi: video src berubah = YouTube sudah ganti video lain
+                    "  if(v.src&&v.src!==lastSrc){" +
+                    "    lastSrc=v.src;" +
+                    "    notified=false;" +
+                    "  }" +
+                    // Deteksi: video hampir selesai (sisa < 1.5 detik) atau ended
+                    "  var ended=v.ended||(v.duration>0&&!v.paused&&" +
+                    "    (v.duration-v.currentTime)<1.5);" +
+                    "  if(ended&&!notified){" +
+                    "    notified=true;" +
+                    "    v.pause();" +
+                    "    window.AndroidInterface.onVideoEnded();" +
+                    "  }" +
+                    // Sembunyikan endscreen & up-next overlay
+                    "  var st=document.getElementById('__hyt_end__');" +
+                    "  if(!st){st=document.createElement('style');" +
+                    "    st.id='__hyt_end__';document.head.appendChild(st);" +
+                    "    st.textContent='.ytp-endscreen-content,.ytp-ce-element," +
                     ".ytp-autonav-endscreen,.ytp-upnext,.ytp-upnext-autoplay," +
-                    "ytd-compact-autoplay-renderer,.ytd-watch-next-secondary-results-renderer" +
-                    "{display:none!important;pointer-events:none!important}';" +
-                    // Saat video selesai → kita yang putar berikutnya, bukan YouTube
-                    "v.addEventListener('ended',function(){" +
-                    "// Pause segera supaya YouTube tidak sempat autoplay sendiri" +
-                    "v.pause();" +
-                    "window.AndroidInterface&&window.AndroidInterface.onVideoEnded();" +
-                    "});" +
+                    "ytd-compact-autoplay-renderer{display:none!important;" +
+                    "pointer-events:none!important}';}" +
+                    "},500);" + // cek setiap 500ms
                     "})();";
 
                 // Inject bertahap karena YouTube render secara async
