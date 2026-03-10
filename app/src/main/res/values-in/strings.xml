@@ -113,4 +113,9 @@
     <string name="btn_save">Simpan</string>
     <string name="btn_add">Tambah</string>
     <string name="btn_close">Tutup</string>
+
+    <!-- Player errors -->
+    <string name="error_no_connection">Tidak ada koneksi internet</string>
+    <string name="error_http">Stream tidak tersedia (HTTP error)</string>
+    <string name="error_playback">Gagal memutar stream</string>
 </resources>
