@@ -11,68 +11,99 @@ public class M3UParser {
         List<Channel> channels = new ArrayList<>();
         if (content == null || content.isEmpty()) return channels;
 
-        String[] lines = content.split("\n");
+        // Normalisasi line ending
+        String[] lines = content.replace("\r\n", "\n").replace("\r", "\n").split("\n");
+        int total = lines.length;
 
-        // Buffer metadata — di-reset hanya saat ketemu URL (channel selesai)
-        String name = null, logo = null, group = null;
-        String userAgent = null, referrer = null;
-        String drmType = null, drmKey = null;
+        int i = 0;
+        while (i < total) {
+            String line = lines[i].trim();
 
-        for (String rawLine : lines) {
-            String line = rawLine.trim();
-
-            if (line.startsWith("#EXTINF")) {
-                // Hanya reset field yang ada di EXTINF, biarkan
-                // userAgent/referrer yang sudah di-set sebelumnya tetap
-                String n = extractAttr(line, "tvg-name");
-                if (n == null || n.isEmpty()) {
-                    int comma = line.lastIndexOf(',');
-                    if (comma >= 0 && comma < line.length() - 1)
-                        n = line.substring(comma + 1).trim();
-                }
-                name  = n;
-                logo  = extractAttr(line, "tvg-logo");
-                group = extractAttr(line, "group-title");
-
-                // User-agent kadang inline di EXTINF
-                String inlineUa = extractAttr(line, "tvg-user-agent");
-                if (inlineUa != null && !inlineUa.isEmpty()) userAgent = inlineUa;
-
-                // Referrer kadang inline di EXTINF
-                String inlineRef = extractAttr(line, "http-referrer");
-                if (inlineRef != null && !inlineRef.isEmpty()) referrer = inlineRef;
-
-            } else if (line.startsWith("#EXTVLCOPT:http-user-agent=")) {
-                userAgent = line.substring("#EXTVLCOPT:http-user-agent=".length()).trim();
-
-            } else if (line.startsWith("#EXTVLCOPT:http-referrer=")) {
-                referrer = line.substring("#EXTVLCOPT:http-referrer=".length()).trim();
-
-            } else if (line.startsWith("#KODIPROP:inputstream.adaptive.license_type=")) {
-                String type = line.substring("#KODIPROP:inputstream.adaptive.license_type=".length()).trim();
-                if (type.equals("org.w3.clearkey"))      drmType = "clearkey";
-                else if (type.contains("widevine"))       drmType = "widevine";
-
-            } else if (line.startsWith("#KODIPROP:inputstream.adaptive.license_key=")) {
-                drmKey = line.substring("#KODIPROP:inputstream.adaptive.license_key=".length()).trim();
-
-            } else if (!line.startsWith("#") && !line.isEmpty()
-                    && (line.startsWith("http") || line.startsWith("rtmp") || line.startsWith("rtsp"))) {
-                // Ini adalah URL channel
-                if (name == null || name.isEmpty()) name = "Channel";
-                Channel ch = new Channel(name, line, logo, group);
-                ch.userAgent = userAgent;
-                ch.referrer  = referrer;
-                ch.drmType   = drmType;
-                ch.drmKey    = drmKey;
-                ch.isDrm     = (drmType != null);
-                channels.add(ch);
-
-                // Reset semua setelah channel tersimpan
-                name = null; logo = null; group = null;
-                userAgent = null; referrer = null;
-                drmType = null; drmKey = null;
+            if (!line.startsWith("#EXTINF")) {
+                i++;
+                continue;
             }
+
+            // ── Ambil display name dari bagian setelah koma terakhir ──
+            // Selalu gunakan display name, ABAIKAN tvg-name
+            // (tvg-name sering berisi ID teknis bukan nama tampilan)
+            String name;
+            int comma = line.lastIndexOf(',');
+            if (comma >= 0 && comma < line.length() - 1) {
+                name = line.substring(comma + 1).trim();
+            } else {
+                name = "Channel";
+            }
+            String logo  = extractAttr(line, "tvg-logo");
+            String group = extractAttr(line, "group-title");
+
+            // UA / referrer yang inline di EXTINF (jarang, tapi ada)
+            String ua  = extractAttr(line, "tvg-user-agent");
+            String ref = extractAttr(line, "http-referrer");
+
+            String drmType = null, drmKey = null;
+            String url = null;
+
+            // ── Scan maju dari baris setelah EXTINF ──
+            // Kumpulkan semua metadata sampai ketemu EXTINF berikutnya atau EOF
+            // Ini menangani dua pola yang ada di playlist:
+            //   Pola A (benar):  EXTINF → KODIPROP → EXTVLCOPT → URL
+            //   Pola B (umum):   EXTINF → URL → KODIPROP → EXTVLCOPT
+            int j = i + 1;
+            // Pass 1: temukan URL
+            int urlLine = -1;
+            for (int k = j; k < total && k < j + 20; k++) {
+                String kl = lines[k].trim();
+                if (kl.startsWith("#EXTINF")) break; // EXTINF berikutnya = batas
+                if (!kl.startsWith("#") && !kl.isEmpty()
+                        && (kl.startsWith("http") || kl.startsWith("rtmp") || kl.startsWith("rtsp"))) {
+                    url = kl;
+                    urlLine = k;
+                    break;
+                }
+            }
+
+            if (url == null) { i++; continue; } // tidak ada URL, skip
+
+            // Pass 2: kumpulkan semua metadata di antara EXTINF dan EXTINF berikutnya
+            // Termasuk baris SETELAH URL (Pola B)
+            int scanEnd = urlLine + 1;
+            // Cari EXTINF berikutnya untuk tahu batas scan
+            for (int k = urlLine + 1; k < total && k < urlLine + 15; k++) {
+                if (lines[k].trim().startsWith("#EXTINF")) break;
+                scanEnd = k + 1;
+            }
+
+            for (int k = j; k < scanEnd; k++) {
+                String kl = lines[k].trim();
+                if (kl.startsWith("#EXTVLCOPT:http-user-agent=")) {
+                    String val = kl.substring("#EXTVLCOPT:http-user-agent=".length()).trim();
+                    if (!val.isEmpty()) ua = val;
+                } else if (kl.startsWith("#EXTVLCOPT:http-referrer=")) {
+                    String val = kl.substring("#EXTVLCOPT:http-referrer=".length()).trim();
+                    if (!val.isEmpty()) ref = val;
+                } else if (kl.startsWith("#KODIPROP:inputstream.adaptive.license_type=")) {
+                    String t = kl.substring("#KODIPROP:inputstream.adaptive.license_type=".length()).trim();
+                    if (t.contains("clearkey") || t.equals("org.w3.clearkey")) drmType = "clearkey";
+                    else if (t.contains("widevine")) drmType = "widevine";
+                } else if (kl.startsWith("#KODIPROP:inputstream.adaptive.license_key=")) {
+                    String val = kl.substring("#KODIPROP:inputstream.adaptive.license_key=".length()).trim();
+                    if (!val.isEmpty()) drmKey = val;
+                }
+            }
+
+            // Buat channel
+            if (name.isEmpty()) name = "Channel";
+            Channel ch = new Channel(name, url, logo, group);
+            ch.userAgent = (ua   != null && !ua.isEmpty())  ? ua  : null;
+            ch.referrer  = (ref  != null && !ref.isEmpty()) ? ref : null;
+            ch.drmType   = drmType;
+            ch.drmKey    = drmKey;
+            ch.isDrm     = (drmType != null);
+            channels.add(ch);
+
+            // Lanjut dari baris setelah URL terakhir yang di-scan
+            i = scanEnd;
         }
         return channels;
     }
