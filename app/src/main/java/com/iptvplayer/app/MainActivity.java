@@ -537,7 +537,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         TextView btnCancel  = dialogView.findViewById(R.id.btn_exit_cancel);
         TextView btnConfirm = dialogView.findViewById(R.id.btn_exit_confirm);
         btnCancel.setOnClickListener(v -> dialog.dismiss());
-        btnConfirm.setOnClickListener(v -> { dialog.dismiss(); finish(); });
+        btnConfirm.setOnClickListener(v -> { dialog.dismiss(); finishAffinity(); });
     }
 
     /** Tap pertama X → orange; tap kedua → confirmExit */

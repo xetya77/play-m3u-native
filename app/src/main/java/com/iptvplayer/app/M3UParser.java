@@ -36,14 +36,13 @@ public class M3UParser {
             String line = rawLines[i].trim();
 
             if (line.startsWith("#EXTINF")) {
-                // Nama: prioritas tvg-name, fallback display name setelah koma terakhir
-                String n = extractAttr(line, "tvg-name");
-                if (n == null || n.isEmpty()) {
-                    int comma = line.lastIndexOf(',');
-                    if (comma >= 0 && comma < line.length() - 1)
-                        n = line.substring(comma + 1).trim();
-                }
-                name  = n;
+                // Nama selalu dari display name setelah koma terakhir di #EXTINF.
+                // tvg-name sengaja diabaikan — sering berisi ID teknis (misal "Indosiar.id")
+                // bukan nama tampilan yang sebenarnya.
+                int comma = line.lastIndexOf(',');
+                String n = (comma >= 0 && comma < line.length() - 1)
+                        ? line.substring(comma + 1).trim() : null;
+                name = (n != null && !n.isEmpty()) ? n : "Channel";
                 logo  = extractAttr(line, "tvg-logo");
                 group = extractAttr(line, "group-title");
 

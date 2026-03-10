@@ -52,6 +52,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import android.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 @OptIn(markerClass = UnstableApi.class)
@@ -1280,7 +1281,29 @@ public class PlayerActivity extends AppCompatActivity {
         handler.removeCallbacksAndMessages(null);
     }
     @Override public void onBackPressed() {
-        if (categoryFullOpen) closeCategoryFull(); else if (panelOpen) hidePanel(); else finish();
+        if (categoryFullOpen) { closeCategoryFull(); return; }
+        if (panelOpen) { hidePanel(); return; }
+        showExitConfirmDialog();
+    }
+
+    /** Dialog konfirmasi keluar app — pakai palette & font app */
+    private void showExitConfirmDialog() {
+        android.view.View dialogView = getLayoutInflater().inflate(R.layout.dialog_exit, null);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(
+                    new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+        dialog.show();
+        TextView btnCancel  = dialogView.findViewById(R.id.btn_exit_cancel);
+        TextView btnConfirm = dialogView.findViewById(R.id.btn_exit_confirm);
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        btnConfirm.setOnClickListener(v -> {
+            dialog.dismiss();
+            finishAffinity(); // tutup semua Activity (Player + Main) sekaligus
+        });
     }
     /** Buka MainActivity (settings/playlist) — selalu buat instance baru jika perlu */
     private void openMainActivity() {
