@@ -512,8 +512,10 @@ public class PlayerActivity extends AppCompatActivity {
                     "    notified=false;" +
                     "  }" +
                     // Deteksi: video hampir selesai (sisa < 1.5 detik) atau ended
-                    "  var ended=v.ended||(v.duration>0&&!v.paused&&" +
-                    "    (v.duration-v.currentTime)<1.5);" +
+                    // Skip jika ini iklan — iklan biasanya < 60 detik, video asli >= 60 detik
+                    "  var isAd=(v.duration>0&&v.duration<60);" +
+                    "  var ended=!isAd&&(v.ended||(v.duration>0&&!v.paused&&" +
+                    "    (v.duration-v.currentTime)<1.5));" +
                     "  if(ended&&!notified){" +
                     "    notified=true;" +
                     "    v.pause();" +
@@ -633,6 +635,8 @@ public class PlayerActivity extends AppCompatActivity {
         playerView.setVisibility(View.GONE);
         youtubeWebView.setVisibility(View.VISIBLE);
         videoLoading.setVisibility(View.GONE);
+        // Sembunyikan overlay remote guide — hanya muncul untuk ExoPlayer
+        if (remoteGuide != null) remoteGuide.setVisibility(View.GONE);
 
         // Pakai halaman watch biasa — tidak kena error 152/153 karena bukan embed
         // UA desktop agar YouTube tidak redirect ke m.youtube.com (mobile UI sulit di-inject)
