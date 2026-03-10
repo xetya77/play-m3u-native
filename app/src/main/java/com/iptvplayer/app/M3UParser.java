@@ -6,18 +6,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Parser M3U yang menangani semua variasi urutan metadata:
+ * Parser M3U dengan dukungan tiga pola urutan metadata:
  *
  *   Pola A (standar):  #EXTINF → [meta] → URL
- *   Pola B (umum):     #EXTINF → URL → [meta]
- *   Pola C (ada):      [meta] → #EXTINF → URL
+ *   Pola B (umum di playlist ini): #EXTINF → URL → [meta]
+ *   Pola C (ada di playlist ini):  [meta] → #EXTINF → URL
  *
- * Untuk zona abu-abu (metadata di antara dua channel), digunakan heuristik
- * "blok terdekat ke EXTINF": setiap blok metadata berurutan diberikan ke
- * channel yang EXTINF-nya lebih dekat ke awal blok tersebut.
- *
- * Nama channel selalu diambil dari display name setelah koma terakhir di
- * #EXTINF — tvg-name sengaja diabaikan karena sering berisi ID teknis.
+ * Pola A dan C ditangani oleh state machine (seperti parser asli).
+ * Pola B ditangani dengan scan tambahan setelah URL ditemukan,
+ * menggunakan heuristik "blok terdekat": blok metadata setelah URL
+ * hanya diambil jika awal blok lebih dekat ke URL saat ini daripada
+ * ke #EXTINF channel berikutnya — sehingga tidak mencemari channel lain.
  */
 public class M3UParser {
 
@@ -27,181 +26,136 @@ public class M3UParser {
 
         String[] rawLines = content.replace("\r\n", "\n").replace("\r", "\n").split("\n");
         int total = rawLines.length;
-        String[] lines = new String[total];
-        for (int i = 0; i < total; i++) lines[i] = rawLines[i].trim();
 
-        // ── Pass 1: posisi semua #EXTINF ──
-        List<Integer> extinfPos = new ArrayList<>();
+        // State machine (sama dengan parser asli)
+        String name = null, logo = null, group = null;
+        String userAgent = null, referrer = null;
+        String drmType = null, drmKey = null;
+
         for (int i = 0; i < total; i++) {
-            if (lines[i].startsWith("#EXTINF")) extinfPos.add(i);
-        }
-        if (extinfPos.isEmpty()) return channels;
-        int numE = extinfPos.size();
+            String line = rawLines[i].trim();
 
-        // ── Pass 2: URL terdekat setelah setiap #EXTINF ──
-        int[] urlAt = new int[numE];
-        for (int ei = 0; ei < numE; ei++) {
-            int extinfI = extinfPos.get(ei);
-            int nextExtinf = (ei + 1 < numE) ? extinfPos.get(ei + 1) : total;
-            urlAt[ei] = -1;
-            for (int k = extinfI + 1; k < nextExtinf; k++) {
-                if (isUrl(lines[k])) { urlAt[ei] = k; break; }
-            }
-        }
+            if (line.startsWith("#EXTINF")) {
+                // Nama: prioritas tvg-name, fallback display name setelah koma terakhir
+                String n = extractAttr(line, "tvg-name");
+                if (n == null || n.isEmpty()) {
+                    int comma = line.lastIndexOf(',');
+                    if (comma >= 0 && comma < line.length() - 1)
+                        n = line.substring(comma + 1).trim();
+                }
+                name  = n;
+                logo  = extractAttr(line, "tvg-logo");
+                group = extractAttr(line, "group-title");
 
-        // ── Pass 3: bangun channel ──
-        for (int ei = 0; ei < numE; ei++) {
-            if (urlAt[ei] < 0) continue;
+                String inlineUa = extractAttr(line, "tvg-user-agent");
+                if (inlineUa != null && !inlineUa.isEmpty()) userAgent = inlineUa;
+                String inlineRef = extractAttr(line, "http-referrer");
+                if (inlineRef != null && !inlineRef.isEmpty()) referrer = inlineRef;
 
-            int extinfI    = extinfPos.get(ei);
-            int urlI       = urlAt[ei];
-            int nextExtinf = (ei + 1 < numE) ? extinfPos.get(ei + 1) : total;
+            } else if (line.startsWith("#EXTVLCOPT:http-user-agent=")) {
+                userAgent = line.substring("#EXTVLCOPT:http-user-agent=".length()).trim();
 
-            String extinfLine = lines[extinfI];
+            } else if (line.startsWith("#EXTVLCOPT:http-referrer=")) {
+                referrer = line.substring("#EXTVLCOPT:http-referrer=".length()).trim();
 
-            // Nama dari display name setelah koma terakhir (abaikan tvg-name)
-            int comma = extinfLine.lastIndexOf(',');
-            String name = (comma >= 0 && comma < extinfLine.length() - 1)
-                    ? extinfLine.substring(comma + 1).trim() : "Channel";
-            if (name.isEmpty()) name = "Channel";
+            } else if (line.startsWith("#KODIPROP:inputstream.adaptive.license_type=")) {
+                String t = line.substring("#KODIPROP:inputstream.adaptive.license_type=".length()).trim();
+                if (t.contains("clearkey") || t.equals("org.w3.clearkey")) drmType = "clearkey";
+                else if (t.contains("widevine"))                            drmType = "widevine";
 
-            String logo  = extractAttr(extinfLine, "tvg-logo");
-            String group = extractAttr(extinfLine, "group-title");
+            } else if (line.startsWith("#KODIPROP:inputstream.adaptive.license_key=")) {
+                drmKey = line.substring("#KODIPROP:inputstream.adaptive.license_key=".length()).trim();
 
-            String ua = null, ref = null, drmType = null, drmKey = null;
+            } else if (!line.startsWith("#") && !line.isEmpty()
+                    && (line.startsWith("http") || line.startsWith("rtmp") || line.startsWith("rtsp"))) {
 
-            // ── Pola A: metadata antara EXTINF dan URL → selalu milik channel ini ──
-            for (int k = extinfI + 1; k < urlI; k++) {
-                MetaResult r = parseMeta(lines[k]);
-                if (r != null) { ua = merge(ua, r.ua); ref = merge(ref, r.ref);
-                    drmType = merge(drmType, r.drmType); drmKey = merge(drmKey, r.drmKey); }
-            }
+                if (name == null || name.isEmpty()) name = "Channel";
+                Channel ch = new Channel(name, line, logo, group);
+                ch.userAgent = userAgent;
+                ch.referrer  = referrer;
+                ch.drmType   = drmType;
+                ch.drmKey    = drmKey;
+                ch.isDrm     = (drmType != null);
+                channels.add(ch);
 
-            // ── Pola B: blok metadata antara URL dan EXTINF berikutnya ──
-            // Setiap blok metadata berurutan diberikan ke channel ini HANYA JIKA
-            // awal blok lebih dekat ke EXTINF ini daripada ke EXTINF berikutnya.
-            {
-                int k = urlI + 1;
-                while (k < nextExtinf) {
-                    if (isMeta(lines[k])) {
-                        int blockStart = k;
-                        List<String> block = new ArrayList<>();
-                        while (k < nextExtinf && isMeta(lines[k])) {
-                            block.add(lines[k]); k++;
-                        }
-                        int distToCurr = blockStart - extinfI;
-                        int distToNext = nextExtinf - blockStart;
-                        if (distToCurr <= distToNext) {
-                            for (String bl : block) {
-                                MetaResult r = parseMeta(bl);
-                                if (r != null) { ua = merge(ua, r.ua); ref = merge(ref, r.ref);
-                                    drmType = merge(drmType, r.drmType); drmKey = merge(drmKey, r.drmKey); }
-                            }
-                        }
-                        // else: blok lebih dekat ke EXTINF berikutnya → biarkan (Pola C berikutnya)
-                    } else {
-                        k++;
+                // ── Pola B: scan metadata setelah URL ──────────────────────────
+                // Cari posisi #EXTINF berikutnya agar tahu batas scan
+                int urlPos       = i;
+                int nextExtinfPos = total;
+                for (int k = i + 1; k < total && k < i + 60; k++) {
+                    if (rawLines[k].trim().startsWith("#EXTINF")) {
+                        nextExtinfPos = k;
+                        break;
                     }
                 }
-            }
 
-            // ── Pola C: blok metadata dari zona channel sebelumnya ──
-            // Diambil HANYA JIKA blok lebih dekat ke EXTINF ini daripada ke EXTINF sebelumnya.
-            if (ei > 0 && urlAt[ei - 1] >= 0) {
-                int prevUrlI   = urlAt[ei - 1];
-                int prevExtinf = extinfPos.get(ei - 1);
-                int k = prevUrlI + 1;
-                while (k < extinfI) {
-                    if (isMeta(lines[k])) {
-                        int blockStart = k;
+                // Scan blok-blok metadata di antara URL dan #EXTINF berikutnya
+                int j = i + 1;
+                while (j < nextExtinfPos) {
+                    String nl = rawLines[j].trim();
+                    if (isMeta(nl)) {
+                        // Temukan seluruh blok metadata berurutan
+                        int blockStart = j;
                         List<String> block = new ArrayList<>();
-                        while (k < extinfI && isMeta(lines[k])) {
-                            block.add(lines[k]); k++;
+                        while (j < nextExtinfPos && isMeta(rawLines[j].trim())) {
+                            block.add(rawLines[j].trim());
+                            j++;
                         }
-                        int distToPrev = blockStart - prevExtinf;
-                        int distToCurr = extinfI - blockStart;
-                        if (distToCurr < distToPrev) {
+                        // Heuristik: ambil blok ini untuk channel saat ini HANYA jika
+                        // awal blok lebih dekat ke URL saat ini daripada ke EXTINF berikutnya
+                        int distFromUrl    = blockStart - urlPos;
+                        int distToNextExtinf = nextExtinfPos - blockStart;
+                        if (distFromUrl <= distToNextExtinf) {
                             for (String bl : block) {
-                                MetaResult r = parseMeta(bl);
-                                if (r != null) { ua = merge(ua, r.ua); ref = merge(ref, r.ref);
-                                    drmType = merge(drmType, r.drmType); drmKey = merge(drmKey, r.drmKey); }
+                                applyMeta(bl, ch);
                             }
+                            ch.isDrm = (ch.drmType != null);
                         }
+                        // else: blok lebih dekat ke EXTINF berikutnya
+                        //       → biarkan untuk ditangkap sebagai Pola C/A channel berikutnya
                     } else {
-                        k++;
+                        j++;
                     }
                 }
-            }
+                // ─────────────────────────────────────────────────────────────
 
-            // Inline attrs di EXTINF sebagai fallback
-            if (ua == null || ua.isEmpty()) {
-                String v = extractAttr(extinfLine, "tvg-user-agent");
-                if (v != null && !v.isEmpty()) ua = v;
+                // Reset state
+                name = null; logo = null; group = null;
+                userAgent = null; referrer = null;
+                drmType = null; drmKey = null;
             }
-            if (ref == null || ref.isEmpty()) {
-                String v = extractAttr(extinfLine, "http-referrer");
-                if (v != null && !v.isEmpty()) ref = v;
-            }
-
-            Channel ch = new Channel(name, lines[urlI], logo, group);
-            ch.userAgent = (ua      != null && !ua.isEmpty())      ? ua      : null;
-            ch.referrer  = (ref     != null && !ref.isEmpty())     ? ref     : null;
-            ch.drmType   = drmType;
-            ch.drmKey    = drmKey;
-            ch.isDrm     = (drmType != null);
-            channels.add(ch);
         }
         return channels;
     }
 
-    // ── Helper ──────────────────────────────────────────────────────────────
-
-    private static boolean isUrl(String l) {
-        return !l.startsWith("#") && !l.isEmpty()
-                && (l.startsWith("http") || l.startsWith("rtmp") || l.startsWith("rtsp"));
-    }
-
-    private static boolean isMeta(String l) {
-        return l.startsWith("#EXTVLCOPT") || l.startsWith("#KODIPROP");
-    }
-
-    private static String merge(String existing, String candidate) {
-        return (existing == null && candidate != null) ? candidate : existing;
-    }
-
-    private static MetaResult parseMeta(String line) {
+    /** Terapkan satu baris metadata ke channel, hanya jika field masih null. */
+    private static void applyMeta(String line, Channel ch) {
         if (line.startsWith("#EXTVLCOPT:http-user-agent=")) {
             String v = line.substring("#EXTVLCOPT:http-user-agent=".length());
-            return v.isEmpty() ? null : new MetaResult(v, null, null, null);
-        }
-        if (line.startsWith("#EXTVLCOPT:http-referrer=")) {
+            if (!v.isEmpty() && ch.userAgent == null) ch.userAgent = v;
+        } else if (line.startsWith("#EXTVLCOPT:http-referrer=")) {
             String v = line.substring("#EXTVLCOPT:http-referrer=".length());
-            return v.isEmpty() ? null : new MetaResult(null, v, null, null);
-        }
-        if (line.startsWith("#KODIPROP:inputstream.adaptive.license_type=")) {
-            String t = line.substring("#KODIPROP:inputstream.adaptive.license_type=".length());
-            String dt = null;
-            if (t.contains("clearkey") || t.equals("org.w3.clearkey")) dt = "clearkey";
-            else if (t.contains("widevine")) dt = "widevine";
-            return dt != null ? new MetaResult(null, null, dt, null) : null;
-        }
-        if (line.startsWith("#KODIPROP:inputstream.adaptive.license_key=")) {
+            if (!v.isEmpty() && ch.referrer == null) ch.referrer = v;
+        } else if (line.startsWith("#KODIPROP:inputstream.adaptive.license_type=")) {
+            if (ch.drmType == null) {
+                String t = line.substring("#KODIPROP:inputstream.adaptive.license_type=".length());
+                if (t.contains("clearkey") || t.equals("org.w3.clearkey")) ch.drmType = "clearkey";
+                else if (t.contains("widevine"))                            ch.drmType = "widevine";
+            }
+        } else if (line.startsWith("#KODIPROP:inputstream.adaptive.license_key=")) {
             String v = line.substring("#KODIPROP:inputstream.adaptive.license_key=".length());
-            return v.isEmpty() ? null : new MetaResult(null, null, null, v);
+            if (!v.isEmpty() && ch.drmKey == null) ch.drmKey = v;
         }
-        return null;
+    }
+
+    private static boolean isMeta(String line) {
+        return line.startsWith("#EXTVLCOPT") || line.startsWith("#KODIPROP");
     }
 
     private static String extractAttr(String line, String attr) {
         Pattern p = Pattern.compile(attr + "=[\"']([^\"']*)[\"']");
         Matcher m = p.matcher(line);
-        return m.find() ? m.group(1).trim() : null;
-    }
-
-    private static class MetaResult {
-        final String ua, ref, drmType, drmKey;
-        MetaResult(String ua, String ref, String drmType, String drmKey) {
-            this.ua = ua; this.ref = ref; this.drmType = drmType; this.drmKey = drmKey;
-        }
+        if (m.find()) return m.group(1).trim();
+        return null;
     }
 }
