@@ -797,7 +797,10 @@ public class PlayerActivity extends AppCompatActivity {
                 return false;
             }
         });
-        chListPanel.setOnTouchListener((v, e) -> { panelSwipe.onTouchEvent(e); return false; });
+        chListPanel.setOnTouchListener((v, e) -> {
+            panelSwipe.onTouchEvent(e);
+            return true; // intercept: jangan propagate ke backdrop
+        });
 
         // Swipe KIRI di panel kategori → kembali ke daftar channel
         GestureDetector catSwipe = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {

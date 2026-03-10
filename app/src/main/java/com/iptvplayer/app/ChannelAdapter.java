@@ -1,5 +1,6 @@
 package com.iptvplayer.app;
 
+import com.iptvplayer.app.R;
 import android.animation.ObjectAnimator;
 import android.animation.AnimatorSet;
 import android.view.LayoutInflater;
@@ -110,7 +111,9 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.VH> {
         h.tvNum.setTextColor(isActive ? 0xFF000000 : 0x80FFFFFF);
         h.tvName.setText(ch.name);
         h.tvName.setTextColor(isActive ? 0xFF000000 : 0xFFFFFFFF);
-        h.tvEpg.setText("Tidak ada informasi");
+        h.tvEpg.setText((ch.group != null && !ch.group.isEmpty())
+                ? ch.group
+                : h.tvEpg.getContext().getString(R.string.player_no_info));
         h.tvEpg.setTextColor(isActive ? 0x80000000 : 0x80FFFFFF);
 
         // Logo
