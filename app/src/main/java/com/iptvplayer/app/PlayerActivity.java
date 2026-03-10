@@ -555,7 +555,7 @@ public class PlayerActivity extends AppCompatActivity {
      * pageToken = null untuk halaman pertama, lanjut recursif untuk halaman berikutnya.
      */
     private void fetchYouTubePlaylist(String playlistId, String pageToken) {
-        tvLoadingMsg.setText("Memuat playlist...");
+        tvLoadingMsg.setText(getString(R.string.loading_playlist));
         videoLoading.setVisibility(View.VISIBLE);
 
         String url = "https://www.googleapis.com/youtube/v3/playlistItems"
@@ -605,7 +605,7 @@ public class PlayerActivity extends AppCompatActivity {
                             ytPlaylistCurrentIdx = 0;
                             playYouTube(ytPlaylistVideoIds.get(0));
                         } else {
-                            tvLoadingMsg.setText("Playlist kosong atau tidak tersedia");
+                            tvLoadingMsg.setText(getString(R.string.status_playlist_unavailable));
                         }
                     }
                 });
@@ -671,7 +671,7 @@ public class PlayerActivity extends AppCompatActivity {
                 if (state == Player.STATE_BUFFERING) {
                     videoLoading.setBackgroundColor(0x00000000);
                     videoLoading.setVisibility(View.VISIBLE);
-                    tvLoadingMsg.setText("Memuat...");
+                    tvLoadingMsg.setText(getString(R.string.loading_generic));
                 } else if (state == Player.STATE_READY) {
                     videoLoading.setVisibility(View.GONE);
                     if (!streamStarted) onFirstStreamReady();
@@ -679,7 +679,7 @@ public class PlayerActivity extends AppCompatActivity {
                 } else if (state == Player.STATE_ENDED) {
                     videoLoading.setBackgroundColor(0x00000000);
                     videoLoading.setVisibility(View.VISIBLE);
-                    tvLoadingMsg.setText("Stream berakhir...");
+                    tvLoadingMsg.setText(getString(R.string.player_stream_ended));
                 }
             }
             @Override public void onPlayerError(androidx.media3.common.PlaybackException error) {
@@ -707,7 +707,7 @@ public class PlayerActivity extends AppCompatActivity {
 
     // ===== CHANNEL ADAPTER =====
     private void setupChannelAdapter() {
-        tvPanelTitle.setText(playlistName.isEmpty() ? "SEMUA SALURAN" : playlistName.toUpperCase());
+        tvPanelTitle.setText(playlistName.isEmpty() ? getString(R.string.player_all_channels) : playlistName.toUpperCase());
         channelAdapter = new ChannelAdapter(idx -> { playChannel(idx, true); hidePanel(); });
         channelAdapter.setChannels(channels);
         channelAdapter.setActiveIndex(currentChannelIdx);
@@ -996,7 +996,7 @@ public class PlayerActivity extends AppCompatActivity {
         if (withFlash) blackFlash();
         videoLoading.setBackgroundColor(0x00000000);
         videoLoading.setVisibility(View.VISIBLE);
-        tvLoadingMsg.setText("Memuat...");
+        tvLoadingMsg.setText(getString(R.string.loading_generic));
         updateChInfo(ch, idx);
         // Cek YouTube dulu — jika ya, gunakan WebView bukan ExoPlayer
         if (isYouTubeUrl(ch.url)) {
@@ -1082,7 +1082,7 @@ public class PlayerActivity extends AppCompatActivity {
     private void updateChInfo(Channel ch, int idx) {
         tvChNum.setText(String.valueOf(idx + 1));
         tvChName.setText(ch.name);
-        tvChEpg.setText("Tidak ada informasi");
+        tvChEpg.setText(getString(R.string.player_no_info));
         tvChPlaylistName.setText(playlistName);
         if (ch.logoUrl != null && !ch.logoUrl.isEmpty()) {
             ivChLogo.setVisibility(View.VISIBLE);
@@ -1326,7 +1326,7 @@ public class PlayerActivity extends AppCompatActivity {
                 if (isYouTubeMode) {
                     youtubeWebView.setVisibility(View.GONE);
                     videoLoading.setVisibility(View.VISIBLE);
-                    tvLoadingMsg.setText("Siaran tidak tersedia");
+                    tvLoadingMsg.setText(getString(R.string.player_unavailable));
                 }
             });
         }

@@ -257,7 +257,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         // Source
         btnSourceNext.setOnClickListener(v -> {
             if (selectedSource == null) {
-                android.widget.Toast.makeText(this, "Pilih sumber terlebih dahulu", android.widget.Toast.LENGTH_SHORT).show();
+                android.widget.Toast.makeText(this, getString(R.string.source_choose_first), android.widget.Toast.LENGTH_SHORT).show();
             } else if ("url".equals(selectedSource)) {
                 showPageWithTransition("url");
             } else if ("file".equals(selectedSource)) {
@@ -701,13 +701,13 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                     if (!channels.isEmpty()) {
                         showPageWithTransition("name");
                     } else {
-                        Toast.makeText(this, "Tidak ada channel ditemukan", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, getString(R.string.status_no_channels), Toast.LENGTH_LONG).show();
                     }
                 });
             } catch (Exception e) {
                 handler.post(() -> {
                     hideLoading();
-                    Toast.makeText(this, "Gagal baca file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getString(R.string.status_error_file, e).getMessage(), Toast.LENGTH_LONG).show();
                 });
             }
         });
@@ -757,12 +757,12 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     private void startWatching() {
         if (playlists.isEmpty()) {
-            Toast.makeText(this, "Tambahkan playlist terlebih dahulu", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.playlists_add_first), Toast.LENGTH_SHORT).show();
             return;
         }
         Playlist pl = playlists.get(currentPlaylistIdx);
         if (pl.channels == null || pl.channels.isEmpty()) {
-            Toast.makeText(this, "Playlist kosong, coba update", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.playlists_empty_try_update), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -887,7 +887,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
         if ("name".equals(field)) {
             tvTitle.setText("Edit Nama");
-            tvSubtitle.setText("Ubah nama untuk: " + pl.name);
+            tvSubtitle.setText(getString(R.string.playlist_rename_for, pl).name);
             etValue.setHint("Nama playlist...");
             etValue.setText(pl.name);
         } else {
@@ -908,7 +908,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnSave.setOnClickListener(v -> {
             String newValue = etValue.getText().toString().trim();
             if (newValue.isEmpty()) {
-                Toast.makeText(this, "Tidak boleh kosong", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.name_empty_error), Toast.LENGTH_SHORT).show();
                 return;
             }
             if ("name".equals(field)) {
@@ -926,7 +926,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         if (playlists.isEmpty()) return;
         Playlist pl = playlists.get(currentPlaylistIdx);
         if (pl.url == null || pl.url.isEmpty()) {
-            Toast.makeText(this, "Tidak bisa update playlist dari file", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.playlists_cannot_update_file), Toast.LENGTH_SHORT).show();
             return;
         }
         showLoading("Mengunduh ulang playlist...", pl.name);
@@ -954,7 +954,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             } catch (Exception e) {
                 handler.post(() -> {
                     hideLoading();
-                    Toast.makeText(this, "Gagal: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getString(R.string.status_error_generic, e).getMessage(), Toast.LENGTH_LONG).show();
                 });
             }
         });
