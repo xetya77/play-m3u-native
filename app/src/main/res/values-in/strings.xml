@@ -1,1 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PlayM3U</string>
 
+    <!-- Welcome -->
+    <string name="welcome_to">Selamat datang di</string>
+    <string name="welcome_tagline">Putar playlist M3U kamu\ndalam satu tempat.</string>
+    <string name="welcome_get_started">Mulai</string>
+    <string name="welcome_press_ok">Tekan OK untuk mulai</string>
+
+    <!-- Source -->
+    <string name="source_heading">Impor M3U dari mana?</string>
+    <string name="source_option_url">Link/URL</string>
+    <string name="source_option_file">File Lokal</string>
+    <string name="source_next">Langkah berikutnya</string>
+    <string name="source_note">Pilih salah satu untuk melanjutkan</string>
+    <string name="source_choose_first">Pilih sumber terlebih dahulu</string>
+
+    <!-- URL -->
+    <string name="url_heading">Apa URL M3U kamu?</string>
+    <string name="url_hint">Masukkan URL playlist\u2026</string>
+    <string name="url_auto_refresh">Aktifkan pembaruan otomatis?</string>
+    <string name="url_auto_refresh_note">Playlist akan diperbarui setiap kali kamu membuka aplikasi.</string>
+    <string name="url_bottom_note">Tempel tautan langsung ke playlist M3U kamu\nlalu tekan Tambah playlist</string>
+    <string name="url_add_playlist">Tambah playlist</string>
+    <string name="url_empty_error">URL tidak boleh kosong</string>
+
+    <!-- Name -->
+    <string name="name_heading">Apa nama playlist ini?</string>
+    <string name="name_hint">Masukkan nama playlist\u2026</string>
+    <string name="name_footer">Beri nama agar mudah dikenali.</string>
+    <string name="name_done">Selesai</string>
+    <string name="name_empty_error">Nama tidak boleh kosong</string>
+
+    <!-- Toggle -->
+    <string name="toggle_yes">Ya</string>
+    <string name="toggle_no">Tidak</string>
+
+    <!-- Settings -->
+    <string name="settings_start">Tonton</string>
+    <string name="settings_playlist_menu">Playlist</string>
+    <string name="settings_epg">EPG</string>
+
+    <!-- Playlists -->
+    <string name="playlists_title">Playlist</string>
+    <string name="playlists_count">%d playlist tersimpan</string>
+    <string name="playlists_refresh_all">Refresh Semua</string>
+    <string name="playlists_switch_main">Ganti Utama</string>
+    <string name="playlists_add">+ Tambah Playlist</string>
+    <string name="playlists_empty_label">Tambahkan\nplaylist M3U</string>
+    <string name="playlists_empty_add">+ Tambah</string>
+    <string name="playlists_updated">\u2713  Playlist berhasil diperbarui</string>
+    <string name="playlists_cannot_update_file">Tidak bisa update playlist dari file</string>
+    <string name="playlists_add_first">Tambahkan playlist terlebih dahulu</string>
+    <string name="playlists_empty_try_update">Playlist kosong, coba update</string>
+
+    <!-- Playlist card / dialog -->
+    <string name="playlist_active_badge">AKTIF</string>
+    <string name="playlist_auto_update">Auto update</string>
+    <string name="playlist_manual">Manual</string>
+    <string name="playlist_name_label">Nama</string>
+    <string name="playlist_url_label">URL</string>
+    <string name="playlist_url_hint">http://\u2026</string>
+    <string name="playlist_edit_title">Edit Playlist</string>
+    <string name="playlist_rename_for">Ubah nama untuk: %s</string>
+    <string name="playlist_name_placeholder">Nama playlist</string>
+    <string name="playlist_url_placeholder">URL Playlist M3U</string>
+    <string name="playlist_save">Simpan</string>
+    <string name="playlist_delete">Hapus</string>
+    <string name="playlist_switcher_title">Pilih Playlist</string>
+    <string name="playlist_switcher_close">Tutup</string>
+
+    <!-- Loading / Status -->
+    <string name="loading_adding">+ Menambahkan Playlist\u2026</string>
+    <string name="loading_available">Tersedia</string>
+    <string name="loading_playlist">Memuat playlist\u2026</string>
+    <string name="loading_generic">Memuat\u2026</string>
+    <string name="status_added">Playlist ditambahkan</string>
+    <string name="status_imported">%d channel\nberhasil diimpor.</string>
+    <string name="status_error_title">Gagal memuat</string>
+    <string name="status_error_hint">Periksa URL\ndan coba lagi</string>
+    <string name="status_error_file">Gagal baca file: %s</string>
+    <string name="status_error_load">Gagal memuat playlist: %s</string>
+    <string name="status_error_generic">Gagal: %s</string>
+    <string name="status_playlist_unavailable">Playlist kosong atau tidak tersedia</string>
+    <string name="status_no_channels">Tidak ada channel ditemukan</string>
+
+    <!-- Dialog Exit -->
+    <string name="exit_title">Keluar Aplikasi</string>
+    <string name="exit_message">Yakin ingin keluar?</string>
+    <string name="exit_cancel">Batal</string>
+    <string name="exit_confirm">Keluar</string>
+
+    <!-- Player -->
+    <string name="player_all_channels">SEMUA SALURAN</string>
+    <string name="player_all">Semua</string>
+    <string name="player_tv">Siaran TV</string>
+    <string name="player_radio">Radio</string>
+    <string name="player_movie">Film</string>
+    <string name="player_settings">Pengaturan</string>
+    <string name="player_no_info">Tidak ada informasi</string>
+    <string name="player_stream_ended">Stream berakhir\u2026</string>
+    <string name="player_unavailable">Siaran tidak tersedia</string>
+    <string name="player_hint">\u2191\u2193 ganti channel  |  \u2192 daftar channel  |  \u2192 lagi: kategori</string>
+    <string name="player_hint_press_list">Tekan: Daftar Channel</string>
+    <string name="player_hint_press_cat">Tekan 2x: Kategori</string>
+    <string name="player_drm_badge">DRM</string>
+    <string name="player_logo_fallback">TV</string>
+
+    <!-- Common -->
+    <string name="btn_ok">OK</string>
+    <string name="btn_cancel">Batal</string>
+    <string name="btn_save">Simpan</string>
+    <string name="btn_add">Tambah</string>
+    <string name="btn_close">Tutup</string>
+</resources>
