@@ -113,4 +113,9 @@
     <string name="btn_save">Save</string>
     <string name="btn_add">Add</string>
     <string name="btn_close">Close</string>
+
+    <!-- Player errors -->
+    <string name="error_no_connection">No internet connection</string>
+    <string name="error_http">Stream unavailable (HTTP error)</string>
+    <string name="error_playback">Failed to play stream</string>
 </resources>
