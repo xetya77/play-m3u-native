@@ -707,7 +707,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             } catch (Exception e) {
                 handler.post(() -> {
                     hideLoading();
-                    Toast.makeText(this, getString(R.string.status_error_file, e).getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getString(R.string.status_error_file, e.getMessage()), Toast.LENGTH_LONG).show();
                 });
             }
         });
@@ -886,13 +886,13 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         TextView btnSave = dialogView.findViewById(R.id.btn_edit_save);
 
         if ("name".equals(field)) {
-            tvTitle.setText("Edit Nama");
-            tvSubtitle.setText(getString(R.string.playlist_rename_for, pl).name);
-            etValue.setHint("Nama playlist...");
+            tvTitle.setText(getString(R.string.playlist_edit_title));
+            tvSubtitle.setText(getString(R.string.playlist_rename_for, pl.name));
+            etValue.setHint(getString(R.string.playlist_name_placeholder));
             etValue.setText(pl.name);
         } else {
-            tvTitle.setText("Edit URL");
-            tvSubtitle.setText("Ubah URL untuk: " + pl.name);
+            tvTitle.setText(getString(R.string.playlist_url_label));
+            tvSubtitle.setText(getString(R.string.playlist_rename_for, pl.name));
             etValue.setHint("URL playlist M3U...");
             etValue.setText(pl.url != null ? pl.url : "");
             etValue.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_URI);
@@ -954,7 +954,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             } catch (Exception e) {
                 handler.post(() -> {
                     hideLoading();
-                    Toast.makeText(this, getString(R.string.status_error_generic, e).getMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getString(R.string.status_error_generic, e.getMessage()), Toast.LENGTH_LONG).show();
                 });
             }
         });
