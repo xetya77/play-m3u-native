@@ -9,7 +9,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Tambah Playlist"
+        android:text="@string/playlists_add"
         android:textColor="#ffffff"
         android:textSize="18sp"
         android:textStyle="bold"
@@ -18,7 +18,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Nama Playlist"
+        android:text="@string/playlist_name_placeholder"
         android:textColor="#8aaad4"
         android:textSize="12sp"
         android:layout_marginBottom="8dp"/>
@@ -39,7 +39,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="URL Playlist M3U"
+        android:text="@string/playlist_url_placeholder"
         android:textColor="#8aaad4"
         android:textSize="12sp"
         android:layout_marginBottom="8dp"/>
@@ -69,7 +69,7 @@
             android:layout_width="wrap_content"
             android:layout_height="44dp"
             android:gravity="center"
-            android:text="Batal"
+            android:text="@string/exit_cancel"
             android:textColor="#8aaad4"
             android:textSize="14sp"
             android:paddingLeft="20dp"
@@ -82,7 +82,7 @@
             android:layout_width="wrap_content"
             android:layout_height="44dp"
             android:gravity="center"
-            android:text="Tambah"
+            android:text="@string/btn_add"
             android:textColor="#ffffff"
             android:textSize="14sp"
             android:textStyle="bold"

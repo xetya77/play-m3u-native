@@ -61,7 +61,7 @@
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:textSize="11sp" android:textColor="#80ffffff"
                 android:singleLine="true" android:ellipsize="end"
-                android:text="Tidak ada informasi"/>
+                android:text="@string/player_no_info"/>
         </LinearLayout>
 
         <!-- Indikator: ▶ saat sedang aktif, waveform saat playing -->

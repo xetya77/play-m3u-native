@@ -45,7 +45,7 @@
         </LinearLayout>
         <TextView android:id="@+id/tv_loading_msg"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Memuat..." android:textColor="#80ffffff" android:textSize="12sp"
+            android:text="@string/loading_generic" android:textColor="#80ffffff" android:textSize="12sp"
             android:paddingLeft="16dp" android:paddingRight="16dp"
             android:paddingTop="6dp" android:paddingBottom="6dp"
             android:background="@drawable/bg_loading_pill"/>
@@ -97,7 +97,7 @@
             <TextView android:id="@+id/tv_ch_epg"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:textColor="#80FFFFFF" android:textSize="15sp"
-                android:text="Tidak ada informasi" android:layout_marginTop="3dp"/>
+                android:text="@string/player_no_info" android:layout_marginTop="3dp"/>
             <TextView android:id="@+id/tv_ch_group"
                 android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
         </LinearLayout>
@@ -124,7 +124,7 @@
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:text="◀ " android:textColor="#FFFFFF" android:textSize="11sp"/>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="OK" android:textColor="#000000" android:textSize="9sp"
+                    android:text="@string/btn_ok" android:textColor="#000000" android:textSize="9sp"
                     android:background="#CCFFFFFF" android:paddingLeft="5dp" android:paddingRight="5dp"
                     android:paddingTop="2dp" android:paddingBottom="2dp"/>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -136,10 +136,10 @@
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:orientation="vertical">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Tekan: Daftar Channel"
+                android:text="@string/player_hint_press_list"
                 android:textColor="#CCffffff" android:textSize="13sp" android:layout_marginBottom="5dp"/>
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Tekan 2x: Kategori"
+                android:text="@string/player_hint_press_cat"
                 android:textColor="#CCffffff" android:textSize="13sp"/>
         </LinearLayout>
     </LinearLayout>
@@ -244,7 +244,7 @@
             android:paddingTop="14dp" android:paddingBottom="8dp">
             <TextView android:id="@+id/tv_panel_title"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="SEMUA SALURAN" android:textColor="#99FFFFFF"
+                android:text="@string/player_all_channels" android:textColor="#99FFFFFF"
                 android:textSize="12sp" android:textStyle="bold"/>
         </LinearLayout>
 
@@ -307,7 +307,7 @@
                 android:src="@drawable/ic_all" android:layout_marginRight="16dp"/>
             <TextView android:id="@+id/cat_full_all_text"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Semua" android:textColor="#FFFFFF" android:textSize="17sp"
+                android:text="@string/player_all" android:textColor="#FFFFFF" android:textSize="17sp"
                 android:letterSpacing="0.02"/>
         </LinearLayout>
 
@@ -323,7 +323,7 @@
                 android:src="@drawable/ic_tv" android:layout_marginRight="16dp"/>
             <TextView android:id="@+id/cat_full_tv_text"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Siaran TV" android:textColor="#80FFFFFF" android:textSize="17sp"
+                android:text="@string/player_tv" android:textColor="#80FFFFFF" android:textSize="17sp"
                 android:letterSpacing="0.02"/>
         </LinearLayout>
 
@@ -339,7 +339,7 @@
                 android:src="@drawable/ic_radio" android:layout_marginRight="16dp"/>
             <TextView android:id="@+id/cat_full_radio_text"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Radio" android:textColor="#80FFFFFF" android:textSize="17sp"
+                android:text="@string/player_radio" android:textColor="#80FFFFFF" android:textSize="17sp"
                 android:letterSpacing="0.02"/>
         </LinearLayout>
 
@@ -355,7 +355,7 @@
                 android:src="@drawable/ic_movie" android:layout_marginRight="16dp"/>
             <TextView android:id="@+id/cat_full_movie_text"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Film" android:textColor="#80FFFFFF" android:textSize="17sp"
+                android:text="@string/player_movie" android:textColor="#80FFFFFF" android:textSize="17sp"
                 android:letterSpacing="0.02"/>
         </LinearLayout>
 
@@ -371,7 +371,7 @@
                 android:src="@drawable/ic_settings" android:layout_marginRight="16dp"/>
             <TextView android:id="@+id/cat_full_settings_text"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Pengaturan" android:textColor="#80FFFFFF" android:textSize="17sp"
+                android:text="@string/player_settings" android:textColor="#80FFFFFF" android:textSize="17sp"
                 android:letterSpacing="0.02"/>
         </LinearLayout>
     </LinearLayout>
@@ -389,7 +389,7 @@
     <TextView android:id="@+id/swipe_hint"
         android:layout_width="wrap_content" android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal" android:layout_marginBottom="40dp"
-        android:text="↑↓ ganti channel  |  → daftar channel  |  → lagi: kategori"
+        android:text="@string/player_hint"
         android:textColor="#b3ffffff" android:textSize="11sp"
         android:paddingLeft="18dp" android:paddingRight="18dp"
         android:paddingTop="8dp" android:paddingBottom="8dp"
