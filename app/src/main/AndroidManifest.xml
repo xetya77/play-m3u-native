@@ -24,7 +24,7 @@
         <activity
             android:name=".SplashActivity"
             android:exported="true"
-            android:screenOrientation="portrait"
+            android:screenOrientation="unspecified"
             android:configChanges="orientation|screenSize"
             android:theme="@style/Theme.PlayM3U.Splash">
             <intent-filter>
