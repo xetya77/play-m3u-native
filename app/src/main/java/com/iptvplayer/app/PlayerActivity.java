@@ -615,7 +615,7 @@ public class PlayerActivity extends AppCompatActivity {
                     isYouTubeMode = true;
                     youtubeWebView.setVisibility(View.VISIBLE);
                     videoLoading.setVisibility(View.VISIBLE);
-                    tvLoadingMsg.setText("Gagal memuat playlist: " + e.getMessage());
+                    tvLoadingMsg.setText(getString(R.string.status_error_load, e.getMessage()));
                 });
             }
         }).start();
@@ -698,11 +698,11 @@ public class PlayerActivity extends AppCompatActivity {
     }
     private String getErrorMessage(androidx.media3.common.PlaybackException e) {
         int c = e.errorCode;
-        if (c == androidx.media3.common.PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED) return "Tidak ada koneksi internet";
+        if (c == androidx.media3.common.PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED) return getString(R.string.error_no_connection);
         if (c == androidx.media3.common.PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT) return "Koneksi timeout, coba lagi...";
-        if (c == androidx.media3.common.PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS) return "Stream tidak tersedia (HTTP error)";
+        if (c == androidx.media3.common.PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS) return getString(R.string.error_http);
         if (c == androidx.media3.common.PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) return "Format tidak didukung";
-        return "Gagal memutar stream";
+        return getString(R.string.error_playback);
     }
 
     // ===== CHANNEL ADAPTER =====
@@ -1072,7 +1072,7 @@ public class PlayerActivity extends AppCompatActivity {
             player.prepare();
             player.play();
         } catch (Exception e) {
-            tvLoadingMsg.setText("Gagal: " + e.getMessage());
+            tvLoadingMsg.setText(getString(R.string.status_error_generic, e.getMessage()));
         }
         channelAdapter.setActiveIndex(idx);
         showChInfo();
@@ -1082,7 +1082,9 @@ public class PlayerActivity extends AppCompatActivity {
     private void updateChInfo(Channel ch, int idx) {
         tvChNum.setText(String.valueOf(idx + 1));
         tvChName.setText(ch.name);
-        tvChEpg.setText(getString(R.string.player_no_info));
+        tvChEpg.setText((ch.group != null && !ch.group.isEmpty())
+                ? ch.group
+                : getString(R.string.player_no_info));
         tvChPlaylistName.setText(playlistName);
         if (ch.logoUrl != null && !ch.logoUrl.isEmpty()) {
             ivChLogo.setVisibility(View.VISIBLE);
