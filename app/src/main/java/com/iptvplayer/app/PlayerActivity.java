@@ -1231,7 +1231,7 @@ public class PlayerActivity extends AppCompatActivity {
             case KeyEvent.KEYCODE_ESCAPE:
                 if (categoryFullOpen) closeCategoryFull();
                 else if (panelOpen)   hidePanel();
-                else finish();
+                else showExitConfirmDialog();
                 return true;
             default:
                 if (keyCode >= KeyEvent.KEYCODE_0 && keyCode <= KeyEvent.KEYCODE_9) {
