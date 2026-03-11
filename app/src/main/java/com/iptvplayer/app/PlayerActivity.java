@@ -775,6 +775,8 @@ public class PlayerActivity extends AppCompatActivity {
             }
             return true;
         });
+        // Sidebar icon tidak boleh propagate touch ke backdrop
+        categorySidebar.setOnTouchListener((v, e) -> true);
 
         // Swipe KANAN di panel daftar channel → buka kategori
         // Swipe KIRI di panel daftar channel → tutup panel
