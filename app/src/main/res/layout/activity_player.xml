@@ -378,84 +378,155 @@
 
 
     <!--
-        PANEL GROUP TITLE — slide dari kanan (kanan layar → kiri)
-        Muncul saat swipe kiri di player. Berisi daftar group title unik dari M3U.
-        Tidak mengganggu panel kiri yang sudah ada.
+        ══════════════════════════════════════════════════════════
+        PANEL KANAN — DAFTAR GROUP TITLE (mirror panel kiri)
+        Terdiri dari:
+          1. group_sidebar (68dp, kanan) — icon shortcut / sembunyikan
+          2. group_list_panel (380dp, kanan, margin 68dp) — daftar group M3U
+          3. group_channel_panel (380dp, kanan, margin 68dp) — channel per group
+        Semua slide dari kanan.
+        ══════════════════════════════════════════════════════════
     -->
-    <LinearLayout android:id="@+id/group_title_panel"
-        android:layout_width="320dp"
+
+    <!-- Backdrop kanan (terpisah dari backdrop kiri) -->
+    <View android:id="@+id/group_backdrop"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#99000000"
+        android:alpha="0"
+        android:visibility="invisible"/>
+
+    <!-- SIDEBAR KANAN — 68dp, mirror sidebar kiri -->
+    <LinearLayout android:id="@+id/group_sidebar"
+        android:layout_width="68dp"
         android:layout_height="match_parent"
         android:layout_gravity="right"
         android:orientation="vertical"
-        android:background="@drawable/bg_category_panel"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_sidebar"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
-        android:elevation="13dp"
+        android:visibility="invisible"
+        android:elevation="12dp">
+
+        <!-- Icon: Semua group -->
+        <LinearLayout android:id="@+id/grp_sb_all"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:gravity="center"
+            android:clickable="true" android:focusable="true">
+            <ImageView android:id="@+id/ic_grp_sb_all"
+                android:layout_width="26dp" android:layout_height="26dp"
+                android:src="@drawable/ic_all" android:alpha="1.0"/>
+        </LinearLayout>
+
+        <!-- Icon: Tutup panel kanan -->
+        <LinearLayout android:id="@+id/grp_sb_close"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:gravity="center"
+            android:clickable="true" android:focusable="true">
+            <ImageView
+                android:layout_width="26dp" android:layout_height="26dp"
+                android:src="@drawable/ic_settings" android:alpha="0.5"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- PANEL LIST GROUP — daftar group title M3U, muncul pertama kali -->
+    <LinearLayout android:id="@+id/group_list_panel"
+        android:layout_width="380dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="right"
+        android:layout_marginRight="68dp"
+        android:orientation="vertical"
+        android:background="@drawable/bg_channel_list_panel"
+        android:translationX="448dp"
+        android:elevation="9dp"
         android:visibility="invisible">
 
-        <!-- Header: "Group" + tombol tutup -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingStart="20dp"
-            android:paddingEnd="16dp">
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Group"
-                android:textColor="#FFFFFF"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.05"/>
-            <TextView android:id="@+id/btn_group_close"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="✕"
-                android:textColor="#80FFFFFF"
-                android:textSize="18sp"
-                android:padding="8dp"
-                android:clickable="true"
-                android:focusable="true"/>
+        <!-- Header -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingLeft="16dp" android:paddingRight="16dp"
+            android:paddingTop="14dp" android:paddingBottom="8dp">
+            <TextView android:id="@+id/tv_group_panel_title"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="GROUP CHANNEL"
+                android:textColor="#99FFFFFF"
+                android:textSize="12sp" android:textStyle="bold"/>
         </LinearLayout>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#18ffffff"
-            android:layout_marginBottom="4dp"/>
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:background="#18ffffff"/>
 
-        <!-- Semua group (All) -->
+        <!-- Semua group -->
         <LinearLayout android:id="@+id/group_item_all"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingStart="20dp"
-            android:paddingEnd="16dp"
-            android:layout_marginStart="6dp"
-            android:layout_marginEnd="6dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="@drawable/selector_settings_item">
+            android:layout_width="match_parent" android:layout_height="52dp"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingStart="16dp" android:paddingEnd="16dp"
+            android:layout_marginStart="6dp" android:layout_marginEnd="6dp"
+            android:clickable="true" android:focusable="true"
+            android:background="@drawable/selector_channel_item">
             <TextView android:id="@+id/tv_group_all"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="— Semua Group —"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"/>
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="— Semua Channel —"
+                android:textColor="#FFFFFF" android:textSize="14sp"/>
         </LinearLayout>
 
-        <!-- Daftar group dari M3U (RecyclerView) -->
+        <!-- Daftar group dari M3U -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_group_titles"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:clipToPadding="false"
-            android:paddingTop="4dp"
+            android:paddingBottom="8dp"/>
+    </LinearLayout>
+
+    <!-- PANEL CHANNEL PER GROUP — muncul setelah pilih group, dorong list group ke kanan -->
+    <LinearLayout android:id="@+id/group_channel_panel"
+        android:layout_width="380dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="right"
+        android:layout_marginRight="68dp"
+        android:orientation="vertical"
+        android:background="@drawable/bg_channel_list_panel"
+        android:translationX="448dp"
+        android:elevation="9dp"
+        android:visibility="invisible">
+
+        <!-- Header dengan tombol kembali -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingLeft="8dp" android:paddingRight="16dp"
+            android:paddingTop="10dp" android:paddingBottom="8dp">
+            <LinearLayout android:id="@+id/btn_group_back"
+                android:layout_width="40dp" android:layout_height="40dp"
+                android:gravity="center"
+                android:clickable="true" android:focusable="true">
+                <TextView
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="←"
+                    android:textColor="#80FFFFFF" android:textSize="20sp"/>
+            </LinearLayout>
+            <TextView android:id="@+id/tv_group_channel_title"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text=""
+                android:textColor="#99FFFFFF"
+                android:textSize="12sp" android:textStyle="bold"
+                android:paddingLeft="8dp"
+                android:singleLine="true" android:ellipsize="end"/>
+        </LinearLayout>
+
+        <View android:layout_width="match_parent" android:layout_height="1dp"
+            android:background="#18ffffff"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_group_channels"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
             android:paddingBottom="8dp"/>
     </LinearLayout>
 
