@@ -379,12 +379,10 @@
 
     <!--
         ══════════════════════════════════════════════════════════
-        PANEL KANAN — DAFTAR GROUP TITLE (mirror panel kiri)
-        Terdiri dari:
-          1. group_sidebar (68dp, kanan) — icon shortcut / sembunyikan
-          2. group_list_panel (380dp, kanan, margin 68dp) — daftar group M3U
-          3. group_channel_panel (380dp, kanan, margin 68dp) — channel per group
-        Semua slide dari kanan.
+        PANEL KANAN — GROUP TITLE (mirror panel kiri, tanpa sidebar)
+        • group_list_panel    : daftar group M3U
+        • group_channel_panel : channel per group (push dari kanan)
+        Header identik panel kiri: title row + clock row + divider
         ══════════════════════════════════════════════════════════
     -->
 
@@ -396,53 +394,18 @@
         android:alpha="0"
         android:visibility="invisible"/>
 
-    <!-- SIDEBAR KANAN — 68dp, mirror sidebar kiri -->
-    <LinearLayout android:id="@+id/group_sidebar"
-        android:layout_width="68dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="right"
-        android:orientation="vertical"
-        android:gravity="center_vertical"
-        android:background="@drawable/bg_sidebar"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:visibility="invisible"
-        android:elevation="12dp">
-
-        <!-- Icon: Semua group -->
-        <LinearLayout android:id="@+id/grp_sb_all"
-            android:layout_width="match_parent" android:layout_height="56dp"
-            android:gravity="center"
-            android:clickable="true" android:focusable="true">
-            <ImageView android:id="@+id/ic_grp_sb_all"
-                android:layout_width="26dp" android:layout_height="26dp"
-                android:src="@drawable/ic_all" android:alpha="1.0"/>
-        </LinearLayout>
-
-        <!-- Icon: Tutup panel kanan -->
-        <LinearLayout android:id="@+id/grp_sb_close"
-            android:layout_width="match_parent" android:layout_height="56dp"
-            android:gravity="center"
-            android:clickable="true" android:focusable="true">
-            <ImageView
-                android:layout_width="26dp" android:layout_height="26dp"
-                android:src="@drawable/ic_settings" android:alpha="0.5"/>
-        </LinearLayout>
-    </LinearLayout>
-
-    <!-- PANEL LIST GROUP — daftar group title M3U, muncul pertama kali -->
+    <!-- PANEL LIST GROUP — daftar group title M3U -->
     <LinearLayout android:id="@+id/group_list_panel"
         android:layout_width="380dp"
         android:layout_height="match_parent"
         android:layout_gravity="right"
-        android:layout_marginRight="68dp"
         android:orientation="vertical"
         android:background="@drawable/bg_channel_list_panel"
-        android:translationX="448dp"
+        android:translationX="380dp"
         android:elevation="9dp"
         android:visibility="invisible">
 
-        <!-- Header -->
+        <!-- Header baris 1: judul — identik panel kiri -->
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="horizontal" android:gravity="center_vertical"
             android:paddingLeft="16dp" android:paddingRight="16dp"
@@ -454,10 +417,22 @@
                 android:textSize="12sp" android:textStyle="bold"/>
         </LinearLayout>
 
+        <!-- Header baris 2: jam — identik baris info panel kiri -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingLeft="16dp" android:paddingRight="16dp"
+            android:paddingTop="2dp" android:paddingBottom="10dp"
+            android:gravity="center_vertical">
+            <TextView android:id="@+id/tv_group_clock"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#60FFFFFF" android:textSize="11sp" android:text=""/>
+        </LinearLayout>
+
         <View android:layout_width="match_parent" android:layout_height="1dp"
             android:background="#18ffffff"/>
 
-        <!-- Semua group -->
+        <!-- Semua channel (reset filter) -->
         <LinearLayout android:id="@+id/group_item_all"
             android:layout_width="match_parent" android:layout_height="52dp"
             android:orientation="horizontal" android:gravity="center_vertical"
@@ -482,31 +457,30 @@
             android:paddingBottom="8dp"/>
     </LinearLayout>
 
-    <!-- PANEL CHANNEL PER GROUP — muncul setelah pilih group, dorong list group ke kanan -->
+    <!-- PANEL CHANNEL PER GROUP — push dari kanan saat pilih group -->
     <LinearLayout android:id="@+id/group_channel_panel"
         android:layout_width="380dp"
         android:layout_height="match_parent"
         android:layout_gravity="right"
-        android:layout_marginRight="68dp"
         android:orientation="vertical"
         android:background="@drawable/bg_channel_list_panel"
-        android:translationX="448dp"
+        android:translationX="380dp"
         android:elevation="9dp"
         android:visibility="invisible">
 
-        <!-- Header dengan tombol kembali -->
+        <!-- Header baris 1: tombol kembali + nama group — identik panel kiri -->
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="horizontal" android:gravity="center_vertical"
             android:paddingLeft="8dp" android:paddingRight="16dp"
-            android:paddingTop="10dp" android:paddingBottom="8dp">
+            android:paddingTop="14dp" android:paddingBottom="8dp">
             <LinearLayout android:id="@+id/btn_group_back"
-                android:layout_width="40dp" android:layout_height="40dp"
+                android:layout_width="32dp" android:layout_height="32dp"
                 android:gravity="center"
                 android:clickable="true" android:focusable="true">
                 <TextView
                     android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:text="←"
-                    android:textColor="#80FFFFFF" android:textSize="20sp"/>
+                    android:textColor="#80FFFFFF" android:textSize="16sp"/>
             </LinearLayout>
             <TextView android:id="@+id/tv_group_channel_title"
                 android:layout_width="0dp" android:layout_height="wrap_content"
@@ -514,8 +488,20 @@
                 android:text=""
                 android:textColor="#99FFFFFF"
                 android:textSize="12sp" android:textStyle="bold"
-                android:paddingLeft="8dp"
+                android:paddingLeft="6dp"
                 android:singleLine="true" android:ellipsize="end"/>
+        </LinearLayout>
+
+        <!-- Header baris 2: jam — identik baris info panel kiri -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingLeft="16dp" android:paddingRight="16dp"
+            android:paddingTop="2dp" android:paddingBottom="10dp"
+            android:gravity="center_vertical">
+            <TextView android:id="@+id/tv_group_channel_clock"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#60FFFFFF" android:textSize="11sp" android:text=""/>
         </LinearLayout>
 
         <View android:layout_width="match_parent" android:layout_height="1dp"
