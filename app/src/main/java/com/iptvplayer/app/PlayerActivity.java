@@ -111,13 +111,14 @@ public class PlayerActivity extends AppCompatActivity {
     private View swipeHint;
     private TextView swipeFbUp, swipeFbDown;
     // Group title panel
-    // Panel kanan — group title (mirror panel kiri)
+    // Panel kanan — group title (mirror panel kiri, tanpa sidebar)
     private View groupBackdrop;
-    private LinearLayout groupSidebar;
     private LinearLayout groupListPanel;
     private LinearLayout groupChannelPanel;
     private RecyclerView rvGroupTitles;
     private RecyclerView rvGroupChannels;
+    private TextView tvGroupClock;
+    private TextView tvGroupChannelClock;
     private TextView tvGroupChannelTitle;
     private boolean groupPanelOpen = false;
     private boolean groupChannelOpen = false;
@@ -246,13 +247,14 @@ public class PlayerActivity extends AppCompatActivity {
         swipeHint         = findViewById(R.id.swipe_hint);
         swipeFbUp         = findViewById(R.id.swipe_fb_up);
         swipeFbDown       = findViewById(R.id.swipe_fb_down);
-        groupBackdrop       = findViewById(R.id.group_backdrop);
-        groupSidebar        = findViewById(R.id.group_sidebar);
-        groupListPanel      = findViewById(R.id.group_list_panel);
-        groupChannelPanel   = findViewById(R.id.group_channel_panel);
-        rvGroupTitles       = findViewById(R.id.rv_group_titles);
-        rvGroupChannels     = findViewById(R.id.rv_group_channels);
-        tvGroupChannelTitle = findViewById(R.id.tv_group_channel_title);
+        groupBackdrop        = findViewById(R.id.group_backdrop);
+        groupListPanel       = findViewById(R.id.group_list_panel);
+        groupChannelPanel    = findViewById(R.id.group_channel_panel);
+        rvGroupTitles        = findViewById(R.id.rv_group_titles);
+        rvGroupChannels      = findViewById(R.id.rv_group_channels);
+        tvGroupClock         = findViewById(R.id.tv_group_clock);
+        tvGroupChannelClock  = findViewById(R.id.tv_group_channel_clock);
+        tvGroupChannelTitle  = findViewById(R.id.tv_group_channel_title);
     }
 
     // ===== CLOCK =====
@@ -260,7 +262,18 @@ public class PlayerActivity extends AppCompatActivity {
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
         clockRunnable = new Runnable() {
             @Override public void run() {
-                tvClock.setText(sdf.format(new Date()));
+                String t = sdf.format(new Date());
+                tvClock.setText(t);
+                // POIN 7: saat panel kanan terbuka, jam dipindah ke header panel kanan
+                if (groupPanelOpen) {
+                    tvClock.setVisibility(View.INVISIBLE);
+                    if (tvGroupClock != null) tvGroupClock.setText(t);
+                    if (tvGroupChannelClock != null) tvGroupChannelClock.setText(t);
+                } else {
+                    tvClock.setVisibility(View.VISIBLE);
+                    if (tvGroupClock != null) tvGroupClock.setText("");
+                    if (tvGroupChannelClock != null) tvGroupChannelClock.setText("");
+                }
                 handler.postDelayed(this, 1000);
             }
         };
@@ -745,22 +758,23 @@ public class PlayerActivity extends AppCompatActivity {
                 float dY = e2.getY() - e1.getY();
                 if (Math.abs(dX) > Math.abs(dY)) {
                     if (dX > 80 && Math.abs(vX) > 100) {
-                        // Swipe KANAN:
-                        // - Belum ada panel → buka daftar channel
-                        // - Daftar channel sudah terbuka → buka kategori
-                        if (!panelOpen && !categoryFullOpen)       openPanel();
+                        // Swipe KANAN
+                        if (groupPanelOpen)                        closeGroupPanel();    // poin 6
+                        else if (!panelOpen && !categoryFullOpen)  openPanel();
                         else if (panelOpen && !categoryFullOpen)   openCategoryFull();
                         return true;
                     } else if (dX < -80 && Math.abs(vX) > 100) {
                         // Swipe KIRI
-                        if (!panelOpen && !categoryFullOpen && !groupPanelOpen) openGroupPanel();
-                        else if (groupPanelOpen)              closeGroupPanel();
-                        else if (categoryFullOpen)            closeCategoryFull();
-                        else if (panelOpen)                   hidePanel();
+                        if (panelOpen || categoryFullOpen) {       // poin 6
+                            if (categoryFullOpen) closeCategoryFull();
+                            else hidePanel();
+                        } else if (!groupPanelOpen) openGroupPanel();
+                        else closeGroupPanel();
                         return true;
                     }
                 } else if (Math.abs(dY) > 80 && Math.abs(vY) > 100) {
-                    if (!panelOpen && !categoryFullOpen) {
+                    // POIN 4: jangan pindah channel saat panel kanan terbuka
+                    if (!panelOpen && !categoryFullOpen && !groupPanelOpen) {
                         if (dY < 0) { showSwipeFeedback(true);  playChannel(currentChannelIdx + 1, true); }
                         else        { showSwipeFeedback(false); playChannel(currentChannelIdx - 1, true); }
                     }
@@ -921,63 +935,74 @@ public class PlayerActivity extends AppCompatActivity {
 
     // ===== PANEL DAFTAR CHANNEL =====
 
-    /** Setup panel kanan (group title) — panggil dari setupControls() */
+    /** Setup panel kanan (group title) */
     private void setupGroupTitlePanel() {
-        // Touch blocker semua panel kanan
-        groupSidebar.setOnTouchListener((v, e) -> true);
+        // POIN 4: Touch blocker — semua touch di panel kanan tidak tembus ke playerView/youtube
         groupListPanel.setOnTouchListener((v, e) -> true);
         groupChannelPanel.setOnTouchListener((v, e) -> true);
 
-        // Sidebar kanan: icon "semua" → tampilkan list group
-        findViewById(R.id.grp_sb_all).setOnClickListener(v -> showGroupList());
-        // Sidebar kanan: icon tutup → closeGroupPanel
-        findViewById(R.id.grp_sb_close).setOnClickListener(v -> closeGroupPanel());
-
-        // Backdrop kanan: tap → tutup
+        // Backdrop kanan tap → tutup
         groupBackdrop.setOnClickListener(v -> closeGroupPanel());
 
-        // "Semua Channel" di list group → reset filter, langsung ke panel channel
+        // "Semua Channel" → reset filter group, tutup panel kanan
+        // POIN 2: tidak mengubah panel kiri sama sekali
         findViewById(R.id.group_item_all).setOnClickListener(v -> {
             activeGroupFilter = null;
-            channelAdapter.applyExactGroupFilter(null);
+            // POIN 2: jangan panggil channelAdapter.applyExactGroupFilter — panel kiri tidak terpengaruh
             closeGroupPanel();
         });
 
         // Tombol kembali di panel channel group → kembali ke list group
         findViewById(R.id.btn_group_back).setOnClickListener(v -> showGroupList());
 
-        // Layout manager
-        rvGroupTitles.setLayoutManager(
-                new androidx.recyclerview.widget.LinearLayoutManager(this));
-        rvGroupChannels.setLayoutManager(
-                new androidx.recyclerview.widget.LinearLayoutManager(this));
+        // POIN 6: Swipe kanan di panel list group → tutup panel kanan
+        GestureDetector groupListSwipe = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float vX, float vY) {
+                if (e1 == null || e2 == null) return false;
+                float dX = e2.getX() - e1.getX();
+                if (dX > 80 && Math.abs(vX) > 100) { closeGroupPanel(); return true; }
+                return false;
+            }
+        });
+        groupListPanel.setOnTouchListener((v, e) -> { groupListSwipe.onTouchEvent(e); return true; });
+
+        // POIN 6: Swipe kanan di panel channel group → kembali ke list group
+        GestureDetector groupChSwipe = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float vX, float vY) {
+                if (e1 == null || e2 == null) return false;
+                float dX = e2.getX() - e1.getX();
+                if (dX > 80 && Math.abs(vX) > 100) { showGroupList(); return true; }
+                return false;
+            }
+        });
+        groupChannelPanel.setOnTouchListener((v, e) -> { groupChSwipe.onTouchEvent(e); return true; });
+
+        rvGroupTitles.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
+        rvGroupChannels.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
     }
 
-    /** Buka panel kanan — tampilkan sidebar + list group title */
+    /** Buka panel kanan — tampilkan list group */
     private void openGroupPanel() {
         if (groupPanelOpen) return;
         groupPanelOpen = true;
         groupChannelOpen = false;
 
+        // POIN 7: sembunyikan jam di pojok kanan atas
+        tvClock.setVisibility(View.INVISIBLE);
+
         // Backdrop
         groupBackdrop.setVisibility(View.VISIBLE);
         groupBackdrop.animate().alpha(1f).setDuration(200).start();
-        tvClock.animate().alpha(1.0f).setDuration(200).start();
 
-        // Sidebar kanan slide dari kanan
-        float dp = getResources().getDisplayMetrics().density;
-        groupSidebar.setVisibility(View.VISIBLE);
-        groupSidebar.setTranslationX(68f * dp);
-        groupSidebar.animate().translationX(0f).setDuration(280)
-                .setInterpolator(new DecelerateInterpolator()).start();
-
-        // Panel list group slide dari kanan
         showGroupList();
     }
 
-    /** Tampilkan list group (tahap 1) */
+    /** Tampilkan list group (tahap 1 / kembali dari channel) */
     private void showGroupList() {
         float dp = getResources().getDisplayMetrics().density;
+        float panelW = 380f * dp;
 
         // Isi adapter group titles
         java.util.LinkedHashSet<String> groups = new java.util.LinkedHashSet<>();
@@ -1001,6 +1026,7 @@ public class PlayerActivity extends AppCompatActivity {
                 tvName.setText(g);
                 long count = channels.stream().filter(ch -> g.equals(ch.group)).count();
                 tvCount.setText(String.valueOf(count));
+                // POIN 5: highlight group yang sedang aktif
                 boolean active = g.equals(activeGroupFilter);
                 tvName.setTextColor(active ? 0xFFFF5B04 : 0xCCFFFFFF);
                 h.itemView.setOnClickListener(v -> showGroupChannels(g));
@@ -1008,43 +1034,37 @@ public class PlayerActivity extends AppCompatActivity {
             @Override public int getItemCount() { return groupList.size(); }
         });
 
-        // Sembunyikan panel channel group, tampilkan list group
+        // Sembunyikan panel channel group jika sedang tampil
         if (groupChannelOpen) {
-            // Dorong groupChannelPanel ke kanan, tarik groupListPanel masuk
-            groupChannelPanel.animate().translationX(448f * dp).setDuration(250)
+            groupChannelPanel.animate().translationX(panelW).setDuration(250)
                     .setInterpolator(new DecelerateInterpolator())
                     .withEndAction(() -> groupChannelPanel.setVisibility(View.INVISIBLE)).start();
             groupChannelOpen = false;
         }
 
         groupListPanel.setVisibility(View.VISIBLE);
-        groupListPanel.setTranslationX(448f * dp);
+        groupListPanel.setTranslationX(panelW);
         groupListPanel.animate().translationX(0f).setDuration(280)
                 .setInterpolator(new DecelerateInterpolator()).start();
     }
 
-    /** Pilih group → dorong list group ke kanan, tampilkan channel group dari kanan */
+    /** Pilih group → dorong list group keluar, tampilkan channel group */
     private void showGroupChannels(String group) {
         activeGroupFilter = group;
-        channelAdapter.applyExactGroupFilter(group);
+        // POIN 2: TIDAK memanggil channelAdapter — panel kiri tidak berubah
 
         float dp = getResources().getDisplayMetrics().density;
+        float panelW = 380f * dp;
 
-        // Update header
         tvGroupChannelTitle.setText(group.toUpperCase());
 
-        // Isi adapter channel per group
-        java.util.List<Channel> groupChs = new java.util.ArrayList<>();
+        // Buat map channel → index asli
+        java.util.LinkedHashMap<Integer, Channel> idxMap = new java.util.LinkedHashMap<>();
         for (int i = 0; i < channels.size(); i++) {
-            Channel ch = channels.get(i);
-            if (group.equals(ch.group)) groupChs.add(ch);
+            if (group.equals(channels.get(i).group)) idxMap.put(i, channels.get(i));
         }
-        // Buat map: channel → index asli
-        java.util.Map<Channel, Integer> idxMap = new java.util.LinkedHashMap<>();
-        for (int i = 0; i < channels.size(); i++) {
-            if (group.equals(channels.get(i).group)) idxMap.put(channels.get(i), i);
-        }
-        java.util.List<Channel> chList = new java.util.ArrayList<>(idxMap.keySet());
+        java.util.List<Integer> idxList = new java.util.ArrayList<>(idxMap.keySet());
+        java.util.List<Channel> chList = new java.util.ArrayList<>(idxMap.values());
 
         rvGroupChannels.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             @Override
@@ -1056,7 +1076,8 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onBindViewHolder(RecyclerView.ViewHolder h, int pos) {
                 Channel ch = chList.get(pos);
-                int realIdx = idxMap.getOrDefault(ch, -1);
+                int realIdx = idxList.get(pos);
+                // POIN 5: penanda aktif sama persis seperti panel kiri
                 boolean isActive = (realIdx == currentChannelIdx);
 
                 android.widget.TextView tvNum  = h.itemView.findViewById(R.id.tv_num);
@@ -1064,16 +1085,16 @@ public class PlayerActivity extends AppCompatActivity {
                 android.widget.TextView tvEpg  = h.itemView.findViewById(R.id.tv_ch_epg);
                 android.widget.ImageView ivLogo = h.itemView.findViewById(R.id.iv_logo);
                 android.widget.TextView tvFb   = h.itemView.findViewById(R.id.tv_logo_fallback);
-                android.view.View itemBg = h.itemView.findViewById(R.id.item_bg);
-                android.widget.LinearLayout waveform = h.itemView.findViewById(R.id.waveform_bars);
+                android.view.View itemBg        = h.itemView.findViewById(R.id.item_bg);
+                android.widget.LinearLayout wave = h.itemView.findViewById(R.id.waveform_bars);
                 android.widget.ImageView ivPlay = h.itemView.findViewById(R.id.iv_play_arrow);
 
                 tvNum.setText(realIdx >= 0 ? String.valueOf(realIdx + 1) : "");
                 tvNum.setTextColor(isActive ? 0xFF000000 : 0x80FFFFFF);
                 tvName.setText(ch.name);
                 tvName.setTextColor(isActive ? 0xFF000000 : 0xFFFFFFFF);
-                tvEpg.setText((ch.group != null && !ch.group.isEmpty()) ? ch.group
-                        : getString(R.string.player_no_info));
+                tvEpg.setText((ch.group != null && !ch.group.isEmpty())
+                        ? ch.group : getString(R.string.player_no_info));
                 tvEpg.setTextColor(isActive ? 0x80000000 : 0x80FFFFFF);
 
                 if (ch.logoUrl != null && !ch.logoUrl.isEmpty()) {
@@ -1085,12 +1106,14 @@ public class PlayerActivity extends AppCompatActivity {
                 } else {
                     ivLogo.setVisibility(View.GONE);
                     tvFb.setVisibility(View.VISIBLE);
-                    String ini = ch.name.isEmpty() ? "?" : ch.name.substring(0, Math.min(2, ch.name.length())).toUpperCase();
+                    String ini = ch.name.isEmpty() ? "?" :
+                            ch.name.substring(0, Math.min(2, ch.name.length())).toUpperCase();
                     tvFb.setText(ini);
                     tvFb.setTextColor(isActive ? 0xFF000000 : 0x66FFFFFF);
                 }
-                itemBg.setVisibility(isActive ? View.VISIBLE : View.INVISIBLE);
-                if (waveform != null) waveform.setVisibility(View.GONE);
+                // POIN 5: background putih + waveform saat aktif (sama seperti panel kiri)
+                if (itemBg != null) itemBg.setVisibility(isActive ? View.VISIBLE : View.INVISIBLE);
+                if (wave != null) wave.setVisibility(isActive ? View.VISIBLE : View.GONE);
                 if (ivPlay != null) ivPlay.setVisibility(View.GONE);
 
                 h.itemView.setOnClickListener(v -> {
@@ -1101,14 +1124,14 @@ public class PlayerActivity extends AppCompatActivity {
             @Override public int getItemCount() { return chList.size(); }
         });
 
-        // Dorong groupListPanel ke kanan, tarik groupChannelPanel masuk
+        // Push: dorong groupListPanel keluar ke kanan, tarik groupChannelPanel masuk
         groupChannelOpen = true;
-        groupListPanel.animate().translationX(448f * dp).setDuration(280)
+        groupListPanel.animate().translationX(-panelW).setDuration(280)
                 .setInterpolator(new DecelerateInterpolator())
                 .withEndAction(() -> groupListPanel.setVisibility(View.INVISIBLE)).start();
 
         groupChannelPanel.setVisibility(View.VISIBLE);
-        groupChannelPanel.setTranslationX(448f * dp);
+        groupChannelPanel.setTranslationX(panelW);
         groupChannelPanel.animate().translationX(0f).setDuration(280)
                 .setInterpolator(new DecelerateInterpolator()).start();
     }
@@ -1119,27 +1142,22 @@ public class PlayerActivity extends AppCompatActivity {
         groupPanelOpen = false;
 
         float dp = getResources().getDisplayMetrics().density;
+        float panelW = 380f * dp;
 
-        // Sembunyikan sidebar
-        groupSidebar.animate().translationX(68f * dp).setDuration(250)
-                .setInterpolator(new DecelerateInterpolator())
-                .withEndAction(() -> groupSidebar.setVisibility(View.INVISIBLE)).start();
-
-        // Sembunyikan panel yang sedang aktif
         LinearLayout activePanel = groupChannelOpen ? groupChannelPanel : groupListPanel;
-        activePanel.animate().translationX(448f * dp).setDuration(250)
+        activePanel.animate().translationX(panelW).setDuration(250)
                 .setInterpolator(new DecelerateInterpolator())
                 .withEndAction(() -> {
                     groupListPanel.setVisibility(View.INVISIBLE);
                     groupChannelPanel.setVisibility(View.INVISIBLE);
                 }).start();
-
         groupChannelOpen = false;
 
-        // Backdrop
         groupBackdrop.animate().alpha(0f).setDuration(200)
                 .withEndAction(() -> groupBackdrop.setVisibility(View.INVISIBLE)).start();
-        tvClock.animate().alpha(0.5f).setDuration(200).start();
+
+        // POIN 7: kembalikan jam ke pojok kanan atas
+        tvClock.setVisibility(View.VISIBLE);
     }
 
     /** Filter channel berdasarkan group title exact match */
@@ -1197,10 +1215,10 @@ public class PlayerActivity extends AppCompatActivity {
         categoryFullOpen = false;
         if (groupPanelOpen || groupChannelOpen) {
             groupPanelOpen = false; groupChannelOpen = false;
-            groupSidebar.setVisibility(View.INVISIBLE);
             groupListPanel.setVisibility(View.INVISIBLE);
             groupChannelPanel.setVisibility(View.INVISIBLE);
-            groupBackdrop.setVisibility(View.INVISIBLE);
+            if (groupBackdrop != null) groupBackdrop.setVisibility(View.INVISIBLE);
+            tvClock.setVisibility(View.VISIBLE);
         }
 
         float dp = getResources().getDisplayMetrics().density;
