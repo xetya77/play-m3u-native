@@ -111,11 +111,17 @@ public class PlayerActivity extends AppCompatActivity {
     private View swipeHint;
     private TextView swipeFbUp, swipeFbDown;
     // Group title panel
-    private LinearLayout groupTitlePanel;
+    // Panel kanan — group title (mirror panel kiri)
+    private View groupBackdrop;
+    private LinearLayout groupSidebar;
+    private LinearLayout groupListPanel;
+    private LinearLayout groupChannelPanel;
     private RecyclerView rvGroupTitles;
-    private View groupItemAll;
+    private RecyclerView rvGroupChannels;
+    private TextView tvGroupChannelTitle;
     private boolean groupPanelOpen = false;
-    private String activeGroupFilter = null; // null = semua group
+    private boolean groupChannelOpen = false;
+    private String activeGroupFilter = null;
 
     // State
     private List<Channel> channels = new ArrayList<>();
@@ -240,9 +246,13 @@ public class PlayerActivity extends AppCompatActivity {
         swipeHint         = findViewById(R.id.swipe_hint);
         swipeFbUp         = findViewById(R.id.swipe_fb_up);
         swipeFbDown       = findViewById(R.id.swipe_fb_down);
-        groupTitlePanel   = findViewById(R.id.group_title_panel);
-        rvGroupTitles     = findViewById(R.id.rv_group_titles);
-        groupItemAll      = findViewById(R.id.group_item_all);
+        groupBackdrop       = findViewById(R.id.group_backdrop);
+        groupSidebar        = findViewById(R.id.group_sidebar);
+        groupListPanel      = findViewById(R.id.group_list_panel);
+        groupChannelPanel   = findViewById(R.id.group_channel_panel);
+        rvGroupTitles       = findViewById(R.id.rv_group_titles);
+        rvGroupChannels     = findViewById(R.id.rv_group_channels);
+        tvGroupChannelTitle = findViewById(R.id.tv_group_channel_title);
     }
 
     // ===== CLOCK =====
@@ -911,40 +921,71 @@ public class PlayerActivity extends AppCompatActivity {
 
     // ===== PANEL DAFTAR CHANNEL =====
 
-    /** Setup panel daftar group title dari M3U */
+    /** Setup panel kanan (group title) — panggil dari setupControls() */
     private void setupGroupTitlePanel() {
-        // Tombol tutup
-        findViewById(R.id.btn_group_close).setOnClickListener(v -> closeGroupPanel());
+        // Touch blocker semua panel kanan
+        groupSidebar.setOnTouchListener((v, e) -> true);
+        groupListPanel.setOnTouchListener((v, e) -> true);
+        groupChannelPanel.setOnTouchListener((v, e) -> true);
 
-        // Klik "Semua Group" → reset filter
-        groupItemAll.setOnClickListener(v -> {
+        // Sidebar kanan: icon "semua" → tampilkan list group
+        findViewById(R.id.grp_sb_all).setOnClickListener(v -> showGroupList());
+        // Sidebar kanan: icon tutup → closeGroupPanel
+        findViewById(R.id.grp_sb_close).setOnClickListener(v -> closeGroupPanel());
+
+        // Backdrop kanan: tap → tutup
+        groupBackdrop.setOnClickListener(v -> closeGroupPanel());
+
+        // "Semua Channel" di list group → reset filter, langsung ke panel channel
+        findViewById(R.id.group_item_all).setOnClickListener(v -> {
             activeGroupFilter = null;
-            applyGroupTitleFilter(null);
+            channelAdapter.applyExactGroupFilter(null);
             closeGroupPanel();
-            openPanel();
         });
 
-        // Touch blocker agar tidak tembus ke backdrop
-        groupTitlePanel.setOnTouchListener((v, e) -> true);
+        // Tombol kembali di panel channel group → kembali ke list group
+        findViewById(R.id.btn_group_back).setOnClickListener(v -> showGroupList());
 
-        // Adapter group titles — diisi saat panel dibuka
+        // Layout manager
         rvGroupTitles.setLayoutManager(
-            new androidx.recyclerview.widget.LinearLayoutManager(this));
+                new androidx.recyclerview.widget.LinearLayoutManager(this));
+        rvGroupChannels.setLayoutManager(
+                new androidx.recyclerview.widget.LinearLayoutManager(this));
     }
 
-    /** Kumpulkan group title unik dari channels, buka panel */
+    /** Buka panel kanan — tampilkan sidebar + list group title */
     private void openGroupPanel() {
         if (groupPanelOpen) return;
         groupPanelOpen = true;
+        groupChannelOpen = false;
 
-        // Kumpulkan group unik
+        // Backdrop
+        groupBackdrop.setVisibility(View.VISIBLE);
+        groupBackdrop.animate().alpha(1f).setDuration(200).start();
+        tvClock.animate().alpha(1.0f).setDuration(200).start();
+
+        // Sidebar kanan slide dari kanan
+        float dp = getResources().getDisplayMetrics().density;
+        groupSidebar.setVisibility(View.VISIBLE);
+        groupSidebar.setTranslationX(68f * dp);
+        groupSidebar.animate().translationX(0f).setDuration(280)
+                .setInterpolator(new DecelerateInterpolator()).start();
+
+        // Panel list group slide dari kanan
+        showGroupList();
+    }
+
+    /** Tampilkan list group (tahap 1) */
+    private void showGroupList() {
+        float dp = getResources().getDisplayMetrics().density;
+
+        // Isi adapter group titles
         java.util.LinkedHashSet<String> groups = new java.util.LinkedHashSet<>();
         for (Channel ch : channels) {
             if (ch.group != null && !ch.group.isEmpty()) groups.add(ch.group);
         }
-
-        // Buat adapter inline
         java.util.List<String> groupList = new java.util.ArrayList<>(groups);
+
         rvGroupTitles.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             @Override
             public RecyclerView.ViewHolder onCreateViewHolder(android.view.ViewGroup p, int t) {
@@ -958,48 +999,147 @@ public class PlayerActivity extends AppCompatActivity {
                 android.widget.TextView tvName = h.itemView.findViewById(R.id.tv_group_title_item);
                 android.widget.TextView tvCount = h.itemView.findViewById(R.id.tv_group_count);
                 tvName.setText(g);
-                // Hitung jumlah channel di group ini
                 long count = channels.stream().filter(ch -> g.equals(ch.group)).count();
                 tvCount.setText(String.valueOf(count));
-                // Highlight jika sedang aktif
                 boolean active = g.equals(activeGroupFilter);
                 tvName.setTextColor(active ? 0xFFFF5B04 : 0xCCFFFFFF);
-                h.itemView.setOnClickListener(v -> {
-                    activeGroupFilter = g;
-                    applyGroupTitleFilter(g);
-                    closeGroupPanel();
-                    openPanel();
-                });
+                h.itemView.setOnClickListener(v -> showGroupChannels(g));
             }
             @Override public int getItemCount() { return groupList.size(); }
         });
 
-        // Backdrop
-        chListBackdrop.setVisibility(View.VISIBLE);
-        chListBackdrop.animate().alpha(1f).setDuration(200).start();
-        tvClock.animate().alpha(1.0f).setDuration(200).start();
+        // Sembunyikan panel channel group, tampilkan list group
+        if (groupChannelOpen) {
+            // Dorong groupChannelPanel ke kanan, tarik groupListPanel masuk
+            groupChannelPanel.animate().translationX(448f * dp).setDuration(250)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .withEndAction(() -> groupChannelPanel.setVisibility(View.INVISIBLE)).start();
+            groupChannelOpen = false;
+        }
 
-        // Slide dari kanan
-        float w = getResources().getDisplayMetrics().widthPixels;
-        groupTitlePanel.setVisibility(View.VISIBLE);
-        groupTitlePanel.setTranslationX(w);
-        groupTitlePanel.animate().translationX(0f).setDuration(280)
+        groupListPanel.setVisibility(View.VISIBLE);
+        groupListPanel.setTranslationX(448f * dp);
+        groupListPanel.animate().translationX(0f).setDuration(280)
                 .setInterpolator(new DecelerateInterpolator()).start();
     }
 
+    /** Pilih group → dorong list group ke kanan, tampilkan channel group dari kanan */
+    private void showGroupChannels(String group) {
+        activeGroupFilter = group;
+        channelAdapter.applyExactGroupFilter(group);
+
+        float dp = getResources().getDisplayMetrics().density;
+
+        // Update header
+        tvGroupChannelTitle.setText(group.toUpperCase());
+
+        // Isi adapter channel per group
+        java.util.List<Channel> groupChs = new java.util.ArrayList<>();
+        for (int i = 0; i < channels.size(); i++) {
+            Channel ch = channels.get(i);
+            if (group.equals(ch.group)) groupChs.add(ch);
+        }
+        // Buat map: channel → index asli
+        java.util.Map<Channel, Integer> idxMap = new java.util.LinkedHashMap<>();
+        for (int i = 0; i < channels.size(); i++) {
+            if (group.equals(channels.get(i).group)) idxMap.put(channels.get(i), i);
+        }
+        java.util.List<Channel> chList = new java.util.ArrayList<>(idxMap.keySet());
+
+        rvGroupChannels.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            @Override
+            public RecyclerView.ViewHolder onCreateViewHolder(android.view.ViewGroup p, int t) {
+                android.view.View v = android.view.LayoutInflater.from(PlayerActivity.this)
+                        .inflate(R.layout.item_ch_panel, p, false);
+                return new RecyclerView.ViewHolder(v) {};
+            }
+            @Override
+            public void onBindViewHolder(RecyclerView.ViewHolder h, int pos) {
+                Channel ch = chList.get(pos);
+                int realIdx = idxMap.getOrDefault(ch, -1);
+                boolean isActive = (realIdx == currentChannelIdx);
+
+                android.widget.TextView tvNum  = h.itemView.findViewById(R.id.tv_num);
+                android.widget.TextView tvName = h.itemView.findViewById(R.id.tv_ch_name);
+                android.widget.TextView tvEpg  = h.itemView.findViewById(R.id.tv_ch_epg);
+                android.widget.ImageView ivLogo = h.itemView.findViewById(R.id.iv_logo);
+                android.widget.TextView tvFb   = h.itemView.findViewById(R.id.tv_logo_fallback);
+                android.view.View itemBg = h.itemView.findViewById(R.id.item_bg);
+                android.widget.LinearLayout waveform = h.itemView.findViewById(R.id.waveform_bars);
+                android.widget.ImageView ivPlay = h.itemView.findViewById(R.id.iv_play_arrow);
+
+                tvNum.setText(realIdx >= 0 ? String.valueOf(realIdx + 1) : "");
+                tvNum.setTextColor(isActive ? 0xFF000000 : 0x80FFFFFF);
+                tvName.setText(ch.name);
+                tvName.setTextColor(isActive ? 0xFF000000 : 0xFFFFFFFF);
+                tvEpg.setText((ch.group != null && !ch.group.isEmpty()) ? ch.group
+                        : getString(R.string.player_no_info));
+                tvEpg.setTextColor(isActive ? 0x80000000 : 0x80FFFFFF);
+
+                if (ch.logoUrl != null && !ch.logoUrl.isEmpty()) {
+                    ivLogo.setVisibility(View.VISIBLE);
+                    tvFb.setVisibility(View.GONE);
+                    com.bumptech.glide.Glide.with(ivLogo.getContext()).load(ch.logoUrl)
+                            .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.ALL)
+                            .into(ivLogo);
+                } else {
+                    ivLogo.setVisibility(View.GONE);
+                    tvFb.setVisibility(View.VISIBLE);
+                    String ini = ch.name.isEmpty() ? "?" : ch.name.substring(0, Math.min(2, ch.name.length())).toUpperCase();
+                    tvFb.setText(ini);
+                    tvFb.setTextColor(isActive ? 0xFF000000 : 0x66FFFFFF);
+                }
+                itemBg.setVisibility(isActive ? View.VISIBLE : View.INVISIBLE);
+                if (waveform != null) waveform.setVisibility(View.GONE);
+                if (ivPlay != null) ivPlay.setVisibility(View.GONE);
+
+                h.itemView.setOnClickListener(v -> {
+                    playChannel(realIdx, true);
+                    closeGroupPanel();
+                });
+            }
+            @Override public int getItemCount() { return chList.size(); }
+        });
+
+        // Dorong groupListPanel ke kanan, tarik groupChannelPanel masuk
+        groupChannelOpen = true;
+        groupListPanel.animate().translationX(448f * dp).setDuration(280)
+                .setInterpolator(new DecelerateInterpolator())
+                .withEndAction(() -> groupListPanel.setVisibility(View.INVISIBLE)).start();
+
+        groupChannelPanel.setVisibility(View.VISIBLE);
+        groupChannelPanel.setTranslationX(448f * dp);
+        groupChannelPanel.animate().translationX(0f).setDuration(280)
+                .setInterpolator(new DecelerateInterpolator()).start();
+    }
+
+    /** Tutup semua panel kanan */
     private void closeGroupPanel() {
         if (!groupPanelOpen) return;
         groupPanelOpen = false;
-        float w = getResources().getDisplayMetrics().widthPixels;
-        groupTitlePanel.animate().translationX(w).setDuration(250)
+
+        float dp = getResources().getDisplayMetrics().density;
+
+        // Sembunyikan sidebar
+        groupSidebar.animate().translationX(68f * dp).setDuration(250)
                 .setInterpolator(new DecelerateInterpolator())
-                .withEndAction(() -> groupTitlePanel.setVisibility(View.INVISIBLE)).start();
-        // Sembunyikan backdrop jika panel channel juga tidak terbuka
-        if (!panelOpen) {
-            chListBackdrop.animate().alpha(0f).setDuration(200)
-                    .withEndAction(() -> chListBackdrop.setVisibility(View.INVISIBLE)).start();
-            tvClock.animate().alpha(0.5f).setDuration(200).start();
-        }
+                .withEndAction(() -> groupSidebar.setVisibility(View.INVISIBLE)).start();
+
+        // Sembunyikan panel yang sedang aktif
+        LinearLayout activePanel = groupChannelOpen ? groupChannelPanel : groupListPanel;
+        activePanel.animate().translationX(448f * dp).setDuration(250)
+                .setInterpolator(new DecelerateInterpolator())
+                .withEndAction(() -> {
+                    groupListPanel.setVisibility(View.INVISIBLE);
+                    groupChannelPanel.setVisibility(View.INVISIBLE);
+                }).start();
+
+        groupChannelOpen = false;
+
+        // Backdrop
+        groupBackdrop.animate().alpha(0f).setDuration(200)
+                .withEndAction(() -> groupBackdrop.setVisibility(View.INVISIBLE)).start();
+        tvClock.animate().alpha(0.5f).setDuration(200).start();
     }
 
     /** Filter channel berdasarkan group title exact match */
@@ -1055,7 +1195,13 @@ public class PlayerActivity extends AppCompatActivity {
         if (!panelOpen) return;
         panelOpen = false;
         categoryFullOpen = false;
-        if (groupPanelOpen) { groupPanelOpen = false; groupTitlePanel.setVisibility(View.INVISIBLE); }
+        if (groupPanelOpen || groupChannelOpen) {
+            groupPanelOpen = false; groupChannelOpen = false;
+            groupSidebar.setVisibility(View.INVISIBLE);
+            groupListPanel.setVisibility(View.INVISIBLE);
+            groupChannelPanel.setVisibility(View.INVISIBLE);
+            groupBackdrop.setVisibility(View.INVISIBLE);
+        }
 
         float dp = getResources().getDisplayMetrics().density;
 
