@@ -19,6 +19,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import androidx.recyclerview.widget.RecyclerView;
 
 import androidx.annotation.OptIn;
 import androidx.media3.common.C;
