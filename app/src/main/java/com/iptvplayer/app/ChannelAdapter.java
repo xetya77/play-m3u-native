@@ -32,6 +32,7 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.VH> {
     private OnChannelClickListener listener;
     private String textFilter = "";
     private String groupFilter = "ALL"; // ALL, TV, RADIO, FILM
+    private String exactGroupFilter = null;
     private String exactGroupFilter = null; // null = semua, atau exact group title
 
     public ChannelAdapter(OnChannelClickListener listener) {
@@ -52,6 +53,12 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.VH> {
     public void applyExactGroupFilter(String exact) {
         this.exactGroupFilter = exact;
         applyFilters();
+    }
+
+    /** Filter berdasarkan group title exact (dari M3U group-title) */
+    public void applyExactGroupFilter(String exact) {
+        this.exactGroupFilter = exact;
+        reapplyFilters();
     }
 
     /** Filter berdasarkan kategori group */
@@ -81,6 +88,7 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.VH> {
     }
 
     private boolean matchesGroupFilter(Channel ch) {
+        if (exactGroupFilter != null) return exactGroupFilter.equals(ch.group);
         // Jika ada exact group filter aktif, prioritaskan
         if (exactGroupFilter != null) {
             return exactGroupFilter.equals(ch.group);
