@@ -32,8 +32,7 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.VH> {
     private OnChannelClickListener listener;
     private String textFilter = "";
     private String groupFilter = "ALL"; // ALL, TV, RADIO, FILM
-    private String exactGroupFilter = null;
-    private String exactGroupFilter = null; // null = semua, atau exact group title
+    private String exactGroupFilter = null; // null = semua group, atau exact group-title dari M3U
 
     public ChannelAdapter(OnChannelClickListener listener) {
         this.listener = listener;
@@ -52,16 +51,10 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.VH> {
     /** Filter berdasarkan group title exact (dari M3U group-title) */
     public void applyExactGroupFilter(String exact) {
         this.exactGroupFilter = exact;
-        applyFilters();
-    }
-
-    /** Filter berdasarkan group title exact (dari M3U group-title) */
-    public void applyExactGroupFilter(String exact) {
-        this.exactGroupFilter = exact;
         reapplyFilters();
     }
 
-    /** Filter berdasarkan kategori group */
+    /** Filter berdasarkan kategori group (All/TV/Radio/Film) */
     public void applyGroupFilter(String category) {
         this.groupFilter = category;
         this.exactGroupFilter = null; // reset exact filter saat ganti kategori
@@ -88,11 +81,9 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.VH> {
     }
 
     private boolean matchesGroupFilter(Channel ch) {
+        // Exact group-title filter (dari swipe kiri → panel group)
         if (exactGroupFilter != null) return exactGroupFilter.equals(ch.group);
-        // Jika ada exact group filter aktif, prioritaskan
-        if (exactGroupFilter != null) {
-            return exactGroupFilter.equals(ch.group);
-        }
+        // Kategori filter (All/TV/Radio/Film)
         if ("ALL".equals(groupFilter)) return true;
         String g = ch.group != null ? ch.group.toLowerCase() : "";
         boolean isRadio = g.contains("radio") || g.contains(" fm") || g.equals("fm");
@@ -126,7 +117,6 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.VH> {
         int realIdx = getRealIndex(pos);
         boolean isActive = (realIdx == activeIndex);
 
-        // Nomor + nama
         h.tvNum.setText(realIdx >= 0 ? String.valueOf(realIdx + 1) : "");
         h.tvNum.setTextColor(isActive ? 0xFF000000 : 0x80FFFFFF);
         h.tvName.setText(ch.name);
@@ -136,7 +126,6 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.VH> {
                 : h.tvEpg.getContext().getString(R.string.player_no_info));
         h.tvEpg.setTextColor(isActive ? 0x80000000 : 0x80FFFFFF);
 
-        // Logo
         if (ch.logoUrl != null && !ch.logoUrl.isEmpty()) {
             h.ivLogo.setVisibility(View.VISIBLE);
             h.tvFallback.setVisibility(View.GONE);
@@ -153,7 +142,6 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.VH> {
             h.tvFallback.setTextColor(isActive ? 0xFF000000 : 0x66FFFFFF);
         }
 
-        // Background: putih saat active (dipilih), transparan lainnya
         if (isActive) {
             h.itemBg.setVisibility(View.VISIBLE);
             h.waveformBars.setVisibility(View.VISIBLE);
@@ -205,7 +193,6 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.VH> {
 
         void startEqualizer() {
             stopEqualizer();
-            // Bar 1: lambat, bar 2: cepat, bar 3: sedang — fase berbeda
             ObjectAnimator anim1 = makeBarAnim(eqBar1, 0.2f, 1.0f, 700);
             ObjectAnimator anim2 = makeBarAnim(eqBar2, 0.15f, 1.0f, 450);
             ObjectAnimator anim3 = makeBarAnim(eqBar3, 0.25f, 1.0f, 600);
@@ -222,7 +209,6 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.VH> {
                 eqAnimator.cancel();
                 eqAnimator = null;
             }
-            // Reset bar ke tinggi normal
             if (eqBar1 != null) eqBar1.setScaleY(1f);
             if (eqBar2 != null) eqBar2.setScaleY(1f);
             if (eqBar3 != null) eqBar3.setScaleY(1f);
