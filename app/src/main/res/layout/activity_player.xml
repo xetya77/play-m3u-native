@@ -376,6 +376,89 @@
         </LinearLayout>
     </LinearLayout>
 
+
+    <!--
+        PANEL GROUP TITLE — slide dari kanan (kanan layar → kiri)
+        Muncul saat swipe kiri di player. Berisi daftar group title unik dari M3U.
+        Tidak mengganggu panel kiri yang sudah ada.
+    -->
+    <LinearLayout android:id="@+id/group_title_panel"
+        android:layout_width="320dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="right"
+        android:orientation="vertical"
+        android:background="@drawable/bg_category_panel"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:elevation="13dp"
+        android:visibility="invisible">
+
+        <!-- Header: "Group" + tombol tutup -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="16dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Group"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05"/>
+            <TextView android:id="@+id/btn_group_close"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✕"
+                android:textColor="#80FFFFFF"
+                android:textSize="18sp"
+                android:padding="8dp"
+                android:clickable="true"
+                android:focusable="true"/>
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#18ffffff"
+            android:layout_marginBottom="4dp"/>
+
+        <!-- Semua group (All) -->
+        <LinearLayout android:id="@+id/group_item_all"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="16dp"
+            android:layout_marginStart="6dp"
+            android:layout_marginEnd="6dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="@drawable/selector_settings_item">
+            <TextView android:id="@+id/tv_group_all"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="— Semua Group —"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"/>
+        </LinearLayout>
+
+        <!-- Daftar group dari M3U (RecyclerView) -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_group_titles"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:paddingTop="4dp"
+            android:paddingBottom="8dp"/>
+    </LinearLayout>
+
     <!-- Swipe feedback -->
     <TextView android:id="@+id/swipe_fb_up"
         android:layout_width="wrap_content" android:layout_height="wrap_content"
