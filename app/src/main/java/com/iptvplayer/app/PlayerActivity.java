@@ -109,6 +109,12 @@ public class PlayerActivity extends AppCompatActivity {
     // Swipe
     private View swipeHint;
     private TextView swipeFbUp, swipeFbDown;
+    // Group title panel
+    private LinearLayout groupTitlePanel;
+    private RecyclerView rvGroupTitles;
+    private View groupItemAll;
+    private boolean groupPanelOpen = false;
+    private String activeGroupFilter = null; // null = semua group
 
     // State
     private List<Channel> channels = new ArrayList<>();
@@ -233,6 +239,9 @@ public class PlayerActivity extends AppCompatActivity {
         swipeHint         = findViewById(R.id.swipe_hint);
         swipeFbUp         = findViewById(R.id.swipe_fb_up);
         swipeFbDown       = findViewById(R.id.swipe_fb_down);
+        groupTitlePanel   = findViewById(R.id.group_title_panel);
+        rvGroupTitles     = findViewById(R.id.rv_group_titles);
+        groupItemAll      = findViewById(R.id.group_item_all);
     }
 
     // ===== CLOCK =====
@@ -732,9 +741,11 @@ public class PlayerActivity extends AppCompatActivity {
                         else if (panelOpen && !categoryFullOpen)   openCategoryFull();
                         return true;
                     } else if (dX < -80 && Math.abs(vX) > 100) {
-                        // Swipe KIRI = kembali/tutup
-                        if (categoryFullOpen) closeCategoryFull();
-                        else if (panelOpen)   hidePanel();
+                        // Swipe KIRI
+                        if (!panelOpen && !categoryFullOpen && !groupPanelOpen) openGroupPanel();
+                        else if (groupPanelOpen)              closeGroupPanel();
+                        else if (categoryFullOpen)            closeCategoryFull();
+                        else if (panelOpen)                   hidePanel();
                         return true;
                     }
                 } else if (Math.abs(dY) > 80 && Math.abs(vY) > 100) {
@@ -835,6 +846,9 @@ public class PlayerActivity extends AppCompatActivity {
         catFullRadio.setOnClickListener(v -> selectCategory("RADIO"));
         catFullMovie.setOnClickListener(v -> selectCategory("FILM"));
         catFullSettings.setOnClickListener(v -> openMainActivity());
+
+        // Setup group title panel
+        setupGroupTitlePanel();
     }
 
     /** Pilih kategori, update styling, filter channel, tutup panel kategori */
@@ -857,6 +871,8 @@ public class PlayerActivity extends AppCompatActivity {
 
         // Filter daftar channel
         channelAdapter.applyGroupFilter(cat);
+        // Jika dibuka via swipe kiri (langsung kategori), buka panel channel setelah pilih
+        if (!panelOpen) openPanel();
 
         // Tutup panel kategori → kembali tampilkan daftar channel
         closeCategoryFull();
@@ -893,6 +909,119 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     // ===== PANEL DAFTAR CHANNEL =====
+
+    /** Setup panel daftar group title dari M3U */
+    private void setupGroupTitlePanel() {
+        // Tombol tutup
+        findViewById(R.id.btn_group_close).setOnClickListener(v -> closeGroupPanel());
+
+        // Klik "Semua Group" → reset filter
+        groupItemAll.setOnClickListener(v -> {
+            activeGroupFilter = null;
+            applyGroupTitleFilter(null);
+            closeGroupPanel();
+            openPanel();
+        });
+
+        // Touch blocker agar tidak tembus ke backdrop
+        groupTitlePanel.setOnTouchListener((v, e) -> true);
+
+        // Adapter group titles — diisi saat panel dibuka
+        rvGroupTitles.setLayoutManager(
+            new androidx.recyclerview.widget.LinearLayoutManager(this));
+    }
+
+    /** Kumpulkan group title unik dari channels, buka panel */
+    private void openGroupPanel() {
+        if (groupPanelOpen) return;
+        groupPanelOpen = true;
+
+        // Kumpulkan group unik
+        java.util.LinkedHashSet<String> groups = new java.util.LinkedHashSet<>();
+        for (Channel ch : channels) {
+            if (ch.group != null && !ch.group.isEmpty()) groups.add(ch.group);
+        }
+
+        // Buat adapter inline
+        java.util.List<String> groupList = new java.util.ArrayList<>(groups);
+        rvGroupTitles.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+            @Override
+            public RecyclerView.ViewHolder onCreateViewHolder(android.view.ViewGroup p, int t) {
+                android.view.View v = android.view.LayoutInflater.from(PlayerActivity.this)
+                        .inflate(R.layout.item_group_title, p, false);
+                return new RecyclerView.ViewHolder(v) {};
+            }
+            @Override
+            public void onBindViewHolder(RecyclerView.ViewHolder h, int pos) {
+                String g = groupList.get(pos);
+                android.widget.TextView tvName = h.itemView.findViewById(R.id.tv_group_title_item);
+                android.widget.TextView tvCount = h.itemView.findViewById(R.id.tv_group_count);
+                tvName.setText(g);
+                // Hitung jumlah channel di group ini
+                long count = channels.stream().filter(ch -> g.equals(ch.group)).count();
+                tvCount.setText(String.valueOf(count));
+                // Highlight jika sedang aktif
+                boolean active = g.equals(activeGroupFilter);
+                tvName.setTextColor(active ? 0xFFFF5B04 : 0xCCFFFFFF);
+                h.itemView.setOnClickListener(v -> {
+                    activeGroupFilter = g;
+                    applyGroupTitleFilter(g);
+                    closeGroupPanel();
+                    openPanel();
+                });
+            }
+            @Override public int getItemCount() { return groupList.size(); }
+        });
+
+        // Backdrop
+        chListBackdrop.setVisibility(View.VISIBLE);
+        chListBackdrop.animate().alpha(1f).setDuration(200).start();
+        tvClock.animate().alpha(1.0f).setDuration(200).start();
+
+        // Slide dari kanan
+        float w = getResources().getDisplayMetrics().widthPixels;
+        groupTitlePanel.setVisibility(View.VISIBLE);
+        groupTitlePanel.setTranslationX(w);
+        groupTitlePanel.animate().translationX(0f).setDuration(280)
+                .setInterpolator(new DecelerateInterpolator()).start();
+    }
+
+    private void closeGroupPanel() {
+        if (!groupPanelOpen) return;
+        groupPanelOpen = false;
+        float w = getResources().getDisplayMetrics().widthPixels;
+        groupTitlePanel.animate().translationX(w).setDuration(250)
+                .setInterpolator(new DecelerateInterpolator())
+                .withEndAction(() -> groupTitlePanel.setVisibility(View.INVISIBLE)).start();
+        // Sembunyikan backdrop jika panel channel juga tidak terbuka
+        if (!panelOpen) {
+            chListBackdrop.animate().alpha(0f).setDuration(200)
+                    .withEndAction(() -> chListBackdrop.setVisibility(View.INVISIBLE)).start();
+            tvClock.animate().alpha(0.5f).setDuration(200).start();
+        }
+    }
+
+    /** Filter channel berdasarkan group title exact match */
+    private void applyGroupTitleFilter(String group) {
+        channelAdapter.applyExactGroupFilter(group);
+    }
+
+    /** Buka panel kategori langsung tanpa panel daftar channel (dari swipe kiri di player) */
+    private void openCategoryDirect() {
+        if (categoryFullOpen) return;
+        // Buka panel channel di background tapi tak kelihatan, supaya state konsisten
+        panelOpen = true;
+        float dp = getResources().getDisplayMetrics().density;
+        chListBackdrop.setVisibility(View.VISIBLE);
+        chListBackdrop.animate().alpha(1f).setDuration(200).start();
+        tvClock.animate().alpha(1.0f).setDuration(200).start();
+        // Sidebar dan chListPanel tidak dimunculkan — langsung buka panel kategori
+        chListPanel.setVisibility(View.INVISIBLE);
+        categorySidebar.setVisibility(View.INVISIBLE);
+        // Buka panel kategori
+        openCategoryFull();
+    }
+
     private void openPanel() {
         if (panelOpen) return;
         panelOpen = true;
@@ -925,6 +1054,7 @@ public class PlayerActivity extends AppCompatActivity {
         if (!panelOpen) return;
         panelOpen = false;
         categoryFullOpen = false;
+        if (groupPanelOpen) { groupPanelOpen = false; groupTitlePanel.setVisibility(View.INVISIBLE); }
 
         float dp = getResources().getDisplayMetrics().density;
 
