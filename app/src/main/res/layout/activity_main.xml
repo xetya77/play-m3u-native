@@ -759,7 +759,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:text="@string/settings_epg"
+                    android:text="@string/settings_resolution_menu"
                     android:textColor="#E4EEF0"
                     android:textSize="20sp"
                     android:fontFamily="@font/inter_medium"/>
