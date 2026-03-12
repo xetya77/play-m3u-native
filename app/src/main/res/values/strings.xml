@@ -39,7 +39,7 @@
     <!-- Settings -->
     <string name="settings_start">Start</string>
     <string name="settings_playlist_menu">Playlist</string>
-    <string name="settings_epg">EPG</string>
+    <string name="settings_epg">Settings</string>
 
     <!-- Playlists -->
     <string name="playlists_title">Playlist</string>
@@ -118,4 +118,11 @@
     <string name="error_no_connection">No internet connection</string>
     <string name="error_http">Stream unavailable (HTTP error)</string>
     <string name="error_playback">Failed to play stream</string>
+    <string name="settings_resolution_menu">Settings</string>
+    <string name="resolution_title">Video Quality</string>
+    <string name="resolution_auto">Auto (Recommended)</string>
+    <string name="resolution_lowest">Lowest Quality</string>
+    <string name="resolution_highest">Highest Quality</string>
+    <string name="resolution_save">Save</string>
+    <string name="resolution_cancel">Cancel</string>
 </resources>

@@ -35,11 +35,11 @@
         <item name="android:navigationBarColor">@color/transparent</item>
     </style>
 
-    <!-- SplashActivity: fullscreen, background #E4EEF0 -->
+    <!-- SplashActivity: fullscreen sejati, bg #16232A, status bar tersembunyi -->
     <style name="Theme.PlayM3U.Splash" parent="android:Theme.NoTitleBar.Fullscreen">
-        <item name="android:windowBackground">#E4EEF0</item>
-        <item name="android:statusBarColor">#E4EEF0</item>
-        <item name="android:navigationBarColor">#E4EEF0</item>
+        <item name="android:windowBackground">#16232A</item>
         <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
 </resources>
