@@ -937,12 +937,6 @@ public class PlayerActivity extends AppCompatActivity {
         // Backdrop kanan tap → tutup
         groupBackdrop.setOnClickListener(v -> closeGroupPanel());
 
-        // "Semua Channel" → reset filter group, tutup panel kanan
-        // POIN 2: tidak mengubah panel kiri sama sekali
-            // POIN 2: jangan panggil channelAdapter.applyExactGroupFilter — panel kiri tidak terpengaruh
-            closeGroupPanel();
-        });
-
         // Tombol kembali di panel channel group → kembali ke list group
         findViewById(R.id.btn_group_back).setOnClickListener(v -> showGroupList());
 
