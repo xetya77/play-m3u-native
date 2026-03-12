@@ -408,7 +408,6 @@
 
         <View android:layout_width="match_parent" android:layout_height="1dp"
             android:background="#18ffffff"/>
-        </LinearLayout>
 
         <!-- Daftar group dari M3U -->
         <androidx.recyclerview.widget.RecyclerView
