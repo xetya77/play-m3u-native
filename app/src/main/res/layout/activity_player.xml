@@ -110,44 +110,6 @@
     <TextView android:id="@+id/tv_ch_playlist_name"
         android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
 
-    <!-- Panduan remote -->
-    <LinearLayout android:id="@+id/remote_guide"
-        android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:layout_gravity="bottom|left"
-        android:layout_marginLeft="20dp" android:layout_marginBottom="20dp"
-        android:orientation="horizontal" android:gravity="center_vertical"
-        android:background="@drawable/bg_loading_pill"
-        android:paddingLeft="16dp" android:paddingRight="16dp"
-        android:paddingTop="10dp" android:paddingBottom="10dp">
-        <LinearLayout android:layout_width="54dp" android:layout_height="54dp"
-            android:gravity="center" android:orientation="vertical" android:layout_marginRight="14dp">
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="▲" android:textColor="#FFFFFF" android:textSize="11sp" android:gravity="center"/>
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:gravity="center">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="◀ " android:textColor="#FFFFFF" android:textSize="11sp"/>
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="@string/btn_ok" android:textColor="#000000" android:textSize="9sp"
-                    android:background="#CCFFFFFF" android:paddingLeft="5dp" android:paddingRight="5dp"
-                    android:paddingTop="2dp" android:paddingBottom="2dp"/>
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text=" ▶" android:textColor="#FFFFFF" android:textSize="11sp"/>
-            </LinearLayout>
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:text="▼" android:textColor="#FFFFFF" android:textSize="11sp" android:gravity="center"/>
-        </LinearLayout>
-        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:orientation="vertical">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="@string/player_hint_press_list"
-                android:textColor="#CCffffff" android:textSize="13sp" android:layout_marginBottom="5dp"/>
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="@string/player_hint_press_cat"
-                android:textColor="#CCffffff" android:textSize="13sp"/>
-        </LinearLayout>
-    </LinearLayout>
-
     <!-- Number overlay -->
     <TextView android:id="@+id/num_overlay"
         android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -446,20 +408,6 @@
 
         <View android:layout_width="match_parent" android:layout_height="1dp"
             android:background="#18ffffff"/>
-
-        <!-- Semua channel (reset filter) -->
-        <LinearLayout android:id="@+id/group_item_all"
-            android:layout_width="match_parent" android:layout_height="52dp"
-            android:orientation="horizontal" android:gravity="center_vertical"
-            android:paddingStart="16dp" android:paddingEnd="16dp"
-            android:layout_marginStart="6dp" android:layout_marginEnd="6dp"
-            android:clickable="true" android:focusable="true"
-            android:background="@drawable/selector_channel_item">
-            <TextView android:id="@+id/tv_group_all"
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="— Semua Channel —"
-                android:textColor="#FFFFFF" android:textSize="14sp"/>
         </LinearLayout>
 
         <!-- Daftar group dari M3U -->
