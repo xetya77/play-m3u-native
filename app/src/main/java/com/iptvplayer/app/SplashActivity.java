@@ -2,12 +2,13 @@ package com.iptvplayer.app;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -32,13 +33,12 @@ public class SplashActivity extends Activity {
     @SuppressWarnings("deprecation")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Harus sebelum super.onCreate — cegah status bar hitam
         requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-        getWindow().setStatusBarColor(0xFFE4EEF0);
-        getWindow().setNavigationBarColor(0xFFE4EEF0);
+        getWindow().setStatusBarColor(0xFF16232A);
+        getWindow().setNavigationBarColor(0xFF16232A);
 
         super.onCreate(savedInstanceState);
 
@@ -51,23 +51,33 @@ public class SplashActivity extends Activity {
             | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
             | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
-        setContentView(R.layout.activity_splash);
-
         prefs = new PrefsManager(this);
         playlists = prefs.loadPlaylists();
 
-        ImageView logo = findViewById(R.id.iv_splash_logo);
-        logo.setAlpha(0f);
+        // Orientation: portrait saat belum ada playlist, landscape saat sudah ada
+        boolean hasPlaylist = !playlists.isEmpty()
+                && playlists.get(Math.min(prefs.getCurrentPlaylistIndex(), playlists.size()-1)).channels != null
+                && !playlists.get(Math.min(prefs.getCurrentPlaylistIndex(), playlists.size()-1)).channels.isEmpty();
 
-        // Animasi fade in → tahan → fade out
-        logo.animate()
+        if (hasPlaylist) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        } else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
+
+        setContentView(R.layout.activity_splash);
+
+        // Animasi: fade in teks → tahan → fade out (sama persis seperti sebelumnya)
+        LinearLayout container = findViewById(R.id.splash_text_container);
+        container.setAlpha(0f);
+
+        container.animate()
             .alpha(1f)
             .setDuration(900)
             .setStartDelay(150)
             .withEndAction(() -> {
-                // Tahan → fade out
                 handler.postDelayed(() ->
-                    logo.animate()
+                    container.animate()
                         .alpha(0f)
                         .setDuration(700)
                         .withEndAction(() -> {
@@ -83,13 +93,8 @@ public class SplashActivity extends Activity {
         refreshPlaylistInBackground();
     }
 
-    /**
-     * Refresh playlist aktif di background (jika downloadOnStart=true dan URL tersedia).
-     * Setelah selesai, set loadDone=true dan coba navigasi.
-     */
     private void refreshPlaylistInBackground() {
         if (playlists.isEmpty()) {
-            // Belum ada playlist, tidak perlu refresh
             loadDone = true;
             return;
         }
@@ -97,16 +102,13 @@ public class SplashActivity extends Activity {
         int idx = prefs.getCurrentPlaylistIndex();
         if (idx >= playlists.size()) idx = 0;
         com.iptvplayer.app.Playlist pl = playlists.get(idx);
-        final int finalIdx = idx;
 
         if (!pl.downloadOnStart || pl.url == null || pl.url.isEmpty()
                 || pl.url.startsWith("content://")) {
-            // File lokal atau tidak perlu auto-refresh
             loadDone = true;
             return;
         }
 
-        // Fetch dari URL di background
         executor.execute(() -> {
             try {
                 OkHttpClient client = new OkHttpClient.Builder()
@@ -126,7 +128,7 @@ public class SplashActivity extends Activity {
                     }
                 }
             } catch (Exception e) {
-                // Gagal refresh — pakai data lama yang sudah tersimpan
+                // Gagal refresh — pakai data lama
             }
             handler.post(() -> {
                 loadDone = true;
@@ -135,15 +137,10 @@ public class SplashActivity extends Activity {
         });
     }
 
-    /**
-     * Navigasi hanya dilakukan saat KEDUA kondisi terpenuhi:
-     * animasi selesai AND load selesai.
-     */
     private void tryNavigate() {
         if (!animDone || !loadDone) return;
 
         if (playlists.isEmpty()) {
-            // Belum punya playlist → tampilkan halaman welcome
             goToMain();
             return;
         }
@@ -153,12 +150,10 @@ public class SplashActivity extends Activity {
         com.iptvplayer.app.Playlist pl = playlists.get(idx);
 
         if (pl.channels == null || pl.channels.isEmpty()) {
-            // Playlist kosong → ke MainActivity (settings)
             goToMain();
             return;
         }
 
-        // Ada playlist + channel → langsung play!
         int chIdx = prefs.getCurrentChannelIndex();
         if (chIdx >= pl.channels.size()) chIdx = 0;
 

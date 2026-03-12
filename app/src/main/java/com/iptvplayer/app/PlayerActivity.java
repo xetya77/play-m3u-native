@@ -1118,6 +1118,7 @@ public class PlayerActivity extends AppCompatActivity {
                 if (ivPlay != null) {
                     ivPlay.setImageResource(R.drawable.ic_triangle_play);
                     ivPlay.setColorFilter(0xFF16232A, android.graphics.PorterDuff.Mode.SRC_IN);
+                    ivPlay.setScaleX(-1f); // flip ke kiri
                     ivPlay.setVisibility(isActive ? View.VISIBLE : View.GONE);
                 }
 
