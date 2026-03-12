@@ -1426,18 +1426,35 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 showPageWithTransition("playlists");
                 break;
             case "epg":
-                showEpgDialog();
+                showResolutionDialog();
                 break;
         }
     }
 
-    /** Dialog EPG — placeholder untuk input URL EPG */
-    private void showEpgDialog() {
-        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-        builder.setTitle("EPG");
-        builder.setMessage("Fitur EPG akan segera hadir.");
-        builder.setPositiveButton("OK", null);
-        builder.show();
+    /** Dialog resolusi — pilih kualitas stream */
+    private void showResolutionDialog() {
+        String current = prefs.getResolution();
+        String[] options = {
+            getString(R.string.resolution_auto),
+            getString(R.string.resolution_lowest),
+            getString(R.string.resolution_highest)
+        };
+        String[] keys = {PrefsManager.RES_AUTO, PrefsManager.RES_LOWEST, PrefsManager.RES_HIGHEST};
+
+        int checked = 0;
+        for (int i = 0; i < keys.length; i++) {
+            if (keys[i].equals(current)) { checked = i; break; }
+        }
+
+        final int[] selected = {checked};
+        new android.app.AlertDialog.Builder(this)
+            .setTitle(getString(R.string.resolution_title))
+            .setSingleChoiceItems(options, checked, (d, which) -> selected[0] = which)
+            .setPositiveButton(getString(R.string.resolution_save), (d, w) -> {
+                prefs.setResolution(keys[selected[0]]);
+            })
+            .setNegativeButton(getString(R.string.resolution_cancel), null)
+            .show();
     }
 
         /** Simpan playlist otomatis tanpa meminta nama — nama diambil dari URL atau auto-generate */

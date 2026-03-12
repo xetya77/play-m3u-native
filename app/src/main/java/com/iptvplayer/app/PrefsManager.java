@@ -15,6 +15,10 @@ public class PrefsManager {
     private static final String KEY_PLAYLISTS = "playlists";
     private static final String KEY_CURRENT_PLAYLIST = "current_playlist";
     private static final String KEY_CURRENT_CHANNEL = "current_channel";
+    private static final String KEY_RESOLUTION = "resolution";
+    public static final String RES_AUTO    = "auto";
+    public static final String RES_LOWEST  = "lowest";
+    public static final String RES_HIGHEST = "highest";
 
     private final SharedPreferences prefs;
     private final Gson gson;
@@ -59,5 +63,13 @@ public class PrefsManager {
 
     public void setCurrentChannelIndex(int idx) {
         prefs.edit().putInt(KEY_CURRENT_CHANNEL, idx).apply();
+    }
+
+    public String getResolution() {
+        return prefs.getString(KEY_RESOLUTION, RES_AUTO);
+    }
+
+    public void setResolution(String value) {
+        prefs.edit().putString(KEY_RESOLUTION, value).apply();
     }
 }

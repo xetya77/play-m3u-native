@@ -40,6 +40,10 @@ import androidx.media3.exoplayer.hls.HlsMediaSource;
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
 import androidx.media3.exoplayer.source.MediaSource;
 import androidx.media3.ui.PlayerView;
+import androidx.media3.common.Tracks;
+import androidx.media3.common.TrackGroup;
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
+import androidx.media3.exoplayer.trackselection.TrackSelectionOverride;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -63,6 +67,7 @@ public class PlayerActivity extends AppCompatActivity {
     // Player
     private PlayerView playerView;
     private ExoPlayer player;
+    private DefaultTrackSelector trackSelector;
     private WebView youtubeWebView;
     private boolean isYouTubeMode = false;
     // Playlist YouTube
@@ -692,10 +697,19 @@ public class PlayerActivity extends AppCompatActivity {
 
     // ===== PLAYER =====
     private void setupPlayer() {
-        player = new ExoPlayer.Builder(this).build();
+        trackSelector = new DefaultTrackSelector(this);
+        player = new ExoPlayer.Builder(this)
+                .setTrackSelector(trackSelector)
+                .build();
         playerView.setUseController(false);
         playerView.setPlayer(player);
         player.addListener(new Player.Listener() {
+            @Override
+            public void onTracksChanged(Tracks tracks) {
+                // Re-apply resolusi saat tracks tersedia/berubah
+                applyResolution();
+            }
+
             @Override public void onPlaybackStateChanged(int state) {
                 if (state == Player.STATE_BUFFERING) {
                     videoLoading.setBackgroundColor(0x00000000);
@@ -1295,6 +1309,65 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     // ===== PLAY CHANNEL =====
+
+    // ===== RESOLUSI =====
+    /** Terapkan preferensi resolusi ke ExoPlayer track selector */
+    private void applyResolution() {
+        if (trackSelector == null || player == null) return;
+        String res = prefs.getResolution();
+        if (PrefsManager.RES_AUTO.equals(res)) {
+            // Kembali ke adaptive bitrate — hapus semua override
+            trackSelector.setParameters(
+                trackSelector.buildUponParameters()
+                    .clearOverrides()
+                    .setForceHighestSupportedBitrate(false)
+                    .setForceLowestBitrate(false)
+                    .build()
+            );
+            return;
+        }
+        // Tunggu tracks tersedia
+        Tracks tracks = player.getCurrentTracks();
+        if (tracks == null) return;
+
+        TrackGroup bestGroup = null;
+        int bestIdx = -1;
+        int bestWidth = -1;
+
+        for (Tracks.Group tg : tracks.getGroups()) {
+            if (tg.getType() != androidx.media3.common.C.TRACK_TYPE_VIDEO) continue;
+            for (int i = 0; i < tg.length; i++) {
+                if (!tg.isTrackSupported(i)) continue;
+                Format fmt = tg.getTrackFormat(i);
+                int w = fmt.width > 0 ? fmt.width : fmt.height;
+                if (w <= 0) continue;
+                if (PrefsManager.RES_HIGHEST.equals(res)) {
+                    if (w > bestWidth) { bestWidth = w; bestGroup = tg.getMediaTrackGroup(); bestIdx = i; }
+                } else { // lowest
+                    if (bestWidth < 0 || w < bestWidth) { bestWidth = w; bestGroup = tg.getMediaTrackGroup(); bestIdx = i; }
+                }
+            }
+        }
+
+        if (bestGroup != null && bestIdx >= 0) {
+            trackSelector.setParameters(
+                trackSelector.buildUponParameters()
+                    .clearOverrides()
+                    .addOverride(new TrackSelectionOverride(bestGroup, bestIdx))
+                    .build()
+            );
+        } else {
+            // Single track atau track belum tersedia — biarkan auto
+            trackSelector.setParameters(
+                trackSelector.buildUponParameters()
+                    .clearOverrides()
+                    .setForceHighestSupportedBitrate(PrefsManager.RES_HIGHEST.equals(res))
+                    .setForceLowestBitrate(PrefsManager.RES_LOWEST.equals(res))
+                    .build()
+            );
+        }
+    }
+
     private void playChannel(int idx, boolean withFlash) {
         if (channels.isEmpty()) return;
         if (idx < 0) idx = channels.size() - 1;
@@ -1380,6 +1453,8 @@ public class PlayerActivity extends AppCompatActivity {
             player.setMediaSource(mediaSource);
             player.prepare();
             player.play();
+            // Terapkan preferensi resolusi
+            applyResolution();
         } catch (Exception e) {
             tvLoadingMsg.setText(getString(R.string.status_error_generic, e.getMessage()));
         }
