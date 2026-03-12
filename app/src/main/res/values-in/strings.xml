@@ -141,4 +141,8 @@
     <string name="appsettings_buffer_unit">detik</string>
     <string name="appsettings_save">Simpan</string>
     <string name="appsettings_cancel">Batal</string>
+    <!-- Delete playlist confirm dialog -->
+    <string name="delete_playlist_title">Hapus Playlist</string>
+    <string name="delete_playlist_cancel">Batal</string>
+    <string name="delete_playlist_confirm">Hapus</string>
 </resources>
