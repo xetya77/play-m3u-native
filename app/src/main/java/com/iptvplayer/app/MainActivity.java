@@ -887,20 +887,48 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 btnEditUrl.setOnClickListener(v -> showEditDialog(idx, "url"));
             }
 
-            // Tombol Hapus
+            // Tombol Hapus — tampilkan konfirmasi dulu
             if (btnDelete != null) {
-                btnDelete.setOnClickListener(v -> {
-                    playlists.remove(idx);
-                    if (currentPlaylistIdx >= playlists.size()) {
-                        currentPlaylistIdx = Math.max(0, playlists.size() - 1);
-                    }
-                    prefs.savePlaylists(playlists);
-                    prefs.setCurrentPlaylistIndex(currentPlaylistIdx);
-                    rebuildPlaylistList();
-                    if (playlists.isEmpty()) showPageWithTransition("welcome");
-                });
+                btnDelete.setOnClickListener(v -> showDeletePlaylistDialog(idx));
             }
         }
+    }
+
+
+    /** Dialog konfirmasi hapus playlist (style = dialog_exit) */
+    private void showDeletePlaylistDialog(int idx) {
+        if (idx < 0 || idx >= playlists.size()) return;
+        String plName = playlists.get(idx).name;
+
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        android.view.View v = getLayoutInflater().inflate(R.layout.dialog_delete_playlist, null);
+        builder.setView(v);
+
+        android.widget.TextView tvName = v.findViewById(R.id.tv_delete_playlist_name);
+        android.widget.TextView btnCancel  = v.findViewById(R.id.btn_delete_cancel);
+        android.widget.TextView btnConfirm = v.findViewById(R.id.btn_delete_confirm);
+
+        if (tvName != null) tvName.setText(
+            getString(R.string.delete_playlist_confirm) + " "" + plName + ""?");
+
+        android.app.AlertDialog dlg = builder.create();
+        if (dlg.getWindow() != null) {
+            dlg.getWindow().setBackgroundDrawable(
+                new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+        dlg.show();
+
+        if (btnCancel  != null) btnCancel.setOnClickListener(x -> dlg.dismiss());
+        if (btnConfirm != null) btnConfirm.setOnClickListener(x -> {
+            dlg.dismiss();
+            playlists.remove(idx);
+            if (currentPlaylistIdx >= playlists.size())
+                currentPlaylistIdx = Math.max(0, playlists.size() - 1);
+            prefs.savePlaylists(playlists);
+            prefs.setCurrentPlaylistIndex(currentPlaylistIdx);
+            rebuildPlaylistList();
+            if (playlists.isEmpty()) showPageWithTransition("welcome");
+        });
     }
 
     /**
@@ -1487,52 +1515,130 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     }
 
 
-    /** Dialog buffer size 0–60 detik */
+
+    /**
+     * Custom picker dialog dengan palette PlayM3U.
+     * onItemSelected dipanggil setiap kali user tap item (belum final).
+     * onSave dipanggil saat user tekan Save.
+     */
+    private void showCustomPickerDialog(
+            String title,
+            String[] items,
+            int initialSel,
+            java.util.function.Consumer<Integer> onItemSelected,
+            Runnable onSave) {
+
+        android.view.View dialogView = getLayoutInflater()
+                .inflate(R.layout.dialog_custom_picker, null);
+
+        android.widget.TextView tvTitle = dialogView.findViewById(R.id.tv_picker_title);
+        android.widget.ListView lv      = dialogView.findViewById(R.id.lv_picker_items);
+        android.widget.TextView btnCancel = dialogView.findViewById(R.id.btn_picker_cancel);
+        android.widget.TextView btnSave   = dialogView.findViewById(R.id.btn_picker_save);
+
+        if (tvTitle != null) tvTitle.setText(title);
+
+        final int[] currentSel = {initialSel};
+
+        // Adapter custom
+        android.widget.ArrayAdapter<String> adapter =
+            new android.widget.ArrayAdapter<String>(this,
+                R.layout.item_picker_row, R.id.tv_picker_item_label, items) {
+            @Override
+            public android.view.View getView(int pos, android.view.View convert,
+                    android.view.ViewGroup parent) {
+                android.view.View row = super.getView(pos, convert, parent);
+                android.view.View dot = row.findViewById(R.id.view_picker_dot);
+                if (dot != null) {
+                    dot.setBackgroundResource(
+                        pos == currentSel[0]
+                            ? R.drawable.bg_picker_dot_sel
+                            : R.drawable.bg_picker_dot_unsel);
+                }
+                android.widget.TextView lbl = row.findViewById(R.id.tv_picker_item_label);
+                if (lbl != null) {
+                    lbl.setTextColor(pos == currentSel[0]
+                        ? android.graphics.Color.parseColor("#FF5B04")
+                        : android.graphics.Color.parseColor("#E4EEF0"));
+                }
+                return row;
+            }
+        };
+
+        if (lv != null) {
+            lv.setAdapter(adapter);
+            // Scroll ke item terpilih
+            lv.post(() -> lv.setSelection(Math.max(0, initialSel - 2)));
+        }
+
+        android.app.AlertDialog.Builder builder =
+            new android.app.AlertDialog.Builder(this);
+        builder.setView(dialogView);
+        android.app.AlertDialog dlg = builder.create();
+        if (dlg.getWindow() != null) {
+            dlg.getWindow().setBackgroundDrawable(
+                new android.graphics.drawable.ColorDrawable(
+                    android.graphics.Color.TRANSPARENT));
+        }
+        dlg.show();
+
+        if (lv != null) {
+            lv.setOnItemClickListener((parent, v2, pos, id) -> {
+                currentSel[0] = pos;
+                onItemSelected.accept(pos);
+                adapter.notifyDataSetChanged();
+            });
+        }
+
+        if (btnCancel != null) btnCancel.setOnClickListener(x -> dlg.dismiss());
+        if (btnSave != null) btnSave.setOnClickListener(x -> {
+            onSave.run();
+            dlg.dismiss();
+        });
+    }
+
+    /** Dialog buffer size 0–60 detik (custom picker) */
     private void showBufferPickerDialog() {
         int current = prefs.getBufferSecs();
         String unit = getString(R.string.appsettings_buffer_unit);
         String[] options = new String[61];
         for (int i = 0; i <= 60; i++) options[i] = i + " " + unit;
         int[] selected = {Math.min(current, 60)};
-        new android.app.AlertDialog.Builder(this)
-            .setTitle(getString(R.string.appsettings_buffer_title))
-            .setSingleChoiceItems(options, selected[0], (d, which) -> selected[0] = which)
-            .setPositiveButton(getString(R.string.appsettings_save), (d, w) -> {
+        showCustomPickerDialog(
+            getString(R.string.appsettings_buffer_title),
+            options, selected[0],
+            which -> {
+                selected[0] = which;
+            },
+            () -> {
                 prefs.setBufferSecs(selected[0]);
                 updateAppSettingsPage();
-            })
-            .setNegativeButton(getString(R.string.appsettings_cancel), null)
-            .show();
+            }
+        );
     }
 
-    /** Dialog resolusi dari halaman app settings */
+    /** Dialog resolusi dari halaman app settings (custom picker) */
     private void showResolutionPickerDialog() {
         String current = prefs.getResolution();
-        String[] options = {
+        String[] keys = {PrefsManager.RES_AUTO, PrefsManager.RES_LOWEST, PrefsManager.RES_HIGHEST};
+        String[] labels = {
             getString(R.string.appsettings_resolution_auto),
             getString(R.string.appsettings_resolution_lowest),
             getString(R.string.appsettings_resolution_highest)
         };
-        String[] keys = {PrefsManager.RES_AUTO, PrefsManager.RES_LOWEST, PrefsManager.RES_HIGHEST};
-
         int checked = 0;
-        for (int i = 0; i < keys.length; i++) {
-            if (keys[i].equals(current)) { checked = i; break; }
-        }
-
-        final int[] selected = {checked};
-        new android.app.AlertDialog.Builder(this)
-            .setTitle(getString(R.string.appsettings_resolution_title))
-            .setSingleChoiceItems(options, checked, (d, which) -> selected[0] = which)
-            .setPositiveButton(getString(R.string.appsettings_save), (d, w) -> {
+        for (int i = 0; i < keys.length; i++) { if (keys[i].equals(current)) { checked = i; break; } }
+        int[] selected = {checked};
+        showCustomPickerDialog(
+            getString(R.string.appsettings_resolution_title),
+            labels, checked,
+            which -> selected[0] = which,
+            () -> {
                 prefs.setResolution(keys[selected[0]]);
                 updateAppSettingsPage();
-            })
-            .setNegativeButton(getString(R.string.appsettings_cancel), null)
-            .show();
+            }
+        );
     }
-
-        /** Simpan playlist otomatis tanpa meminta nama — nama diambil dari URL atau auto-generate */
     private void autoSavePlaylist() {
         // Generate nama dari URL
         String name = pendingUrl;

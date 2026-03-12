@@ -45,6 +45,10 @@ import androidx.media3.common.TrackGroup;
 import androidx.media3.common.TrackSelectionOverride;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import androidx.media3.exoplayer.DefaultLoadControl;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -1395,6 +1399,116 @@ public class PlayerActivity extends AppCompatActivity {
         );
     }
 
+
+
+    /** True jika URL memerlukan resolusi sebelum diputar */
+    private boolean needsUrlResolving(String url) {
+        if (url == null) return false;
+        String lower = url.toLowerCase();
+        return lower.contains("drive.google.com") ||
+               lower.contains("dropbox.com") ||
+               lower.contains("1drv.ms") ||
+               lower.contains("onedrive.live.com");
+    }
+
+    // ===== URL RESOLVER (Google Drive, Dropbox, OneDrive, redirect) =====
+    /**
+     * Resolve URL video hosting ke direct stream URL.
+     * Dijalankan di background thread; callback di main thread.
+     */
+    /**
+     * Konversi URL share hosting → direct stream URL.
+     * Jika tidak dikenali, kembalikan URL asli.
+     */
+    private String resolveStreamUrl(String raw) {
+        if (raw == null || raw.isEmpty()) return raw;
+        String url = raw.trim();
+
+        // ── Google Drive ──
+        // Format: https://drive.google.com/file/d/{ID}/view?...
+        // atau: https://drive.google.com/open?id={ID}
+        java.util.regex.Matcher gdMatcher = java.util.regex.Pattern
+            .compile("drive\.google\.com/(?:file/d/|open\?id=)([a-zA-Z0-9_\-]+)")
+            .matcher(url);
+        if (gdMatcher.find()) {
+            String fileId = gdMatcher.group(1);
+            return "https://drive.google.com/uc?export=download&id=" + fileId;
+        }
+
+        // ── Dropbox ──
+        // ?dl=0 → ?dl=1 ; www.dropbox.com → dl.dropboxusercontent.com
+        if (url.contains("dropbox.com")) {
+            url = url.replaceAll("[?&]dl=0", "")       // hapus dl=0
+                     .replaceAll("[?&]dl=1", "");       // hapus duplikat dl=1
+            // Tambah dl=1
+            url = url + (url.contains("?") ? "&dl=1" : "?dl=1");
+            // Ganti domain ke direct download
+            url = url.replace("www.dropbox.com", "dl.dropboxusercontent.com");
+            return url;
+        }
+
+        // ── OneDrive ──
+        // https://1drv.ms/{id} atau https://onedrive.live.com/...
+        // Encode ke base64 direct link
+        if (url.contains("1drv.ms") || url.contains("onedrive.live.com")) {
+            try {
+                byte[] b = (url).getBytes("UTF-8");
+                String b64 = android.util.Base64.encodeToString(b,
+                    android.util.Base64.NO_PADDING | android.util.Base64.NO_WRAP
+                    | android.util.Base64.URL_SAFE);
+                // Remove trailing '=' padding
+                b64 = b64.replaceAll("=+$", "");
+                return "https://api.onedrive.com/v1.0/shares/u!" + b64
+                    + "/root/content";
+            } catch (Exception ignored) {}
+        }
+
+        // ── Generic redirect follow ──
+        // Jika URL adalah shortlink/redirect, follow hingga final URL
+        // Hanya untuk URL yang tidak langsung berupa stream
+        if (!looksLikeDirectStream(url)) {
+            try {
+                String followed = followRedirect(url, 5);
+                if (followed != null && !followed.equals(url)) return followed;
+            } catch (Exception ignored) {}
+        }
+
+        return url;
+    }
+
+    /** True jika URL kemungkinan besar adalah direct stream (ends with media ext atau port stream) */
+    private boolean looksLikeDirectStream(String url) {
+        String lower = url.toLowerCase();
+        return lower.contains(".m3u8") || lower.contains(".ts") ||
+               lower.contains(".mp4") || lower.contains(".mkv") ||
+               lower.contains(".avi") || lower.contains(".mpd") ||
+               lower.contains(":8080") || lower.contains(":1935") ||
+               lower.contains(":8888") || lower.startsWith("rtsp://") ||
+               lower.startsWith("rtmp://");
+    }
+
+    /** Follow HTTP redirect (max maxHops kali) — sync, jalankan di background thread */
+    private String followRedirect(String urlStr, int maxHops) throws Exception {
+        String current = urlStr;
+        for (int i = 0; i < maxHops; i++) {
+            HttpURLConnection conn = (HttpURLConnection) new URL(current).openConnection();
+            conn.setInstanceFollowRedirects(false);
+            conn.setConnectTimeout(4000);
+            conn.setReadTimeout(4000);
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+            int code = conn.getResponseCode();
+            conn.disconnect();
+            if (code >= 300 && code < 400) {
+                String loc = conn.getHeaderField("Location");
+                if (loc == null || loc.equals(current)) break;
+                current = loc;
+            } else {
+                break;
+            }
+        }
+        return current;
+    }
+
     private void playChannel(int idx, boolean withFlash) {
         if (channels.isEmpty()) return;
         if (idx < 0) idx = channels.size() - 1;
@@ -1438,6 +1552,43 @@ public class PlayerActivity extends AppCompatActivity {
         // Bukan YouTube — switch ke ExoPlayer (reset WebView jika sedang YouTube mode)
         switchToExoMode();
 
+        // Resolve URL hosting share links (Google Drive, Dropbox, OneDrive)
+        final String channelUrl = ch.url;
+        if (needsUrlResolving(channelUrl)) {
+            // Jalankan resolver di background, lalu rekursif playChannel dengan url sudah di-resolve
+            ExecutorService ex = Executors.newSingleThreadExecutor();
+            ex.execute(() -> {
+                String resolved = resolveStreamUrl(channelUrl);
+                if (!resolved.equals(channelUrl)) {
+                    // Buat channel baru dengan URL yang sudah di-resolve
+                    Channel resolvedCh = new Channel(ch.name, resolved, ch.logoUrl, ch.group);
+                    resolvedCh.userAgent  = ch.userAgent;
+                    resolvedCh.referrer   = ch.referrer;
+                    resolvedCh.drmType    = ch.drmType;
+                    resolvedCh.drmKey     = ch.drmKey;
+                    resolvedCh.isDrm      = ch.isDrm;
+                    // Ganti channel di list lalu play ulang di main thread
+                    final int resolvedIdx = idx;
+                    final Channel finalCh = resolvedCh;
+                    runOnUiThread(() -> {
+                        if (resolvedIdx < channels.size()) {
+                            channels.set(resolvedIdx, finalCh);
+                        }
+                        playChannelDirect(finalCh, resolvedIdx, withFlash);
+                    });
+                } else {
+                    runOnUiThread(() -> playChannelDirect(ch, idx, withFlash));
+                }
+                ex.shutdown();
+            });
+            return;
+        }
+
+        playChannelDirect(ch, idx, withFlash);
+    }
+
+    /** Putar channel langsung tanpa URL resolving (URL sudah final) */
+    private void playChannelDirect(Channel ch, int idx, boolean withFlash) {
         try {
             player.stop();
             String ua = (ch.userAgent != null && !ch.userAgent.isEmpty()) ? ch.userAgent
