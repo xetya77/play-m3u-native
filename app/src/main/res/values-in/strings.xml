@@ -13,7 +13,7 @@
     <string name="source_option_url">Link/URL</string>
     <string name="source_option_file">File Lokal</string>
     <string name="source_next">Langkah berikutnya</string>
-    <string name="source_note">Pilih salah satu untuk melanjutkan</string>
+    <string name="source_note">Pilih salah satu untuk melanjutkan\nlalu tekan next step</string>
     <string name="source_choose_first">Pilih sumber terlebih dahulu</string>
 
     <!-- URL -->
