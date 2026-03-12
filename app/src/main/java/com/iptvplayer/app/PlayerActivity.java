@@ -1023,17 +1023,17 @@ public class PlayerActivity extends AppCompatActivity {
                 String g = groupList.get(pos);
                 android.widget.TextView tvName  = h.itemView.findViewById(R.id.tv_group_title_item);
                 android.widget.TextView tvCount = h.itemView.findViewById(R.id.tv_group_count);
-                android.view.View itemBg        = h.itemView.findViewById(R.id.group_item_bg);
-                android.widget.ImageView ivTri  = h.itemView.findViewById(R.id.iv_group_triangle);
+                // Penanda aktif: group_item_bg dan iv_group_triangle (dari item_group_title.xml baru)
+                // Jika ID tidak ditemukan (item_group_title.xml lama), graceful fallback
                 tvName.setText(g);
                 long count = channels.stream().filter(ch -> g.equals(ch.group)).count();
                 tvCount.setText(String.valueOf(count));
-                // POIN 1: segitiga + background putih saat group aktif (bukan waveform)
                 boolean active = g.equals(activeGroupFilter);
-                if (itemBg != null) itemBg.setVisibility(active ? View.VISIBLE : View.INVISIBLE);
-                if (ivTri != null)  ivTri.setVisibility(active ? View.VISIBLE : View.INVISIBLE);
-                tvName.setTextColor(active ? 0xFF000000 : 0xCCFFFFFF);
-                tvCount.setTextColor(active ? 0x80000000 : 0x50FFFFFF);
+                // Penanda aktif: warna orange saat aktif (item_group_title.xml lama tidak punya bg/triangle ID)
+                // item_group_title.xml baru menambahkan group_item_bg + iv_group_triangle
+                tvName.setTextColor(active ? 0xFFFF5B04 : 0xCCFFFFFF);
+                tvCount.setTextColor(active ? 0xFFFF5B04 : 0x50FFFFFF);
+                h.itemView.setBackgroundResource(active ? R.drawable.bg_channel_item_active : 0);
                 h.itemView.setOnClickListener(v -> showGroupChannels(g));
             }
             @Override public int getItemCount() { return groupList.size(); }
