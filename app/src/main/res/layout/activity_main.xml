@@ -770,6 +770,275 @@
         <TextView android:id="@+id/btn_add_playlist_settings" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone"/>
     </LinearLayout>
 
+
+    <!-- ===== PAGE APP SETTINGS ===== -->
+    <LinearLayout
+        android:id="@+id/page_app_settings"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="#16232A"
+        android:visibility="gone">
+
+        <!-- Header -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:background="#16232A">
+
+            <TextView
+                android:id="@+id/btn_app_settings_back"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_alignParentStart="true"
+                android:text="@string/appsettings_back"
+                android:textColor="#FF5B04"
+                android:textSize="24sp"
+                android:fontFamily="@font/inter_bold"
+                android:paddingEnd="12dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:clickable="true"
+                android:focusable="true"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="@string/appsettings_title"
+                android:textColor="#E4EEF0"
+                android:textSize="18sp"
+                android:fontFamily="@font/inter_bold"
+                android:textStyle="bold"/>
+        </RelativeLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#1AFFFFFF"/>
+
+        <!-- Scrollable settings rows -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:overScrollMode="never">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingTop="8dp"
+                android:paddingBottom="24dp">
+
+                <!-- ── ROW: Video Quality (dropdown) ── -->
+                <LinearLayout
+                    android:id="@+id/row_resolution"
+                    android:layout_width="match_parent"
+                    android:layout_height="72dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/appsettings_resolution_title"
+                            android:textColor="#E4EEF0"
+                            android:textSize="16sp"
+                            android:fontFamily="@font/inter_medium"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tv_resolution_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#80E4EEF0"
+                        android:textSize="14sp"
+                        android:fontFamily="@font/inter_regular"
+                        android:layout_marginEnd="8dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="›"
+                        android:textColor="#80E4EEF0"
+                        android:textSize="22sp"
+                        android:fontFamily="@font/inter_regular"/>
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View android:layout_width="match_parent" android:layout_height="1dp"
+                    android:background="#0DFFFFFF" android:layout_marginStart="24dp"/>
+
+                <!-- ── ROW: Buffer size (dropdown) ── -->
+                <LinearLayout
+                    android:id="@+id/row_buffer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:minHeight="72dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:paddingTop="14dp"
+                        android:paddingBottom="14dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/appsettings_buffer_title"
+                            android:textColor="#E4EEF0"
+                            android:textSize="16sp"
+                            android:fontFamily="@font/inter_medium"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/appsettings_buffer_desc"
+                            android:textColor="#60E4EEF0"
+                            android:textSize="12sp"
+                            android:fontFamily="@font/inter_regular"
+                            android:layout_marginTop="2dp"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tv_buffer_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#80E4EEF0"
+                        android:textSize="14sp"
+                        android:fontFamily="@font/inter_regular"
+                        android:layout_marginEnd="8dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="›"
+                        android:textColor="#80E4EEF0"
+                        android:textSize="22sp"
+                        android:fontFamily="@font/inter_regular"/>
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View android:layout_width="match_parent" android:layout_height="1dp"
+                    android:background="#0DFFFFFF" android:layout_marginStart="24dp"/>
+
+                <!-- ── ROW: Resume on startup (toggle) ── -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:minHeight="72dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:paddingTop="14dp"
+                        android:paddingBottom="14dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/appsettings_load_last_title"
+                            android:textColor="#E4EEF0"
+                            android:textSize="16sp"
+                            android:fontFamily="@font/inter_medium"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/appsettings_load_last_desc"
+                            android:textColor="#60E4EEF0"
+                            android:textSize="12sp"
+                            android:fontFamily="@font/inter_regular"
+                            android:layout_marginTop="2dp"/>
+                    </LinearLayout>
+
+                    <Switch
+                        android:id="@+id/switch_load_last"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:thumbTint="#E4EEF0"
+                        android:trackTint="#075056"
+                        android:checked="false"/>
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View android:layout_width="match_parent" android:layout_height="1dp"
+                    android:background="#0DFFFFFF" android:layout_marginStart="24dp"/>
+
+                <!-- ── ROW: Subtitles (toggle) ── -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:minHeight="72dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:paddingTop="14dp"
+                        android:paddingBottom="14dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/appsettings_subtitle_title"
+                            android:textColor="#E4EEF0"
+                            android:textSize="16sp"
+                            android:fontFamily="@font/inter_medium"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/appsettings_subtitle_desc"
+                            android:textColor="#60E4EEF0"
+                            android:textSize="12sp"
+                            android:fontFamily="@font/inter_regular"
+                            android:layout_marginTop="2dp"/>
+                    </LinearLayout>
+
+                    <Switch
+                        android:id="@+id/switch_subtitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:thumbTint="#E4EEF0"
+                        android:trackTint="#075056"
+                        android:checked="false"/>
+                </LinearLayout>
+
+            </LinearLayout>
+        </ScrollView>
+
+    </LinearLayout>
+
     <!-- ===== PAGE PLAYLISTS ===== -->
     <LinearLayout
         android:id="@+id/page_playlists"
