@@ -125,4 +125,20 @@
     <string name="resolution_highest">Highest Quality</string>
     <string name="resolution_save">Save</string>
     <string name="resolution_cancel">Cancel</string>
+    <!-- App Settings page -->
+    <string name="appsettings_title">Settings</string>
+    <string name="appsettings_back">&#8592;</string>
+    <string name="appsettings_resolution_title">Video Quality</string>
+    <string name="appsettings_resolution_auto">Auto</string>
+    <string name="appsettings_resolution_lowest">Lowest</string>
+    <string name="appsettings_resolution_highest">Highest</string>
+    <string name="appsettings_load_last_title">Resume on startup</string>
+    <string name="appsettings_load_last_desc">Auto-play last watched channel when opening app</string>
+    <string name="appsettings_subtitle_title">Subtitles</string>
+    <string name="appsettings_subtitle_desc">Show subtitles when available</string>
+    <string name="appsettings_buffer_title">Buffer size</string>
+    <string name="appsettings_buffer_desc">Larger buffer reduces interruptions but uses more memory</string>
+    <string name="appsettings_buffer_unit">seconds</string>
+    <string name="appsettings_save">Save</string>
+    <string name="appsettings_cancel">Cancel</string>
 </resources>
