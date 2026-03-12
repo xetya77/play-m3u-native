@@ -29,13 +29,14 @@
             android:gravity="left">
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/welcome_to"
                 android:textColor="#60163A2A"
                 android:textSize="17sp"
                 android:fontFamily="@font/inter_bold"
                 android:textStyle="bold"
+                android:gravity="center_horizontal"
                 android:layout_marginBottom="4dp"/>
 
             <TextView
@@ -983,7 +984,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:thumbTint="#E4EEF0"
-                        android:trackTint="#075056"
+                        android:trackTint="@drawable/selector_switch_track"
                         android:checked="false"/>
                 </LinearLayout>
 
@@ -1030,7 +1031,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:thumbTint="#E4EEF0"
-                        android:trackTint="#075056"
+                        android:trackTint="@drawable/selector_switch_track"
                         android:checked="false"/>
                 </LinearLayout>
 
