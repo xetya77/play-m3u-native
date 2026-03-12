@@ -20,21 +20,7 @@
             android:layout_height="0dp"
             android:layout_weight="12"/>
 
-        <!-- Icon logo -->
-        <ImageView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:layout_gravity="center_horizontal"
-            android:src="@drawable/ic_app_logo"
-            android:scaleType="fitCenter"/>
-
-        <!-- Gap icon → Welcome to: ~5% -->
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="5"/>
-
-        <!-- Welcome to -->
+        <!-- Teks logo: "Welcome to / Play / M3U." gaya intro -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -43,19 +29,44 @@
             android:textColor="#60163A2A"
             android:textSize="17sp"
             android:fontFamily="@font/inter_bold"
-            android:textStyle="bold"/>
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp"/>
 
-        <!-- PlayM3U -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:text="PlayM3U"
+            android:text="Play"
             android:textColor="@color/welcome_dark"
-            android:textSize="34sp"
-            android:fontFamily="@font/inter_bold"
-            android:textStyle="bold"
-            android:layout_marginTop="2dp"/>
+            android:textSize="64sp"
+            android:fontFamily="@font/inter_black"
+            android:includeFontPadding="false"
+            android:lineSpacingMultiplier="0.9"/>
+
+        <!-- "M3U" + titik oranye dalam satu baris -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal"
+            android:gravity="bottom">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="M3U"
+                android:textColor="@color/welcome_dark"
+                android:textSize="64sp"
+                android:fontFamily="@font/inter_black"
+                android:includeFontPadding="false"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="."
+                android:textColor="#FF5B04"
+                android:textSize="64sp"
+                android:fontFamily="@font/inter_black"
+                android:includeFontPadding="false"/>
+        </LinearLayout>
 
         <!-- Gap PlayM3U → tagline: ~8% -->
         <Space
@@ -279,6 +290,8 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:background="#075056"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
         android:visibility="gone">
 
         <!-- Stepper: 3 bars, bar1+bar2 active #FF5B04, bar3 inactive -->
@@ -457,6 +470,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
         android:background="#0D1B22"
         android:visibility="gone">
 
