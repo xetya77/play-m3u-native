@@ -36,7 +36,8 @@
             <TextView android:id="@+id/tv_logo_fallback"
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:gravity="center" android:textColor="#66ffffff"
-                android:textSize="9sp" android:textStyle="bold" android:visibility="gone"/>
+                android:textSize="9sp" android:textStyle="bold" android:visibility="gone"
+                android:fontFamily="@font/inter_bold"/>
         </FrameLayout>
 
         <!-- Teks -->
@@ -48,20 +49,23 @@
                 <TextView android:id="@+id/tv_num"
                     android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:textSize="12sp" android:layout_marginRight="6dp"
-                    android:textColor="#80ffffff"/>
+                    android:textColor="#80ffffff"
+                    android:fontFamily="@font/inter_regular"/>
                 <TextView android:id="@+id/tv_ch_name"
                     android:layout_width="0dp" android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:textSize="13sp" android:textStyle="bold"
                     android:singleLine="true" android:ellipsize="end"
-                    android:textColor="#FFFFFF"/>
+                    android:textColor="#FFFFFF"
+                    android:fontFamily="@font/inter_bold"/>
             </LinearLayout>
 
             <TextView android:id="@+id/tv_ch_epg"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:textSize="11sp" android:textColor="#80ffffff"
                 android:singleLine="true" android:ellipsize="end"
-                android:text="@string/player_no_info"/>
+                android:text="@string/player_no_info"
+                android:fontFamily="@font/inter_regular"/>
         </LinearLayout>
 
         <!-- Indikator: ▶ saat sedang aktif, waveform saat playing -->

@@ -1,32 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    Item group title di panel kanan.
+    Penanda aktif: background putih (item_bg) + segitiga (ic_triangle_play) di sisi kiri.
+    Identik strukturnya dengan item_ch_panel tapi tanpa logo.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="52dp"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:paddingStart="20dp"
-    android:paddingEnd="16dp"
-    android:layout_marginStart="6dp"
-    android:layout_marginEnd="6dp"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="8dp"
+    android:layout_marginRight="8dp"
+    android:layout_marginTop="2dp"
+    android:layout_marginBottom="2dp"
     android:clickable="true"
-    android:focusable="true"
-    android:background="@drawable/selector_settings_item">
+    android:focusable="true">
 
-    <TextView
-        android:id="@+id/tv_group_title_item"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:textColor="#CCFFFFFF"
-        android:textSize="14sp"
-        android:singleLine="true"
-        android:ellipsize="end"/>
+    <!-- Background putih saat aktif -->
+    <LinearLayout android:id="@+id/group_item_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_channel_item_active"
+        android:visibility="invisible"/>
 
-    <TextView
-        android:id="@+id/tv_group_count"
-        android:layout_width="wrap_content"
+    <!-- Content row -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#50FFFFFF"
-        android:textSize="11sp"
-        android:layout_marginStart="8dp"/>
-</LinearLayout>
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingLeft="14dp"
+        android:paddingRight="12dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
+
+        <!-- Segitiga penanda aktif (sama seperti source M3U) -->
+        <ImageView android:id="@+id/iv_group_triangle"
+            android:layout_width="10dp"
+            android:layout_height="12dp"
+            android:src="@drawable/ic_triangle_play"
+            android:scaleType="fitCenter"
+            android:layout_marginRight="10dp"
+            android:visibility="invisible"/>
+
+        <!-- Nama group -->
+        <TextView android:id="@+id/tv_group_title_item"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="13sp"
+            android:fontFamily="@font/inter_medium"
+            android:textColor="#CCFFFFFF"
+            android:singleLine="true"
+            android:ellipsize="end"/>
+
+        <!-- Jumlah channel -->
+        <TextView android:id="@+id/tv_group_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#50FFFFFF"
+            android:textSize="11sp"
+            android:fontFamily="@font/inter_regular"
+            android:layout_marginStart="8dp"/>
+    </LinearLayout>
+</FrameLayout>

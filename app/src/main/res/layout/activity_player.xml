@@ -56,7 +56,8 @@
         android:layout_width="wrap_content" android:layout_height="wrap_content"
         android:layout_gravity="top|right"
         android:layout_marginTop="12dp" android:layout_marginRight="16dp"
-        android:textColor="#FFFFFFFF" android:textSize="20sp" android:textStyle="bold"
+        android:textColor="#FFFFFFFF" android:fontFamily="@font/inter_bold"
+        android:textSize="20sp" android:textStyle="bold"
         android:text="00:00:00" android:alpha="0.5"/>
 
     <!-- Channel Info OSD kiri bawah -->
@@ -87,16 +88,19 @@
                 android:orientation="horizontal" android:gravity="center_vertical">
                 <TextView android:id="@+id/tv_ch_num"
                     android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:textColor="#FFFFFF" android:textSize="35sp" android:textStyle="bold"
+                    android:textColor="#FFFFFF" android:fontFamily="@font/inter_bold"
+                    android:textSize="35sp" android:textStyle="bold"
                     android:layout_marginRight="14dp"/>
                 <TextView android:id="@+id/tv_ch_name"
                     android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:textColor="#FFFFFF" android:textSize="25sp" android:textStyle="bold"
+                    android:textColor="#FFFFFF" android:fontFamily="@font/inter_bold"
+                    android:textSize="25sp" android:textStyle="bold"
                     android:singleLine="true" android:ellipsize="end" android:maxWidth="260dp"/>
             </LinearLayout>
             <TextView android:id="@+id/tv_ch_epg"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:textColor="#80FFFFFF" android:textSize="15sp"
+                android:textColor="#80FFFFFF" android:fontFamily="@font/inter_regular"
+            android:textSize="15sp"
                 android:text="@string/player_no_info" android:layout_marginTop="3dp"/>
             <TextView android:id="@+id/tv_ch_group"
                 android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
@@ -149,7 +153,8 @@
         android:layout_width="wrap_content" android:layout_height="wrap_content"
         android:layout_gravity="bottom|right"
         android:layout_marginRight="20dp" android:layout_marginBottom="90dp"
-        android:textColor="#FFFFFF" android:textSize="40sp" android:textStyle="bold"
+        android:textColor="#FFFFFF" android:fontFamily="@font/inter_bold"
+        android:textSize="40sp" android:textStyle="bold"
         android:paddingLeft="24dp" android:paddingRight="24dp"
         android:paddingTop="12dp" android:paddingBottom="12dp"
         android:background="@drawable/bg_loading_pill" android:visibility="gone"/>
@@ -245,7 +250,8 @@
             <TextView android:id="@+id/tv_panel_title"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:text="@string/player_all_channels" android:textColor="#99FFFFFF"
-                android:textSize="12sp" android:textStyle="bold"/>
+                android:textSize="12sp" android:textStyle="bold"
+                android:fontFamily="@font/inter_bold"/>
         </LinearLayout>
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -255,16 +261,19 @@
             android:gravity="center_vertical">
             <TextView android:id="@+id/tv_resolution"
                 android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-                android:textColor="#60ffffff" android:textSize="11sp" android:text=""/>
+                android:textColor="#60ffffff" android:fontFamily="@font/inter_regular"
+                android:textSize="11sp" android:text=""/>
             <LinearLayout
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:orientation="vertical" android:gravity="end">
                 <TextView android:id="@+id/tv_quota_used"
                     android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:textColor="#50ffffff" android:textSize="10sp" android:text=""/>
+                    android:textColor="#50ffffff" android:textSize="10sp" android:text=""
+                    android:fontFamily="@font/inter_regular"/>
                 <TextView android:id="@+id/tv_bitrate"
                     android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:textColor="#60ffffff" android:textSize="11sp" android:text=""/>
+                    android:textColor="#60ffffff" android:fontFamily="@font/inter_regular"
+                    android:textSize="11sp" android:text=""/>
             </LinearLayout>
         </LinearLayout>
 
@@ -405,28 +414,34 @@
         android:elevation="9dp"
         android:visibility="invisible">
 
-        <!-- Header baris 1: judul — identik panel kiri -->
+        <!-- Header: judul kiri + jam kanan — identik panel kiri -->
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="horizontal" android:gravity="center_vertical"
             android:paddingLeft="16dp" android:paddingRight="16dp"
             android:paddingTop="14dp" android:paddingBottom="8dp">
             <TextView android:id="@+id/tv_group_panel_title"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:text="GROUP CHANNEL"
                 android:textColor="#99FFFFFF"
-                android:textSize="12sp" android:textStyle="bold"/>
+                android:textSize="12sp"
+                android:fontFamily="@font/inter_bold"/>
+            <TextView android:id="@+id/tv_group_clock"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textColor="#80FFFFFF"
+                android:textSize="14sp"
+                android:fontFamily="@font/inter_medium"
+                android:text=""/>
         </LinearLayout>
 
-        <!-- Header baris 2: jam — identik baris info panel kiri -->
+        <!-- Header baris 2: info row (kosong, proporsional dengan panel kiri) -->
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:paddingLeft="16dp" android:paddingRight="16dp"
             android:paddingTop="2dp" android:paddingBottom="10dp"
             android:gravity="center_vertical">
-            <TextView android:id="@+id/tv_group_clock"
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textColor="#60FFFFFF" android:textSize="11sp" android:text=""/>
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text=""/>
         </LinearLayout>
 
         <View android:layout_width="match_parent" android:layout_height="1dp"
@@ -468,7 +483,7 @@
         android:elevation="9dp"
         android:visibility="invisible">
 
-        <!-- Header baris 1: tombol kembali + nama group — identik panel kiri -->
+        <!-- Header: back + judul + jam kanan -->
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="horizontal" android:gravity="center_vertical"
             android:paddingLeft="8dp" android:paddingRight="16dp"
@@ -480,28 +495,34 @@
                 <TextView
                     android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:text="←"
-                    android:textColor="#80FFFFFF" android:textSize="16sp"/>
+                    android:textColor="#80FFFFFF" android:textSize="16sp"
+                    android:fontFamily="@font/inter_regular"/>
             </LinearLayout>
             <TextView android:id="@+id/tv_group_channel_title"
                 android:layout_width="0dp" android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text=""
                 android:textColor="#99FFFFFF"
-                android:textSize="12sp" android:textStyle="bold"
+                android:textSize="12sp"
+                android:fontFamily="@font/inter_bold"
                 android:paddingLeft="6dp"
                 android:singleLine="true" android:ellipsize="end"/>
+            <TextView android:id="@+id/tv_group_channel_clock"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textColor="#80FFFFFF"
+                android:textSize="14sp"
+                android:fontFamily="@font/inter_medium"
+                android:text=""/>
         </LinearLayout>
 
-        <!-- Header baris 2: jam — identik baris info panel kiri -->
+        <!-- Header baris 2: info row (proporsional dengan panel kiri) -->
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:paddingLeft="16dp" android:paddingRight="16dp"
             android:paddingTop="2dp" android:paddingBottom="10dp"
             android:gravity="center_vertical">
-            <TextView android:id="@+id/tv_group_channel_clock"
-                android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textColor="#60FFFFFF" android:textSize="11sp" android:text=""/>
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text=""/>
         </LinearLayout>
 
         <View android:layout_width="match_parent" android:layout_height="1dp"
