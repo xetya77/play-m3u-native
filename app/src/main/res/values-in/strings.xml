@@ -39,7 +39,7 @@
     <!-- Settings -->
     <string name="settings_start">Tonton</string>
     <string name="settings_playlist_menu">Playlist</string>
-    <string name="settings_epg">EPG</string>
+    <string name="settings_epg">Pengaturan</string>
 
     <!-- Playlists -->
     <string name="playlists_title">Playlist</string>
@@ -118,4 +118,11 @@
     <string name="error_no_connection">Tidak ada koneksi internet</string>
     <string name="error_http">Stream tidak tersedia (HTTP error)</string>
     <string name="error_playback">Gagal memutar stream</string>
+    <string name="settings_resolution_menu">Pengaturan</string>
+    <string name="resolution_title">Kualitas Video</string>
+    <string name="resolution_auto">Otomatis (Disarankan)</string>
+    <string name="resolution_lowest">Kualitas Terendah</string>
+    <string name="resolution_highest">Kualitas Tertinggi</string>
+    <string name="resolution_save">Simpan</string>
+    <string name="resolution_cancel">Batal</string>
 </resources>
