@@ -15,7 +15,10 @@ public class PrefsManager {
     private static final String KEY_PLAYLISTS = "playlists";
     private static final String KEY_CURRENT_PLAYLIST = "current_playlist";
     private static final String KEY_CURRENT_CHANNEL = "current_channel";
-    private static final String KEY_RESOLUTION = "resolution";
+    private static final String KEY_RESOLUTION      = "resolution";
+    private static final String KEY_LOAD_LAST_CH    = "load_last_channel";
+    private static final String KEY_SUBTITLE_ON     = "subtitle_enabled";
+    private static final String KEY_BUFFER_SECS     = "buffer_secs";
     public static final String RES_AUTO    = "auto";
     public static final String RES_LOWEST  = "lowest";
     public static final String RES_HIGHEST = "highest";
@@ -71,5 +74,29 @@ public class PrefsManager {
 
     public void setResolution(String value) {
         prefs.edit().putString(KEY_RESOLUTION, value).apply();
+    }
+
+    public boolean getLoadLastChannel() {
+        return prefs.getBoolean(KEY_LOAD_LAST_CH, false);
+    }
+
+    public void setLoadLastChannel(boolean value) {
+        prefs.edit().putBoolean(KEY_LOAD_LAST_CH, value).apply();
+    }
+
+    public boolean getSubtitleEnabled() {
+        return prefs.getBoolean(KEY_SUBTITLE_ON, false);
+    }
+
+    public void setSubtitleEnabled(boolean value) {
+        prefs.edit().putBoolean(KEY_SUBTITLE_ON, value).apply();
+    }
+
+    public int getBufferSecs() {
+        return prefs.getInt(KEY_BUFFER_SECS, 30);
+    }
+
+    public void setBufferSecs(int secs) {
+        prefs.edit().putInt(KEY_BUFFER_SECS, secs).apply();
     }
 }

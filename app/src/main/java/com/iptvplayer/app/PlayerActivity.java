@@ -44,6 +44,7 @@ import androidx.media3.common.Tracks;
 import androidx.media3.common.TrackGroup;
 import androidx.media3.common.TrackSelectionOverride;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
+import androidx.media3.exoplayer.DefaultLoadControl;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -698,16 +699,28 @@ public class PlayerActivity extends AppCompatActivity {
     // ===== PLAYER =====
     private void setupPlayer() {
         trackSelector = new DefaultTrackSelector(this);
+        // Buffer dari preferensi user (0–60 detik)
+        int bufSecs = prefs.getBufferSecs();
+        int bufMs   = bufSecs <= 0 ? 1000 : bufSecs * 1000; // min 1 detik agar tidak crash
+        DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
+                .setBufferDurationsMs(
+                    bufMs,           // minBufferMs
+                    bufMs * 3,       // maxBufferMs (3x min)
+                    Math.min(bufMs, 2500), // bufferForPlaybackMs
+                    Math.min(bufMs, 5000)) // bufferForPlaybackAfterRebufferMs
+                .build();
         player = new ExoPlayer.Builder(this)
                 .setTrackSelector(trackSelector)
+                .setLoadControl(loadControl)
                 .build();
         playerView.setUseController(false);
         playerView.setPlayer(player);
         player.addListener(new Player.Listener() {
             @Override
             public void onTracksChanged(Tracks tracks) {
-                // Re-apply resolusi saat tracks tersedia/berubah
+                // Re-apply resolusi + subtitle saat tracks tersedia/berubah
                 applyResolution();
+                applySubtitle();
             }
 
             @Override public void onPlaybackStateChanged(int state) {
@@ -1368,6 +1381,20 @@ public class PlayerActivity extends AppCompatActivity {
         }
     }
 
+
+    // ===== SUBTITLE =====
+    /** Aktifkan/nonaktifkan subtitle sesuai preferensi */
+    private void applySubtitle() {
+        if (trackSelector == null) return;
+        boolean enabled = prefs.getSubtitleEnabled();
+        trackSelector.setParameters(
+            trackSelector.buildUponParameters()
+                .setRendererDisabled(androidx.media3.common.C.INDEX_UNSET, false)
+                .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, !enabled)
+                .build()
+        );
+    }
+
     private void playChannel(int idx, boolean withFlash) {
         if (channels.isEmpty()) return;
         if (idx < 0) idx = channels.size() - 1;
@@ -1453,8 +1480,9 @@ public class PlayerActivity extends AppCompatActivity {
             player.setMediaSource(mediaSource);
             player.prepare();
             player.play();
-            // Terapkan preferensi resolusi
+            // Terapkan preferensi resolusi + subtitle
             applyResolution();
+            applySubtitle();
         } catch (Exception e) {
             tvLoadingMsg.setText(getString(R.string.status_error_generic, e.getMessage()));
         }

@@ -46,7 +46,7 @@ import okhttp3.Response;
 public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     // ===== PAGES =====
-    private View pageWelcome, pageSource, pageUrl, pageName, pageSettings, pagePlaylists;
+    private View pageWelcome, pageSource, pageUrl, pageName, pageSettings, pagePlaylists, pageAppSettings;
 
     // ===== WELCOME =====
     private View btnWelcomeAdd;
@@ -80,6 +80,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     // ===== SETTINGS =====
     private View btnSettingsExit, btnStartWatch, btnGoPlaylists, btnAddPlaylistSettings;
     private View btnEpg;
+    private android.widget.Switch switchLoadLast, switchSubtitle;
+    private android.widget.TextView tvResolutionValue, tvBufferValue;
     private android.widget.TextView tvSettingsPlaylistName;
     // State "first tap" untuk 2x klik: null=belum ada, "start"/"playlists"/"epg"
     private String settingsSelectedMenu = null;
@@ -183,6 +185,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         pageUrl = findViewById(R.id.page_url);
         pageName = findViewById(R.id.page_name);
         pageSettings = findViewById(R.id.page_settings);
+        pageAppSettings = findViewById(R.id.page_app_settings);
         pagePlaylists = findViewById(R.id.page_playlists);
 
         // Welcome
@@ -222,6 +225,10 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnGoPlaylists  = findViewById(R.id.btn_go_playlists);
         btnAddPlaylistSettings = findViewById(R.id.btn_add_playlist_settings);
         btnEpg = findViewById(R.id.btn_epg);
+        switchLoadLast  = findViewById(R.id.switch_load_last);
+        switchSubtitle  = findViewById(R.id.switch_subtitle);
+        tvResolutionValue = findViewById(R.id.tv_resolution_value);
+        tvBufferValue     = findViewById(R.id.tv_buffer_value);
         tvSettingsPlaylistName = findViewById(R.id.tv_settings_playlist_name);
 
         // Playlists
@@ -396,6 +403,27 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         setupSettingsMenuButton(btnStartWatch,   "start");
         setupSettingsMenuButton(btnGoPlaylists,  "playlists");
         setupSettingsMenuButton(btnEpg,          "epg");
+
+        // App Settings page
+        if (pageAppSettings != null) {
+            View btnBack = pageAppSettings.findViewById(R.id.btn_app_settings_back);
+            if (btnBack != null) btnBack.setOnClickListener(v -> showPageWithTransition("settings"));
+
+            View rowRes = pageAppSettings.findViewById(R.id.row_resolution);
+            if (rowRes != null) rowRes.setOnClickListener(v -> showResolutionPickerDialog());
+
+            View rowBuf = pageAppSettings.findViewById(R.id.row_buffer);
+            if (rowBuf != null) rowBuf.setOnClickListener(v -> showBufferPickerDialog());
+
+            if (switchLoadLast != null) {
+                switchLoadLast.setChecked(prefs.getLoadLastChannel());
+                switchLoadLast.setOnCheckedChangeListener((btn, checked) -> prefs.setLoadLastChannel(checked));
+            }
+            if (switchSubtitle != null) {
+                switchSubtitle.setChecked(prefs.getSubtitleEnabled());
+                switchSubtitle.setOnCheckedChangeListener((btn, checked) -> prefs.setSubtitleEnabled(checked));
+            }
+        }
         // Touch: pressed state → orange (page 3 PDF)
         setupMenuPressedState(btnStartWatch,  "start");
         setupMenuPressedState(btnGoPlaylists, "playlists");
@@ -427,7 +455,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
     private void showPageWithTransition(String page) {
         android.view.View currentVisible = null;
-        for (android.view.View v : new android.view.View[]{pageWelcome, pageSource, pageUrl, pageName, pageSettings, pagePlaylists}) {
+        for (android.view.View v : new android.view.View[]{pageWelcome, pageSource, pageUrl, pageName, pageSettings, pagePlaylists, pageAppSettings}) {
             if (v != null && v.getVisibility() == android.view.View.VISIBLE) { currentVisible = v; break; }
         }
         final android.view.View outView = currentVisible;
@@ -444,6 +472,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 else if ("settings".equals(page)) inView = pageSettings;
                 else if ("welcome".equals(page)) inView = pageWelcome;
                 else if ("playlists".equals(page)) inView = pagePlaylists;
+                else if ("app_settings".equals(page)) inView = pageAppSettings;
                 if (inView != null) {
                     inView.setAlpha(0f);
                     inView.animate().alpha(1f).setDuration(200).start();
@@ -461,6 +490,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         pageName.setVisibility(View.GONE);
         pageSettings.setVisibility(View.GONE);
         pagePlaylists.setVisibility(View.GONE);
+        if (pageAppSettings != null) pageAppSettings.setVisibility(View.GONE);
 
         // Add to history
         if (pageHistory.isEmpty() || !pageHistory.get(pageHistory.size() - 1).equals(page)) {
@@ -494,6 +524,12 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 pagePlaylists.setVisibility(View.VISIBLE);
                 rebuildPlaylistList();
                 break;
+            case "app_settings":
+                if (pageAppSettings != null) {
+                    pageAppSettings.setVisibility(View.VISIBLE);
+                    updateAppSettingsPage();
+                }
+                break;
         }
     }
 
@@ -508,7 +544,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             showPage("settings");
             return;
         }
-        int chIdx = prefs.getCurrentChannelIndex();
+        // Load last channel jika preferensi aktif, sinon mulai dari 0
+        int chIdx = prefs.getLoadLastChannel() ? prefs.getCurrentChannelIndex() : 0;
         if (chIdx >= pl.channels.size()) chIdx = 0;
         Intent intent = new Intent(this, PlayerActivity.class);
         intent.putExtra("playlist_index", currentPlaylistIdx);
@@ -1426,18 +1463,55 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 showPageWithTransition("playlists");
                 break;
             case "epg":
-                showResolutionDialog();
+                showPageWithTransition("app_settings");
                 break;
         }
     }
 
-    /** Dialog resolusi — pilih kualitas stream */
-    private void showResolutionDialog() {
+    /** Update tampilan nilai di app settings page */
+    private void updateAppSettingsPage() {
+        if (tvResolutionValue != null) {
+            String res = prefs.getResolution();
+            String label;
+            if (PrefsManager.RES_LOWEST.equals(res)) label = getString(R.string.appsettings_resolution_lowest);
+            else if (PrefsManager.RES_HIGHEST.equals(res)) label = getString(R.string.appsettings_resolution_highest);
+            else label = getString(R.string.appsettings_resolution_auto);
+            tvResolutionValue.setText(label);
+        }
+        if (tvBufferValue != null) {
+            int secs = prefs.getBufferSecs();
+            tvBufferValue.setText(secs + " " + getString(R.string.appsettings_buffer_unit));
+        }
+        if (switchLoadLast != null) switchLoadLast.setChecked(prefs.getLoadLastChannel());
+        if (switchSubtitle  != null) switchSubtitle.setChecked(prefs.getSubtitleEnabled());
+    }
+
+
+    /** Dialog buffer size 0–60 detik */
+    private void showBufferPickerDialog() {
+        int current = prefs.getBufferSecs();
+        String unit = getString(R.string.appsettings_buffer_unit);
+        String[] options = new String[61];
+        for (int i = 0; i <= 60; i++) options[i] = i + " " + unit;
+        int[] selected = {Math.min(current, 60)};
+        new android.app.AlertDialog.Builder(this)
+            .setTitle(getString(R.string.appsettings_buffer_title))
+            .setSingleChoiceItems(options, selected[0], (d, which) -> selected[0] = which)
+            .setPositiveButton(getString(R.string.appsettings_save), (d, w) -> {
+                prefs.setBufferSecs(selected[0]);
+                updateAppSettingsPage();
+            })
+            .setNegativeButton(getString(R.string.appsettings_cancel), null)
+            .show();
+    }
+
+    /** Dialog resolusi dari halaman app settings */
+    private void showResolutionPickerDialog() {
         String current = prefs.getResolution();
         String[] options = {
-            getString(R.string.resolution_auto),
-            getString(R.string.resolution_lowest),
-            getString(R.string.resolution_highest)
+            getString(R.string.appsettings_resolution_auto),
+            getString(R.string.appsettings_resolution_lowest),
+            getString(R.string.appsettings_resolution_highest)
         };
         String[] keys = {PrefsManager.RES_AUTO, PrefsManager.RES_LOWEST, PrefsManager.RES_HIGHEST};
 
@@ -1448,12 +1522,13 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
         final int[] selected = {checked};
         new android.app.AlertDialog.Builder(this)
-            .setTitle(getString(R.string.resolution_title))
+            .setTitle(getString(R.string.appsettings_resolution_title))
             .setSingleChoiceItems(options, checked, (d, which) -> selected[0] = which)
-            .setPositiveButton(getString(R.string.resolution_save), (d, w) -> {
+            .setPositiveButton(getString(R.string.appsettings_save), (d, w) -> {
                 prefs.setResolution(keys[selected[0]]);
+                updateAppSettingsPage();
             })
-            .setNegativeButton(getString(R.string.resolution_cancel), null)
+            .setNegativeButton(getString(R.string.appsettings_cancel), null)
             .show();
     }
 
