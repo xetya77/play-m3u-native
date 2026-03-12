@@ -1021,31 +1021,42 @@ public class PlayerActivity extends AppCompatActivity {
             @Override
             public void onBindViewHolder(RecyclerView.ViewHolder h, int pos) {
                 String g = groupList.get(pos);
-                android.widget.TextView tvName = h.itemView.findViewById(R.id.tv_group_title_item);
+                android.widget.TextView tvName  = h.itemView.findViewById(R.id.tv_group_title_item);
                 android.widget.TextView tvCount = h.itemView.findViewById(R.id.tv_group_count);
+                android.view.View itemBg        = h.itemView.findViewById(R.id.group_item_bg);
+                android.widget.ImageView ivTri  = h.itemView.findViewById(R.id.iv_group_triangle);
                 tvName.setText(g);
                 long count = channels.stream().filter(ch -> g.equals(ch.group)).count();
                 tvCount.setText(String.valueOf(count));
-                // POIN 5: highlight group yang sedang aktif
+                // POIN 1: segitiga + background putih saat group aktif (bukan waveform)
                 boolean active = g.equals(activeGroupFilter);
-                tvName.setTextColor(active ? 0xFFFF5B04 : 0xCCFFFFFF);
+                if (itemBg != null) itemBg.setVisibility(active ? View.VISIBLE : View.INVISIBLE);
+                if (ivTri != null)  ivTri.setVisibility(active ? View.VISIBLE : View.INVISIBLE);
+                tvName.setTextColor(active ? 0xFF000000 : 0xCCFFFFFF);
+                tvCount.setTextColor(active ? 0x80000000 : 0x50FFFFFF);
                 h.itemView.setOnClickListener(v -> showGroupChannels(g));
             }
             @Override public int getItemCount() { return groupList.size(); }
         });
 
-        // Sembunyikan panel channel group jika sedang tampil
         if (groupChannelOpen) {
-            groupChannelPanel.animate().translationX(panelW).setDuration(250)
-                    .setInterpolator(new DecelerateInterpolator())
-                    .withEndAction(() -> groupChannelPanel.setVisibility(View.INVISIBLE)).start();
+            // Sequential: channel keluar ke kanan dulu → baru list masuk dari kanan
             groupChannelOpen = false;
+            groupChannelPanel.animate().translationX(panelW).setDuration(240)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .withEndAction(() -> {
+                        groupChannelPanel.setVisibility(View.INVISIBLE);
+                        groupListPanel.setVisibility(View.VISIBLE);
+                        groupListPanel.setTranslationX(panelW);
+                        groupListPanel.animate().translationX(0f).setDuration(260)
+                                .setInterpolator(new DecelerateInterpolator()).start();
+                    }).start();
+        } else {
+            groupListPanel.setVisibility(View.VISIBLE);
+            groupListPanel.setTranslationX(panelW);
+            groupListPanel.animate().translationX(0f).setDuration(260)
+                    .setInterpolator(new DecelerateInterpolator()).start();
         }
-
-        groupListPanel.setVisibility(View.VISIBLE);
-        groupListPanel.setTranslationX(panelW);
-        groupListPanel.animate().translationX(0f).setDuration(280)
-                .setInterpolator(new DecelerateInterpolator()).start();
     }
 
     /** Pilih group → dorong list group keluar, tampilkan channel group */
@@ -1111,10 +1122,13 @@ public class PlayerActivity extends AppCompatActivity {
                     tvFb.setText(ini);
                     tvFb.setTextColor(isActive ? 0xFF000000 : 0x66FFFFFF);
                 }
-                // POIN 5: background putih + waveform saat aktif (sama seperti panel kiri)
+                // POIN 1+5: background putih + segitiga saat aktif (bukan waveform)
                 if (itemBg != null) itemBg.setVisibility(isActive ? View.VISIBLE : View.INVISIBLE);
-                if (wave != null) wave.setVisibility(isActive ? View.VISIBLE : View.GONE);
-                if (ivPlay != null) ivPlay.setVisibility(View.GONE);
+                if (wave != null) wave.setVisibility(View.GONE); // tidak pakai waveform di panel kanan
+                if (ivPlay != null) {
+                    ivPlay.setImageResource(R.drawable.ic_triangle_play);
+                    ivPlay.setVisibility(isActive ? View.VISIBLE : View.GONE);
+                }
 
                 h.itemView.setOnClickListener(v -> {
                     playChannel(realIdx, true);
@@ -1124,16 +1138,18 @@ public class PlayerActivity extends AppCompatActivity {
             @Override public int getItemCount() { return chList.size(); }
         });
 
-        // Push: dorong groupListPanel keluar ke kanan, tarik groupChannelPanel masuk
+        // Sequential: list keluar ke kanan dulu → setelah selesai channel masuk dari kanan
         groupChannelOpen = true;
-        groupListPanel.animate().translationX(-panelW).setDuration(280)
+        groupListPanel.animate().translationX(panelW).setDuration(240)
                 .setInterpolator(new DecelerateInterpolator())
-                .withEndAction(() -> groupListPanel.setVisibility(View.INVISIBLE)).start();
-
-        groupChannelPanel.setVisibility(View.VISIBLE);
-        groupChannelPanel.setTranslationX(panelW);
-        groupChannelPanel.animate().translationX(0f).setDuration(280)
-                .setInterpolator(new DecelerateInterpolator()).start();
+                .withEndAction(() -> {
+                    groupListPanel.setVisibility(View.INVISIBLE);
+                    // Baru sekarang channel panel masuk dari kanan
+                    groupChannelPanel.setVisibility(View.VISIBLE);
+                    groupChannelPanel.setTranslationX(panelW);
+                    groupChannelPanel.animate().translationX(0f).setDuration(260)
+                            .setInterpolator(new DecelerateInterpolator()).start();
+                }).start();
     }
 
     /** Tutup semua panel kanan */
@@ -1144,8 +1160,9 @@ public class PlayerActivity extends AppCompatActivity {
         float dp = getResources().getDisplayMetrics().density;
         float panelW = 380f * dp;
 
+        // POIN 2: tutup panel aktif ke kanan dengan durasi konsisten
         LinearLayout activePanel = groupChannelOpen ? groupChannelPanel : groupListPanel;
-        activePanel.animate().translationX(panelW).setDuration(250)
+        activePanel.animate().translationX(panelW).setDuration(260)
                 .setInterpolator(new DecelerateInterpolator())
                 .withEndAction(() -> {
                     groupListPanel.setVisibility(View.INVISIBLE);
