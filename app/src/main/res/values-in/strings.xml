@@ -125,4 +125,20 @@
     <string name="resolution_highest">Kualitas Tertinggi</string>
     <string name="resolution_save">Simpan</string>
     <string name="resolution_cancel">Batal</string>
+    <!-- App Settings page -->
+    <string name="appsettings_title">Pengaturan</string>
+    <string name="appsettings_back">&#8592;</string>
+    <string name="appsettings_resolution_title">Kualitas Video</string>
+    <string name="appsettings_resolution_auto">Otomatis</string>
+    <string name="appsettings_resolution_lowest">Terendah</string>
+    <string name="appsettings_resolution_highest">Tertinggi</string>
+    <string name="appsettings_load_last_title">Lanjutkan saat dibuka</string>
+    <string name="appsettings_load_last_desc">Putar otomatis channel terakhir saat membuka aplikasi</string>
+    <string name="appsettings_subtitle_title">Subtitle</string>
+    <string name="appsettings_subtitle_desc">Tampilkan subtitle jika tersedia</string>
+    <string name="appsettings_buffer_title">Ukuran buffer</string>
+    <string name="appsettings_buffer_desc">Buffer lebih besar mengurangi gangguan tapi butuh lebih banyak memori</string>
+    <string name="appsettings_buffer_unit">detik</string>
+    <string name="appsettings_save">Simpan</string>
+    <string name="appsettings_cancel">Batal</string>
 </resources>
