@@ -84,7 +84,6 @@ public class PlayerActivity extends AppCompatActivity {
     private TextView tvChLogoFallback;
 
     // Remote & number
-    private View remoteGuide;
     private TextView numOverlay;
 
     // Backdrop
@@ -201,8 +200,6 @@ public class PlayerActivity extends AppCompatActivity {
         tvChPlaylistName  = findViewById(R.id.tv_ch_playlist_name);
         ivChLogo          = findViewById(R.id.iv_ch_logo);
         tvChLogoFallback  = findViewById(R.id.tv_ch_logo_fallback);
-
-        remoteGuide       = findViewById(R.id.remote_guide);
         numOverlay        = findViewById(R.id.num_overlay);
         chListBackdrop    = findViewById(R.id.ch_list_backdrop);
 
@@ -670,7 +667,6 @@ public class PlayerActivity extends AppCompatActivity {
         youtubeWebView.setVisibility(View.VISIBLE);
         videoLoading.setVisibility(View.GONE);
         // Sembunyikan overlay remote guide — hanya muncul untuk ExoPlayer
-        if (remoteGuide != null) remoteGuide.setVisibility(View.GONE);
 
         // Pakai halaman watch biasa — tidak kena error 152/153 karena bukan embed
         // UA desktop agar YouTube tidak redirect ke m.youtube.com (mobile UI sulit di-inject)
@@ -723,9 +719,6 @@ public class PlayerActivity extends AppCompatActivity {
         });
     }
     private void onFirstStreamReady() {
-        if (remoteGuide != null)
-            remoteGuide.animate().alpha(0f).setDuration(800)
-                    .withEndAction(() -> remoteGuide.setVisibility(View.GONE)).start();
         // Jam opacity 50% saat menonton (panel tutup)
         tvClock.animate().alpha(0.5f).setDuration(600).start();
     }
@@ -946,8 +939,6 @@ public class PlayerActivity extends AppCompatActivity {
 
         // "Semua Channel" → reset filter group, tutup panel kanan
         // POIN 2: tidak mengubah panel kiri sama sekali
-        findViewById(R.id.group_item_all).setOnClickListener(v -> {
-            activeGroupFilter = null;
             // POIN 2: jangan panggil channelAdapter.applyExactGroupFilter — panel kiri tidak terpengaruh
             closeGroupPanel();
         });
@@ -1029,11 +1020,16 @@ public class PlayerActivity extends AppCompatActivity {
                 long count = channels.stream().filter(ch -> g.equals(ch.group)).count();
                 tvCount.setText(String.valueOf(count));
                 boolean active = g.equals(activeGroupFilter);
-                // Penanda aktif: warna orange saat aktif (item_group_title.xml lama tidak punya bg/triangle ID)
-                // item_group_title.xml baru menambahkan group_item_bg + iv_group_triangle
-                tvName.setTextColor(active ? 0xFFFF5B04 : 0xCCFFFFFF);
-                tvCount.setTextColor(active ? 0xFFFF5B04 : 0x50FFFFFF);
-                h.itemView.setBackgroundResource(active ? R.drawable.bg_channel_item_active : 0);
+                // Poin 1+3: segitiga #16232A + background #E4EEF0 + teks #16232A saat aktif
+                android.view.View itemBg       = h.itemView.findViewById(R.id.group_item_bg);
+                android.widget.ImageView ivTri = h.itemView.findViewById(R.id.iv_group_triangle);
+                if (itemBg != null) itemBg.setVisibility(active ? android.view.View.VISIBLE : android.view.View.INVISIBLE);
+                if (ivTri != null) {
+                    ivTri.setVisibility(active ? android.view.View.VISIBLE : android.view.View.INVISIBLE);
+                    ivTri.setColorFilter(0xFF16232A, android.graphics.PorterDuff.Mode.SRC_IN);
+                }
+                tvName.setTextColor(active ? 0xFF16232A : 0xCCFFFFFF);
+                tvCount.setTextColor(active ? 0x8016232A : 0x50FFFFFF);
                 h.itemView.setOnClickListener(v -> showGroupChannels(g));
             }
             @Override public int getItemCount() { return groupList.size(); }
@@ -1127,6 +1123,7 @@ public class PlayerActivity extends AppCompatActivity {
                 if (wave != null) wave.setVisibility(View.GONE); // tidak pakai waveform di panel kanan
                 if (ivPlay != null) {
                     ivPlay.setImageResource(R.drawable.ic_triangle_play);
+                    ivPlay.setColorFilter(0xFF16232A, android.graphics.PorterDuff.Mode.SRC_IN);
                     ivPlay.setVisibility(isActive ? View.VISIBLE : View.GONE);
                 }
 
@@ -1430,15 +1427,11 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void showChInfo() {
+        // Poin 5: langsung tampil tanpa animasi masuk (anti-lag saat pindah channel cepat)
+        channelInfo.animate().cancel();
         channelInfo.setAlpha(1f);
+        channelInfo.setTranslationX(20f);
         channelInfo.setVisibility(View.VISIBLE);
-        // Set posisi awal ke luar layar kiri sebelum animasi masuk
-        // Gunakan post agar layout sudah selesai sehingga getWidth() akurat
-        channelInfo.post(() -> {
-            channelInfo.setTranslationX(osdHideOffset());
-            channelInfo.animate().translationX(20f).setDuration(400)
-                    .setInterpolator(new DecelerateInterpolator()).start();
-        });
         if (chInfoHideRunnable != null) handler.removeCallbacks(chInfoHideRunnable);
         chInfoHideRunnable = this::hideChInfo;
         handler.postDelayed(chInfoHideRunnable, 4000);
@@ -1622,6 +1615,17 @@ public class PlayerActivity extends AppCompatActivity {
         btnConfirm.setOnClickListener(v -> {
             dialog.dismiss();
             finishAffinity(); // tutup semua Activity (Player + Main) sekaligus
+        });
+        // Poin 6: warna teks berubah saat ditekan (#E4EEF0) dan kembali (#16232A)
+        btnConfirm.setOnTouchListener((v, ev) -> {
+            int action = ev.getAction();
+            if (action == android.view.MotionEvent.ACTION_DOWN) {
+                ((TextView) v).setTextColor(0xFFE4EEF0);
+            } else if (action == android.view.MotionEvent.ACTION_UP
+                    || action == android.view.MotionEvent.ACTION_CANCEL) {
+                ((TextView) v).setTextColor(0xFF16232A);
+            }
+            return false;
         });
     }
     /** Buka MainActivity (settings/playlist) — selalu buat instance baru jika perlu */
