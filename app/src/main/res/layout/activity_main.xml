@@ -20,52 +20,58 @@
             android:layout_height="0dp"
             android:layout_weight="12"/>
 
-        <!-- Teks logo: "Welcome to / Play / M3U." gaya intro -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:text="@string/welcome_to"
-            android:textColor="#60163A2A"
-            android:textSize="17sp"
-            android:fontFamily="@font/inter_bold"
-            android:textStyle="bold"
-            android:layout_marginBottom="4dp"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:text="Play"
-            android:textColor="@color/welcome_dark"
-            android:textSize="64sp"
-            android:fontFamily="@font/inter_black"
-            android:includeFontPadding="false"
-            android:lineSpacingMultiplier="0.9"/>
-
-        <!-- "M3U" + titik oranye dalam satu baris -->
+        <!-- Teks logo: "Welcome to / Play / M3U." — blok center, isi rata kiri -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:orientation="horizontal"
-            android:gravity="bottom">
+            android:orientation="vertical"
+            android:gravity="left">
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="M3U"
+                android:text="@string/welcome_to"
+                android:textColor="#60163A2A"
+                android:textSize="17sp"
+                android:fontFamily="@font/inter_bold"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Play"
                 android:textColor="@color/welcome_dark"
                 android:textSize="64sp"
                 android:fontFamily="@font/inter_black"
-                android:includeFontPadding="false"/>
-            <TextView
+                android:includeFontPadding="false"
+                android:lineSpacingMultiplier="0.9"/>
+
+            <!-- "M3U" + titik oranye dalam satu baris, rata kiri dengan "Play" -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="."
-                android:textColor="#FF5B04"
-                android:textSize="64sp"
-                android:fontFamily="@font/inter_black"
-                android:includeFontPadding="false"/>
+                android:orientation="horizontal"
+                android:gravity="bottom">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="M3U"
+                    android:textColor="@color/welcome_dark"
+                    android:textSize="64sp"
+                    android:fontFamily="@font/inter_black"
+                    android:includeFontPadding="false"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="."
+                    android:textColor="#FF5B04"
+                    android:textSize="64sp"
+                    android:fontFamily="@font/inter_black"
+                    android:includeFontPadding="false"/>
+            </LinearLayout>
+
         </LinearLayout>
 
         <!-- Gap PlayM3U → tagline: ~8% -->
@@ -270,6 +276,7 @@
             android:id="@+id/tv_source_note"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minHeight="36dp"
             android:layout_gravity="center_horizontal"
             android:gravity="center"
             android:text="@string/source_note"
