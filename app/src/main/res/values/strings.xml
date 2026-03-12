@@ -13,7 +13,7 @@
     <string name="source_option_url">Link/URL</string>
     <string name="source_option_file">Local File</string>
     <string name="source_next">Next step</string>
-    <string name="source_note">Choose one to continue</string>
+    <string name="source_note">Choose one to continue\nand press next step</string>
     <string name="source_choose_first">Please choose a source first</string>
 
     <!-- URL -->
