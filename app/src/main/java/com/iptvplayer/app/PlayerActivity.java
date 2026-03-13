@@ -1554,30 +1554,28 @@ public class PlayerActivity extends AppCompatActivity {
 
         // Resolve URL hosting share links (Google Drive, Dropbox, OneDrive)
         final String channelUrl = ch.url;
+        final int finalIdx = idx;
+        final boolean finalFlash = withFlash;
+        final Channel finalCh0 = ch;
         if (needsUrlResolving(channelUrl)) {
-            // Jalankan resolver di background, lalu rekursif playChannel dengan url sudah di-resolve
+            // Jalankan resolver di background, lalu play dengan URL yang sudah di-resolve
             ExecutorService ex = Executors.newSingleThreadExecutor();
             ex.execute(() -> {
                 String resolved = resolveStreamUrl(channelUrl);
                 if (!resolved.equals(channelUrl)) {
-                    // Buat channel baru dengan URL yang sudah di-resolve
-                    Channel resolvedCh = new Channel(ch.name, resolved, ch.logoUrl, ch.group);
-                    resolvedCh.userAgent  = ch.userAgent;
-                    resolvedCh.referrer   = ch.referrer;
-                    resolvedCh.drmType    = ch.drmType;
-                    resolvedCh.drmKey     = ch.drmKey;
-                    resolvedCh.isDrm      = ch.isDrm;
-                    // Ganti channel di list lalu play ulang di main thread
-                    final int resolvedIdx = idx;
-                    final Channel finalCh = resolvedCh;
+                    Channel resolvedCh = new Channel(finalCh0.name, resolved, finalCh0.logoUrl, finalCh0.group);
+                    resolvedCh.userAgent = finalCh0.userAgent;
+                    resolvedCh.referrer  = finalCh0.referrer;
+                    resolvedCh.drmType   = finalCh0.drmType;
+                    resolvedCh.drmKey    = finalCh0.drmKey;
+                    resolvedCh.isDrm     = finalCh0.isDrm;
+                    final Channel finalResolved = resolvedCh;
                     runOnUiThread(() -> {
-                        if (resolvedIdx < channels.size()) {
-                            channels.set(resolvedIdx, finalCh);
-                        }
-                        playChannelDirect(finalCh, resolvedIdx, withFlash);
+                        if (finalIdx < channels.size()) channels.set(finalIdx, finalResolved);
+                        playChannelDirect(finalResolved, finalIdx, finalFlash);
                     });
                 } else {
-                    runOnUiThread(() -> playChannelDirect(ch, idx, withFlash));
+                    runOnUiThread(() -> playChannelDirect(finalCh0, finalIdx, finalFlash));
                 }
                 ex.shutdown();
             });
