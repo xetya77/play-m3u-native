@@ -25,16 +25,16 @@
         android:layout_height="1dp"
         android:background="#1AFFFFFF"/>
 
-    <!-- List items -->
+    <!-- List items dalam container fixed height agar tombol selalu terlihat -->
     <ListView
         android:id="@+id/lv_picker_items"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:maxHeight="320dp"
+        android:layout_height="300dp"
         android:divider="#0DFFFFFF"
         android:dividerHeight="1dp"
-        android:scrollbars="none"
-        android:overScrollMode="never"/>
+        android:scrollbars="vertical"
+        android:overScrollMode="never"
+        android:fastScrollEnabled="false"/>
 
     <!-- Divider -->
     <View
@@ -42,7 +42,7 @@
         android:layout_height="1dp"
         android:background="#1AFFFFFF"/>
 
-    <!-- Buttons -->
+    <!-- Buttons — selalu di bawah, tidak terdorong keluar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

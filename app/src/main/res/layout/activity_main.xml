@@ -799,9 +799,11 @@
                 android:textColor="#FF5B04"
                 android:textSize="24sp"
                 android:fontFamily="@font/inter_bold"
+                android:paddingStart="8dp"
                 android:paddingEnd="12dp"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
+                android:background="@drawable/selector_back_btn"
                 android:clickable="true"
                 android:focusable="true"/>
 
@@ -979,12 +981,12 @@
                             android:layout_marginTop="2dp"/>
                     </LinearLayout>
 
-                    <Switch
+                    <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/switch_load_last"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:thumbTint="#E4EEF0"
-                        android:trackTint="@drawable/selector_switch_track"
+                        android:thumbTint="@color/selector_switch_thumb"
+                        android:trackTint="@color/selector_switch_track"
                         android:checked="false"/>
                 </LinearLayout>
 
@@ -1026,12 +1028,12 @@
                             android:layout_marginTop="2dp"/>
                     </LinearLayout>
 
-                    <Switch
+                    <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/switch_subtitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:thumbTint="#E4EEF0"
-                        android:trackTint="@drawable/selector_switch_track"
+                        android:thumbTint="@color/selector_switch_thumb"
+                        android:trackTint="@color/selector_switch_track"
                         android:checked="false"/>
                 </LinearLayout>
 
@@ -1068,9 +1070,11 @@
                 android:textColor="#FF5B04"
                 android:textSize="24sp"
                 android:fontFamily="@font/inter_bold"
+                android:paddingStart="8dp"
                 android:paddingEnd="12dp"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
+                android:background="@drawable/selector_back_btn"
                 android:focusable="true"
                 android:clickable="true"/>
 
