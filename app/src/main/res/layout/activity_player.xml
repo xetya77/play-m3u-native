@@ -243,7 +243,9 @@
             android:background="#18ffffff"/>
 
         <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_ch_list"
-            android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+            android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+            android:focusable="true"
+            android:descendantFocusability="blocksDescendants"/>
     </LinearLayout>
 
     <!--
@@ -416,7 +418,9 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:clipToPadding="false"
-            android:paddingBottom="8dp"/>
+            android:paddingBottom="8dp"
+            android:focusable="true"
+            android:descendantFocusability="blocksDescendants"/>
     </LinearLayout>
 
     <!-- PANEL CHANNEL PER GROUP — push dari kanan saat pilih group -->
@@ -481,7 +485,9 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:clipToPadding="false"
-            android:paddingBottom="8dp"/>
+            android:paddingBottom="8dp"
+            android:focusable="true"
+            android:descendantFocusability="blocksDescendants"/>
     </LinearLayout>
 
     <!-- Swipe feedback -->
