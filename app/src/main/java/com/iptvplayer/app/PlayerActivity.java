@@ -1428,7 +1428,7 @@ public class PlayerActivity extends AppCompatActivity {
         // Format: https://drive.google.com/file/d/{ID}/view?...
         // atau: https://drive.google.com/open?id={ID}
         java.util.regex.Matcher gdMatcher = java.util.regex.Pattern
-            .compile("drive\.google\.com/(?:file/d/|open\?id=)([a-zA-Z0-9_\-]+)")
+            .compile("drive[.]google[.]com/(?:file/d/|open[?]id=)([a-zA-Z0-9_-]+)")
             .matcher(url);
         if (gdMatcher.find()) {
             String fileId = gdMatcher.group(1);

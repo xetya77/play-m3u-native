@@ -908,8 +908,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         android.widget.TextView btnCancel  = v.findViewById(R.id.btn_delete_cancel);
         android.widget.TextView btnConfirm = v.findViewById(R.id.btn_delete_confirm);
 
-        if (tvName != null) tvName.setText(
-            getString(R.string.delete_playlist_confirm) + " "" + plName + ""?");
+        if (tvName != null) tvName.setText(plName + "?");
 
         android.app.AlertDialog dlg = builder.create();
         if (dlg.getWindow() != null) {
