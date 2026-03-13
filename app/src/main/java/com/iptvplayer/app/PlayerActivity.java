@@ -1186,6 +1186,11 @@ public class PlayerActivity extends AppCompatActivity {
     private void closeGroupPanel() {
         if (!groupPanelOpen) return;
         groupPanelOpen = false;
+        // Clear TV highlight
+        tvHighlightView(tvPrevGroupView, false);
+        tvHighlightView(tvPrevGroupChView, false);
+        tvPrevGroupView = null;
+        tvPrevGroupChView = null;
 
         float dp = getResources().getDisplayMetrics().density;
         float panelW = 380f * dp;
@@ -1262,6 +1267,9 @@ public class PlayerActivity extends AppCompatActivity {
     private void hidePanel() {
         if (!panelOpen) return;
         panelOpen = false;
+        // Clear TV highlight
+        tvHighlightView(tvPrevChListView, false);
+        tvPrevChListView = null;
         categoryFullOpen = false;
         if (groupPanelOpen || groupChannelOpen) {
             groupPanelOpen = false; groupChannelOpen = false;
@@ -1518,95 +1526,151 @@ public class PlayerActivity extends AppCompatActivity {
      *   2. Jika masih redirect ke HTML → baca body, cari uuid/confirm token
      *   3. Retry dengan token yang ditemukan
      */
+    /**
+     * Resolve Google Drive file URL ke direct stream URL.
+     *
+     * Google Drive sejak 2023 menggunakan drive.usercontent.google.com.
+     * File video/audio yang di-share public dapat di-stream langsung
+     * dengan menyertakan cookie download_warning dan parameter confirm.
+     *
+     * Strategi:
+     *   1. GET ke uc?export=download — cek redirect/body untuk uuid/confirm token
+     *   2. Bangun URL usercontent.google.com dengan token
+     *   3. Fallback: URL usercontent langsung dengan confirm=t
+     */
     private String resolveGoogleDrive(String fileId) throws Exception {
-        final String UA = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 "
-            + "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
+        final String UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            + "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+        final String COOKIE = "download_warning_" + fileId + "=t; "
+            + "NID=511=; CONSENT=YES+cb; SOCS=CAI";
 
-        // Strategi 1: drive.usercontent.google.com dengan confirm=t
-        // Ini adalah format URL resmi baru Google Drive sejak pertengahan 2023
-        String directUrl = "https://drive.usercontent.google.com/download?id="
-            + fileId + "&export=download&authuser=0&confirm=t";
-
-        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
+        // Client yang TIDAK follow redirect otomatis — kita perlu cek Location header
+        okhttp3.OkHttpClient clientNoRedir = new okhttp3.OkHttpClient.Builder()
             .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
-            .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
+            .followRedirects(false)
+            .followSslRedirects(false)
+            .build();
+
+        // Client yang follow redirect — untuk cek URL final
+        okhttp3.OkHttpClient clientRedir = new okhttp3.OkHttpClient.Builder()
+            .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
             .followRedirects(true)
             .followSslRedirects(true)
-            .addInterceptor(chain -> {
-                okhttp3.Request req = chain.request().newBuilder()
-                    .header("User-Agent", UA)
-                    .header("Accept", "*/*")
-                    .header("Cookie", "download_warning_" + fileId + "=t; CONSENT=YES+")
-                    .build();
-                return chain.proceed(req);
-            })
             .build();
 
-        // HEAD request untuk cek apakah URL langsung return media
-        okhttp3.Request headReq = new okhttp3.Request.Builder()
-            .url(directUrl)
-            .head()
+        // ── Strategi 1: GET uc?export=download — cari uuid/confirm di body/redirect ──
+        String ucUrl = "https://drive.google.com/uc?export=download&id=" + fileId
+            + "&confirm=t&authuser=0";
+
+        okhttp3.Request req1 = new okhttp3.Request.Builder()
+            .url(ucUrl)
+            .get()
+            .header("User-Agent", UA)
+            .header("Cookie", COOKIE)
+            .header("Accept", "text/html,application/xhtml+xml,*/*")
+            .header("Referer", "https://drive.google.com/")
             .build();
 
-        try (okhttp3.Response headResp = client.newCall(headReq).execute()) {
-            String ct = headResp.header("Content-Type", "");
-            String finalUrl = headResp.request().url().toString();
+        try (okhttp3.Response resp1 = clientNoRedir.newCall(req1).execute()) {
+            int code = resp1.code();
 
-            // Jika content-type adalah media atau octet-stream → URL sudah benar
-            if (ct != null && (ct.startsWith("video/") || ct.startsWith("audio/")
-                    || ct.contains("octet-stream") || ct.contains("mp4")
-                    || ct.contains("mpeg") || ct.contains("webm"))) {
-                return finalUrl;
+            // 302/303 redirect — ikuti Location header
+            if (code == 302 || code == 303 || code == 307 || code == 308) {
+                String loc = resp1.header("Location");
+                if (loc != null && !loc.isEmpty()) {
+                    // Cek apakah redirect ke usercontent atau URL stream
+                    if (loc.contains("usercontent.google.com") || loc.contains("export=download")) {
+                        // Validate dengan HEAD request (follow redirect)
+                        String validated = validateStreamUrl(clientRedir, loc, UA, COOKIE);
+                        if (validated != null) return validated;
+                    }
+                }
             }
 
-            // URL di-redirect ke sesuatu yang bukan HTML → pakai URL final redirect
-            if (!finalUrl.contains("accounts.google.com")
-                    && !finalUrl.contains("drive.google.com/file")) {
-                return finalUrl;
-            }
-        } catch (Exception ignored) {}
+            // 200 — baca body untuk cari uuid atau confirm
+            if (code == 200 && resp1.body() != null) {
+                String body = resp1.body().string();
 
-        // Strategi 2: GET ke uc?export=download, baca body, cari uuid/confirm
-        String ucUrl = "https://drive.google.com/uc?export=download&id=" + fileId;
-        okhttp3.Request getReq = new okhttp3.Request.Builder().url(ucUrl).get().build();
-
-        try (okhttp3.Response getResp = client.newCall(getReq).execute()) {
-            String finalUrl = getResp.request().url().toString();
-            String ct = getResp.header("Content-Type", "");
-
-            // Sudah di-redirect ke media langsung
-            if (ct != null && (ct.startsWith("video/") || ct.startsWith("audio/")
-                    || ct.contains("octet-stream"))) {
-                return finalUrl;
-            }
-
-            // Parse body untuk cari uuid (format baru) atau confirm token (format lama)
-            if (getResp.body() != null) {
-                String body = getResp.body().string();
-
-                // Cari uuid — format baru 2023+
+                // Cari uuid (format Google Drive 2024+)
                 java.util.regex.Matcher uuidM = java.util.regex.Pattern
-                    .compile("uuid=([a-zA-Z0-9_-]{8,})")
+                    .compile(""uuid":"([a-zA-Z0-9_-]{8,})"")
                     .matcher(body);
                 if (uuidM.find()) {
-                    return "https://drive.usercontent.google.com/download?id="
-                        + fileId + "&export=download&authuser=0&confirm=t&uuid="
-                        + uuidM.group(1);
+                    String url2 = "https://drive.usercontent.google.com/download?id="
+                        + fileId + "&export=download&authuser=0&confirm=t&uuid=" + uuidM.group(1);
+                    String validated = validateStreamUrl(clientRedir, url2, UA, COOKIE);
+                    if (validated != null) return validated;
+                    return url2;
                 }
 
-                // Cari confirm token — format lama
-                java.util.regex.Matcher confirmM = java.util.regex.Pattern
-                    .compile("[?&]confirm=([a-zA-Z0-9_-]+)")
+                // Cari uuid di format lain
+                java.util.regex.Matcher uuidM2 = java.util.regex.Pattern
+                    .compile("uuid=([a-zA-Z0-9_-]{8,})")
                     .matcher(body);
-                if (confirmM.find()) {
-                    return "https://drive.google.com/uc?export=download&confirm="
-                        + confirmM.group(1) + "&id=" + fileId;
+                if (uuidM2.find()) {
+                    String url2 = "https://drive.usercontent.google.com/download?id="
+                        + fileId + "&export=download&authuser=0&confirm=t&uuid=" + uuidM2.group(1);
+                    return url2;
+                }
+
+                // Cari confirm token (format lama)
+                java.util.regex.Matcher confirmM = java.util.regex.Pattern
+                    .compile("[?&amp;]confirm=([a-zA-Z0-9_-]+)")
+                    .matcher(body);
+                if (confirmM.find() && !confirmM.group(1).equals("t")) {
+                    String url2 = "https://drive.usercontent.google.com/download?id="
+                        + fileId + "&export=download&authuser=0&confirm=" + confirmM.group(1);
+                    return url2;
+                }
+
+                // Cari href yang mengandung usercontent.google.com
+                java.util.regex.Matcher hrefM = java.util.regex.Pattern
+                    .compile("href="(https://drive\.usercontent\.google\.com/download[^"]+)"")
+                    .matcher(body);
+                if (hrefM.find()) {
+                    String url2 = hrefM.group(1).replace("&amp;", "&");
+                    return url2;
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            android.util.Log.w("GDrive", "Strategy 1 failed: " + e.getMessage());
+        }
 
-        // Strategi 3 (last resort): URL langsung tanpa resolusi lebih lanjut
-        return directUrl;
+        // ── Strategi 2: usercontent.google.com langsung dengan confirm=t ──
+        String fallback = "https://drive.usercontent.google.com/download?id="
+            + fileId + "&export=download&authuser=0&confirm=t";
+        return fallback;
+    }
+
+    /**
+     * Validasi URL stream — cek apakah URL return Content-Type media.
+     * Return URL final jika valid, null jika tidak.
+     */
+    private String validateStreamUrl(okhttp3.OkHttpClient client,
+                                      String url, String ua, String cookie) {
+        try {
+            okhttp3.Request req = new okhttp3.Request.Builder()
+                .url(url)
+                .head()
+                .header("User-Agent", ua)
+                .header("Cookie", cookie)
+                .header("Range", "bytes=0-1023")
+                .build();
+            try (okhttp3.Response resp = client.newCall(req).execute()) {
+                String ct = resp.header("Content-Type", "");
+                String cd = resp.header("Content-Disposition", "");
+                String finalUrl = resp.request().url().toString();
+                boolean isMedia = ct != null && (
+                    ct.startsWith("video/") || ct.startsWith("audio/")
+                    || ct.contains("octet-stream") || ct.contains("mp4")
+                    || ct.contains("mpeg") || ct.contains("webm") || ct.contains("x-matroska"));
+                boolean hasDisp = cd != null && cd.contains("attachment");
+                if (isMedia || hasDisp) return finalUrl;
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 
     /** Follow HTTP redirect (max maxHops kali) — sync, jalankan di background thread */
@@ -1751,8 +1815,26 @@ public class PlayerActivity extends AppCompatActivity {
                     || ch.url.contains("api.onedrive.com")
                     || ch.url.contains("dl.dropboxusercontent.com")) {
                 // File hosting direct download — pakai ProgressiveMediaSource
-                // agar ExoPlayer probe format dari Content-Type, bukan URL extension
-                mediaSource = new ProgressiveMediaSource.Factory(dsFactory)
+                // Inject cookie khusus untuk Google Drive agar ExoPlayer range request berhasil
+                androidx.media3.datasource.DefaultHttpDataSource.Factory driveFactory =
+                    new androidx.media3.datasource.DefaultHttpDataSource.Factory()
+                        .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                            + "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
+                        .setConnectTimeoutMs(20000)
+                        .setReadTimeoutMs(30000)
+                        .setAllowCrossProtocolRedirects(true);
+                if (ch.url.contains("drive.usercontent.google.com") || ch.url.contains("drive.google.com")) {
+                    java.util.Map<String, String> driveHeaders = new java.util.HashMap<>();
+                    String fileIdForCookie = "";
+                    java.util.regex.Matcher idM = java.util.regex.Pattern
+                        .compile("[?&]id=([a-zA-Z0-9_-]+)").matcher(ch.url);
+                    if (idM.find()) fileIdForCookie = idM.group(1);
+                    driveHeaders.put("Cookie", "download_warning_" + fileIdForCookie
+                        + "=t; CONSENT=YES+cb; SOCS=CAI");
+                    driveHeaders.put("Referer", "https://drive.google.com/");
+                    driveFactory.setDefaultRequestProperties(driveHeaders);
+                }
+                mediaSource = new ProgressiveMediaSource.Factory(driveFactory)
                     .createMediaSource(MediaItem.fromUri(ch.url));
             } else {
                 mediaSource = new DefaultMediaSourceFactory(dsFactory).createMediaSource(MediaItem.fromUri(ch.url));
@@ -1972,15 +2054,24 @@ public class PlayerActivity extends AppCompatActivity {
     private int tvGroupChIdx   = 0;
     private int tvCatFullIdx   = 0;
 
+    /** Track view yang sedang di-highlight agar bisa di-clear */
+    private android.view.View tvPrevChListView    = null;
+    private android.view.View tvPrevGroupView     = null;
+    private android.view.View tvPrevGroupChView   = null;
+
     /** Scroll panel kiri (ch list) dan update highlight */
     private void tvScrollChList(int dir) {
         if (channels.isEmpty()) return;
         tvChListIdx = Math.max(0, Math.min(channels.size() - 1, tvChListIdx + dir));
         rvChList.scrollToPosition(tvChListIdx);
         rvChList.post(() -> {
+            tvHighlightView(tvPrevChListView, false);
             androidx.recyclerview.widget.RecyclerView.ViewHolder vh =
                 rvChList.findViewHolderForAdapterPosition(tvChListIdx);
-            if (vh != null) tvHighlightView(vh.itemView, true);
+            if (vh != null) {
+                tvHighlightView(vh.itemView, true);
+                tvPrevChListView = vh.itemView;
+            }
         });
     }
 
@@ -2002,9 +2093,13 @@ public class PlayerActivity extends AppCompatActivity {
             tvGroupChIdx = Math.max(0, Math.min(total - 1, tvGroupChIdx + dir));
             rvGroupChannels.scrollToPosition(tvGroupChIdx);
             rvGroupChannels.post(() -> {
+                tvHighlightView(tvPrevGroupChView, false);
                 androidx.recyclerview.widget.RecyclerView.ViewHolder vh =
                     rvGroupChannels.findViewHolderForAdapterPosition(tvGroupChIdx);
-                if (vh != null) tvHighlightView(vh.itemView, true);
+                if (vh != null) {
+                    tvHighlightView(vh.itemView, true);
+                    tvPrevGroupChView = vh.itemView;
+                }
             });
         } else {
             // Scroll rv_group_titles
@@ -2014,9 +2109,13 @@ public class PlayerActivity extends AppCompatActivity {
             tvGroupIdx = Math.max(0, Math.min(total - 1, tvGroupIdx + dir));
             rvGroupTitles.scrollToPosition(tvGroupIdx);
             rvGroupTitles.post(() -> {
+                tvHighlightView(tvPrevGroupView, false);
                 androidx.recyclerview.widget.RecyclerView.ViewHolder vh =
                     rvGroupTitles.findViewHolderForAdapterPosition(tvGroupIdx);
-                if (vh != null) tvHighlightView(vh.itemView, true);
+                if (vh != null) {
+                    tvHighlightView(vh.itemView, true);
+                    tvPrevGroupView = vh.itemView;
+                }
             });
         }
     }
@@ -2063,10 +2162,35 @@ public class PlayerActivity extends AppCompatActivity {
         }
     }
 
-    /** Beri highlight visual sementara pada view item RV */
+    /** Beri highlight TV focus pada item RV — gunakan foreground agar tidak
+     *  override background drawable (bg_channel_item_active, dll) */
     private void tvHighlightView(android.view.View v, boolean highlight) {
         if (v == null) return;
-        v.setBackgroundColor(highlight ? 0x33FF5B04 : 0x00000000);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            if (highlight) {
+                android.graphics.drawable.GradientDrawable ring =
+                    new android.graphics.drawable.GradientDrawable();
+                ring.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+                ring.setColor(0x22FF5B04);
+                ring.setStroke(3, 0xFFFF5B04);
+                ring.setCornerRadius(14f * getResources().getDisplayMetrics().density);
+                v.setForeground(ring);
+            } else {
+                v.setForeground(null);
+            }
+        } else {
+            // Fallback API 21-22: simpan drawable asli di tag default
+            if (highlight) {
+                if (v.getTag() == null) v.setTag(v.getBackground());
+                v.setBackgroundColor(0x33FF5B04);
+            } else {
+                Object saved = v.getTag();
+                if (saved instanceof android.graphics.drawable.Drawable) {
+                    v.setBackground((android.graphics.drawable.Drawable) saved);
+                    v.setTag(null);
+                }
+            }
+        }
     }
     private void handleNumKey(int num) {
         numBuffer += num;
