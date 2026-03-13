@@ -145,4 +145,8 @@
     <string name="delete_playlist_title">Hapus Playlist</string>
     <string name="delete_playlist_cancel">Batal</string>
     <string name="delete_playlist_confirm">Hapus</string>
+    <string name="appsettings_logo_title">Logo Intro</string>
+    <string name="appsettings_logo_desc">Gambar kustom yang ditampilkan saat aplikasi dibuka</string>
+    <string name="appsettings_logo_pick">Pilih Gambar</string>
+    <string name="appsettings_logo_remove">Hapus</string>
 </resources>
