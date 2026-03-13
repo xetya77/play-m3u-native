@@ -1430,13 +1430,18 @@ public class PlayerActivity extends AppCompatActivity {
 
         // ── Google Drive ──
         // Format: https://drive.google.com/file/d/{ID}/view?...
-        // atau: https://drive.google.com/open?id={ID}
+        // atau:   https://drive.google.com/open?id={ID}
         java.util.regex.Matcher gdMatcher = java.util.regex.Pattern
             .compile("drive[.]google[.]com/(?:file/d/|open[?]id=)([a-zA-Z0-9_-]+)")
             .matcher(url);
         if (gdMatcher.find()) {
             String fileId = gdMatcher.group(1);
-            return "https://drive.google.com/uc?export=download&id=" + fileId;
+            try {
+                return resolveGoogleDrive(fileId);
+            } catch (Exception e) {
+                // Fallback: direct uc link
+                return "https://drive.google.com/uc?export=download&id=" + fileId;
+            }
         }
 
         // ── Dropbox ──
@@ -1489,6 +1494,80 @@ public class PlayerActivity extends AppCompatActivity {
                lower.contains(":8080") || lower.contains(":1935") ||
                lower.contains(":8888") || lower.startsWith("rtsp://") ||
                lower.startsWith("rtmp://");
+    }
+
+    /**
+     * Resolve Google Drive share link ke direct download URL.
+     * Menangani halaman konfirmasi virus scan (cookie confirm=t).
+     */
+    private String resolveGoogleDrive(String fileId) throws Exception {
+        String dlUrl = "https://drive.google.com/uc?export=download&id=" + fileId;
+
+        HttpURLConnection conn = (HttpURLConnection) new URL(dlUrl).openConnection();
+        conn.setInstanceFollowRedirects(false);
+        conn.setConnectTimeout(8000);
+        conn.setReadTimeout(8000);
+        conn.setRequestProperty("User-Agent",
+            "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/91.0 Mobile Safari/537.36");
+        conn.setRequestProperty("Accept",
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+
+        int code = conn.getResponseCode();
+
+        // Jika redirect langsung → follow
+        if (code >= 300 && code < 400) {
+            String loc = conn.getHeaderField("Location");
+            conn.disconnect();
+            if (loc != null && !loc.isEmpty()) return loc;
+            return dlUrl;
+        }
+
+        // Cek apakah response adalah HTML (halaman konfirmasi virus scan)
+        String contentType = conn.getContentType();
+        if (contentType != null && contentType.contains("text/html")) {
+            // Baca body untuk cari confirm token
+            java.io.InputStream is = conn.getInputStream();
+            java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(is));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            int maxLines = 200;
+            while ((line = reader.readLine()) != null && maxLines-- > 0) {
+                sb.append(line);
+            }
+            reader.close();
+            conn.disconnect();
+
+            String body = sb.toString();
+
+            // Cari confirm token — format: confirm=t atau confirm=XXXX
+            java.util.regex.Matcher confirmMatcher = java.util.regex.Pattern
+                .compile("confirm=([0-9A-Za-t]+)")
+                .matcher(body);
+            if (confirmMatcher.find()) {
+                String token = confirmMatcher.group(1);
+                return "https://drive.google.com/uc?export=download&confirm="
+                    + token + "&id=" + fileId;
+            }
+
+            // Cari uuid (format baru Google Drive)
+            java.util.regex.Matcher uuidMatcher = java.util.regex.Pattern
+                .compile("uuid=([a-zA-Z0-9_-]+)")
+                .matcher(body);
+            if (uuidMatcher.find()) {
+                String uuid = uuidMatcher.group(1);
+                return "https://drive.usercontent.google.com/download?id="
+                    + fileId + "&export=download&authuser=0&confirm=t&uuid=" + uuid;
+            }
+
+            // Fallback: pakai confirm=t (Google terkadang menerima ini)
+            return "https://drive.usercontent.google.com/download?id="
+                + fileId + "&export=download&authuser=0&confirm=t";
+        }
+
+        conn.disconnect();
+        // Response langsung bukan HTML → URL sudah benar
+        return dlUrl;
     }
 
     /** Follow HTTP redirect (max maxHops kali) — sync, jalankan di background thread */

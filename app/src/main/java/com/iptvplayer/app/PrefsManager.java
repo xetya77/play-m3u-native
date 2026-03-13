@@ -19,6 +19,7 @@ public class PrefsManager {
     private static final String KEY_LOAD_LAST_CH    = "load_last_channel";
     private static final String KEY_SUBTITLE_ON     = "subtitle_enabled";
     private static final String KEY_BUFFER_SECS     = "buffer_secs";
+    private static final String KEY_CUSTOM_LOGO     = "custom_logo_uri";
     public static final String RES_AUTO    = "auto";
     public static final String RES_LOWEST  = "lowest";
     public static final String RES_HIGHEST = "highest";
@@ -98,5 +99,17 @@ public class PrefsManager {
 
     public void setBufferSecs(int secs) {
         prefs.edit().putInt(KEY_BUFFER_SECS, secs).apply();
+    }
+
+    public String getCustomLogoUri() {
+        return prefs.getString(KEY_CUSTOM_LOGO, null);
+    }
+
+    public void setCustomLogoUri(String uri) {
+        prefs.edit().putString(KEY_CUSTOM_LOGO, uri).apply();
+    }
+
+    public void clearCustomLogoUri() {
+        prefs.edit().remove(KEY_CUSTOM_LOGO).apply();
     }
 }

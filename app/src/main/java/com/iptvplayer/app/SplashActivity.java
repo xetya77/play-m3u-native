@@ -8,7 +8,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.view.WindowManager;
+import android.net.Uri;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import com.bumptech.glide.Glide;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -69,17 +72,40 @@ public class SplashActivity extends Activity {
 
         setContentView(R.layout.activity_splash);
 
-        // Animasi: fade in teks → tahan → fade out (sama persis seperti sebelumnya)
+        // Custom logo: jika user pernah set, tampilkan logo custom dan sembunyikan teks default
+        String customLogoUri = prefs.getCustomLogoUri();
         LinearLayout container = findViewById(R.id.splash_text_container);
-        container.setAlpha(0f);
+        ImageView ivCustomLogo = findViewById(R.id.iv_custom_splash_logo);
 
-        container.animate()
+        if (customLogoUri != null && !customLogoUri.isEmpty()) {
+            try {
+                // Tampilkan custom logo, sembunyikan teks default
+                container.setVisibility(android.view.View.GONE);
+                ivCustomLogo.setVisibility(android.view.View.VISIBLE);
+                Glide.with(this)
+                    .load(Uri.parse(customLogoUri))
+                    .into(ivCustomLogo);
+            } catch (Exception e) {
+                // Gagal load custom logo — fallback ke teks default
+                ivCustomLogo.setVisibility(android.view.View.GONE);
+                container.setVisibility(android.view.View.VISIBLE);
+                prefs.clearCustomLogoUri();
+            }
+        }
+
+        // Animasi: fade in → tahan → fade out
+        // Animasi berlaku untuk custom logo maupun teks default
+        android.view.View animTarget = (customLogoUri != null && !customLogoUri.isEmpty())
+            ? ivCustomLogo : container;
+        animTarget.setAlpha(0f);
+
+        animTarget.animate()
             .alpha(1f)
             .setDuration(900)
             .setStartDelay(150)
             .withEndAction(() -> {
                 handler.postDelayed(() ->
-                    container.animate()
+                    animTarget.animate()
                         .alpha(0f)
                         .setDuration(700)
                         .withEndAction(() -> {
