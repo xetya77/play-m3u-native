@@ -142,19 +142,20 @@
     </LinearLayout>
 
     <!-- ===== PAGE SOURCE (new design) ===== -->
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/page_source"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
         android:background="@color/welcome_bg"
+        android:focusable="false"
         android:visibility="gone">
 
-        <!-- Stepper: IDENTIK dengan URL page — 76dp×6dp, gap 8dp, marginTop 47dp -->
+        <!-- Stepper — posisi fixed di atas -->
         <LinearLayout
+            android:id="@+id/source_stepper"
             android:layout_width="wrap_content"
             android:layout_height="6dp"
-            android:layout_gravity="center_horizontal"
+            android:layout_centerHorizontal="true"
             android:layout_marginTop="47dp"
             android:orientation="horizontal">
             <View
@@ -173,123 +174,129 @@
                 android:background="@drawable/bg_stepper_inactive"/>
         </LinearLayout>
 
-        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="10"/>
-
-        <!-- Heading: 17sp Inter Bold #16232A -->
-        <TextView
+        <!-- Konten tengah: heading + dua option card -->
+        <LinearLayout
+            android:id="@+id/source_center_block"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:text="@string/source_heading"
-            android:textColor="#16232A"
-            android:textSize="22sp"
-            android:fontFamily="@font/inter_bold"
-            android:textStyle="bold"
-            android:layout_marginBottom="28dp"/>
+            android:layout_centerInParent="true"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
 
-        <!-- Option 1: Link/URL — 288x108dp -->
-        <LinearLayout
-            android:id="@+id/source_url_item"
-            android:layout_width="288dp"
-            android:layout_height="108dp"
-            android:layout_gravity="center_horizontal"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:paddingStart="28dp"
-            android:paddingEnd="28dp"
-            android:focusable="true"
-            android:clickable="true"
-            android:background="@drawable/selector_source_option">
-
-            <ImageView
-                android:id="@+id/checkbox_url"
-                android:layout_width="19dp"
-                android:layout_height="22dp"
-                android:src="@drawable/ic_triangle_play"
-                android:visibility="gone"
-                android:layout_marginEnd="16dp"
-                android:scaleType="fitCenter"/>
-
+            <!-- Heading -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/source_option_url"
-                android:textColor="#E4EEF0"
-                android:textSize="24sp"
-                android:fontFamily="@font/inter_medium"/>
+                android:text="@string/source_heading"
+                android:textColor="#16232A"
+                android:textSize="22sp"
+                android:fontFamily="@font/inter_bold"
+                android:textStyle="bold"
+                android:layout_marginBottom="28dp"/>
+
+            <!-- Option 1: Link/URL -->
+            <LinearLayout
+                android:id="@+id/source_url_item"
+                android:layout_width="288dp"
+                android:layout_height="108dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:paddingStart="28dp"
+                android:paddingEnd="28dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:background="@drawable/selector_source_option">
+                <ImageView
+                    android:id="@+id/checkbox_url"
+                    android:layout_width="19dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_triangle_play"
+                    android:visibility="gone"
+                    android:layout_marginEnd="16dp"
+                    android:scaleType="fitCenter"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/source_option_url"
+                    android:textColor="#E4EEF0"
+                    android:textSize="24sp"
+                    android:fontFamily="@font/inter_medium"/>
+            </LinearLayout>
+
+            <Space android:layout_width="match_parent" android:layout_height="24dp"/>
+
+            <!-- Option 2: Local File -->
+            <LinearLayout
+                android:id="@+id/source_file_item"
+                android:layout_width="288dp"
+                android:layout_height="108dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:paddingStart="28dp"
+                android:paddingEnd="28dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:background="@drawable/selector_source_option">
+                <ImageView
+                    android:id="@+id/checkbox_file"
+                    android:layout_width="19dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_triangle_play"
+                    android:visibility="gone"
+                    android:layout_marginEnd="16dp"
+                    android:scaleType="fitCenter"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/source_option_file"
+                    android:textColor="#E4EEF0"
+                    android:textSize="24sp"
+                    android:fontFamily="@font/inter_medium"/>
+            </LinearLayout>
+
         </LinearLayout>
 
-        <Space android:layout_width="match_parent" android:layout_height="24dp"/>
-
-        <!-- Option 2: Local File — 288x108dp -->
+        <!-- Next + Note — di bawah, posisi fixed -->
         <LinearLayout
-            android:id="@+id/source_file_item"
-            android:layout_width="288dp"
-            android:layout_height="108dp"
-            android:layout_gravity="center_horizontal"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:paddingStart="28dp"
-            android:paddingEnd="28dp"
-            android:focusable="true"
-            android:clickable="true"
-            android:background="@drawable/selector_source_option">
-
-            <ImageView
-                android:id="@+id/checkbox_file"
-                android:layout_width="19dp"
-                android:layout_height="22dp"
-                android:src="@drawable/ic_triangle_play"
-                android:visibility="gone"
-                android:layout_marginEnd="16dp"
-                android:scaleType="fitCenter"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/source_option_file"
-                android:textColor="#E4EEF0"
-                android:textSize="24sp"
-                android:fontFamily="@font/inter_medium"/>
-        </LinearLayout>
-
-        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="20"/>
-
-        <!-- Next step: 181x68dp, warna #075056 -->
-        <TextView
-            android:id="@+id/btn_source_next"
-            android:layout_width="181dp"
-            android:layout_height="68dp"
-            android:layout_gravity="center_horizontal"
-            android:gravity="center"
-            android:text="@string/source_next"
-            android:textColor="#E4EEF0"
-            android:textSize="15sp"
-            android:fontFamily="@font/inter_medium"
-            android:background="@drawable/bg_next_step_btn"
-            android:focusable="true"
-            android:clickable="true"/>
-
-        <Space android:layout_width="match_parent" android:layout_height="10dp"/>
-
-        <!-- Helper text: #16232A 70% opacity, center, italic 11sp -->
-        <TextView
-            android:id="@+id/tv_source_note"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minHeight="36dp"
-            android:layout_gravity="center_horizontal"
-            android:gravity="center"
-            android:text="@string/source_note"
-            android:textColor="#16232A"
-            android:textSize="11sp"
-            android:textStyle="italic"
-            android:fontFamily="@font/inter_medium"
-            android:alpha="0.7"/>
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="48dp"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
 
-        <Space android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="8"/>
+            <TextView
+                android:id="@+id/btn_source_next"
+                android:layout_width="181dp"
+                android:layout_height="68dp"
+                android:gravity="center"
+                android:text="@string/source_next"
+                android:textColor="#E4EEF0"
+                android:textSize="15sp"
+                android:fontFamily="@font/inter_medium"
+                android:background="@drawable/bg_next_step_btn"
+                android:focusable="true"
+                android:clickable="true"/>
 
-    </LinearLayout>
+            <Space android:layout_width="match_parent" android:layout_height="10dp"/>
+
+            <TextView
+                android:id="@+id/tv_source_note"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="36dp"
+                android:gravity="center"
+                android:text="@string/source_note"
+                android:textColor="#16232A"
+                android:textSize="11sp"
+                android:textStyle="italic"
+                android:fontFamily="@font/inter_medium"
+                android:alpha="0.7"/>
+
+        </LinearLayout>
+
+    </RelativeLayout>
 
         <!-- ===== PAGE URL (new PDF design) ===== -->
     <LinearLayout
@@ -486,21 +493,20 @@
         <!-- Stepper: 3 bar semua orange (step 3/3) -->
         <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="6dp"
             android:layout_gravity="center_horizontal"
             android:orientation="horizontal"
-            android:layout_marginTop="47dp"
-            android:gravity="center_vertical">
+            android:layout_marginTop="47dp">
             <View
                 android:layout_width="76dp"
                 android:layout_height="6dp"
-                android:background="@drawable/bg_url_stepper_active"/>
-            <Space android:layout_width="5dp" android:layout_height="0dp"/>
+                android:background="@drawable/bg_url_stepper_active"
+                android:layout_marginEnd="8dp"/>
             <View
                 android:layout_width="76dp"
                 android:layout_height="6dp"
-                android:background="@drawable/bg_url_stepper_active"/>
-            <Space android:layout_width="5dp" android:layout_height="0dp"/>
+                android:background="@drawable/bg_url_stepper_active"
+                android:layout_marginEnd="8dp"/>
             <View
                 android:layout_width="76dp"
                 android:layout_height="6dp"
