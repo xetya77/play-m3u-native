@@ -141,6 +141,10 @@
     <string name="appsettings_buffer_unit">seconds</string>
     <string name="appsettings_save">Save</string>
     <string name="appsettings_cancel">Cancel</string>
+    <string name="appsettings_logo_title">Intro Logo</string>
+    <string name="appsettings_logo_desc">Custom image shown during app startup</string>
+    <string name="appsettings_logo_pick">Choose Image</string>
+    <string name="appsettings_logo_remove">Remove</string>
     <!-- Delete playlist confirm dialog -->
     <string name="delete_playlist_title">Delete Playlist</string>
     <string name="delete_playlist_cancel">Cancel</string>
