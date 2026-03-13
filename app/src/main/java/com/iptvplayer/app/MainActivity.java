@@ -5,7 +5,6 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.content.Intent;
 import android.net.Uri;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -81,8 +80,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     // ===== SETTINGS =====
     private View btnSettingsExit, btnStartWatch, btnGoPlaylists, btnAddPlaylistSettings;
     private View btnEpg;
-    private androidx.appcompat.widget.SwitchCompat switchLoadLast, switchSubtitle;
-    private ActivityResultLauncher<String[]> logoPickerLauncher;
+    private android.widget.Switch switchLoadLast, switchSubtitle;
     private android.widget.TextView tvResolutionValue, tvBufferValue;
     private android.widget.TextView tvSettingsPlaylistName;
     // State "first tap" untuk 2x klik: null=belum ada, "start"/"playlists"/"epg"
@@ -138,20 +136,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         hideSystemUI();
 
         prefs = new PrefsManager(this);
-
-        // Register file picker launcher untuk custom splash logo
-        logoPickerLauncher = registerForActivityResult(
-            new ActivityResultContracts.OpenDocument(),
-            uri -> {
-                if (uri == null) return;
-                try {
-                    getContentResolver().takePersistableUriPermission(
-                        uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                } catch (Exception ignored) {}
-                prefs.setCustomLogoUri(uri.toString());
-                updateLogoPreview();
-            });
-
         playlists = prefs.loadPlaylists();
         currentPlaylistIdx = prefs.getCurrentPlaylistIndex();
 
@@ -241,8 +225,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnGoPlaylists  = findViewById(R.id.btn_go_playlists);
         btnAddPlaylistSettings = findViewById(R.id.btn_add_playlist_settings);
         btnEpg = findViewById(R.id.btn_epg);
-        switchLoadLast  = (androidx.appcompat.widget.SwitchCompat) findViewById(R.id.switch_load_last);
-        switchSubtitle  = (androidx.appcompat.widget.SwitchCompat) findViewById(R.id.switch_subtitle);
+        switchLoadLast  = findViewById(R.id.switch_load_last);
+        switchSubtitle  = findViewById(R.id.switch_subtitle);
         tvResolutionValue = findViewById(R.id.tv_resolution_value);
         tvBufferValue     = findViewById(R.id.tv_buffer_value);
         tvSettingsPlaylistName = findViewById(R.id.tv_settings_playlist_name);
@@ -433,29 +417,12 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
             if (switchLoadLast != null) {
                 switchLoadLast.setChecked(prefs.getLoadLastChannel());
-                applySwitchColors(switchLoadLast);
                 switchLoadLast.setOnCheckedChangeListener((btn, checked) -> prefs.setLoadLastChannel(checked));
             }
             if (switchSubtitle != null) {
                 switchSubtitle.setChecked(prefs.getSubtitleEnabled());
-                applySwitchColors(switchSubtitle);
                 switchSubtitle.setOnCheckedChangeListener((btn, checked) -> prefs.setSubtitleEnabled(checked));
             }
-
-            // ── Logo Intro ──
-            android.widget.TextView btnPickLogo   = findViewById(R.id.btn_pick_logo);
-            android.widget.TextView btnRemoveLogo = findViewById(R.id.btn_remove_logo);
-            if (btnPickLogo != null) {
-                btnPickLogo.setOnClickListener(v ->
-                    logoPickerLauncher.launch(new String[]{"image/png", "image/jpeg", "image/jpg"}));
-            }
-            if (btnRemoveLogo != null) {
-                btnRemoveLogo.setOnClickListener(v -> {
-                    prefs.clearCustomLogoUri();
-                    updateLogoPreview();
-                });
-            }
-            updateLogoPreview();
         }
         // Touch: pressed state → orange (page 3 PDF)
         setupMenuPressedState(btnStartWatch,  "start");
@@ -860,9 +827,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             Playlist pl = playlists.get(i);
 
             View item = getLayoutInflater().inflate(R.layout.item_playlist_row, playlistListContainer, false);
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                item.setDefaultFocusHighlightEnabled(false);
-            }
 
             TextView tvNumber = item.findViewById(R.id.tv_pl_number);
             TextView tvName = item.findViewById(R.id.tv_pl_name);
@@ -1531,48 +1495,6 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         }
     }
 
-
-    /** Update tampilan preview logo di page app settings */
-    private void updateLogoPreview() {
-        android.view.View layoutPreview = findViewById(R.id.layout_logo_preview);
-        android.widget.ImageView ivPreview = findViewById(R.id.iv_logo_preview);
-        if (layoutPreview == null || ivPreview == null) return;
-
-        String uri = prefs.getCustomLogoUri();
-        if (uri != null && !uri.isEmpty()) {
-            layoutPreview.setVisibility(android.view.View.VISIBLE);
-            com.bumptech.glide.Glide.with(this)
-                .load(android.net.Uri.parse(uri))
-                .into(ivPreview);
-        } else {
-            layoutPreview.setVisibility(android.view.View.GONE);
-            ivPreview.setImageDrawable(null);
-        }
-    }
-
-    /** Apply warna toggle switch sesuai palette: checked=#FF5B04, unchecked=#075056 */
-    private void applySwitchColors(androidx.appcompat.widget.SwitchCompat sw) {
-        int[][] states = new int[][]{
-            new int[]{ android.R.attr.state_checked},
-            new int[]{-android.R.attr.state_checked}
-        };
-        int[] trackColors = new int[]{
-            android.graphics.Color.parseColor("#FF5B04"),
-            android.graphics.Color.parseColor("#075056")
-        };
-        int[] thumbColors = new int[]{
-            android.graphics.Color.parseColor("#E4EEF0"),
-            android.graphics.Color.parseColor("#E4EEF0")
-        };
-        android.content.res.ColorStateList trackCsl =
-            new android.content.res.ColorStateList(states, trackColors);
-        android.content.res.ColorStateList thumbCsl =
-            new android.content.res.ColorStateList(states, thumbColors);
-        sw.setButtonTintList(null);  // reset system tint
-        sw.setTrackTintList(trackCsl);
-        sw.setThumbTintList(thumbCsl);
-    }
-
     /** Update tampilan nilai di app settings page */
     private void updateAppSettingsPage() {
         if (tvResolutionValue != null) {
@@ -1844,51 +1766,5 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         }
         return super.dispatchTouchEvent(event);
     }
-
-    @Override
-    public boolean onKeyDown(int keyCode, android.view.KeyEvent event) {
-        // DPAD navigation untuk Android TV
-        if (keyCode == android.view.KeyEvent.KEYCODE_BACK
-                || keyCode == android.view.KeyEvent.KEYCODE_ESCAPE) {
-            // Navigasi mundur sesuai halaman aktif
-            if (pageAppSettings != null && pageAppSettings.getVisibility() == android.view.View.VISIBLE) {
-                showPageWithTransition("settings"); return true;
-            }
-            if (pagePlaylists != null && pagePlaylists.getVisibility() == android.view.View.VISIBLE) {
-                showPageWithTransition("settings"); return true;
-            }
-            if (pageSource != null && pageSource.getVisibility() == android.view.View.VISIBLE) {
-                // Jika ada playlist, kembali ke settings; jika tidak, ke welcome
-                if (prefs.getPlaylists().isEmpty()) {
-                    showPageWithTransition("welcome"); return true;
-                } else {
-                    showPageWithTransition("settings"); return true;
-                }
-            }
-            if (pageUrl != null && pageUrl.getVisibility() == android.view.View.VISIBLE) {
-                showPageWithTransition("source"); return true;
-            }
-            if (pageName != null && pageName.getVisibility() == android.view.View.VISIBLE) {
-                showPageWithTransition("url"); return true;
-            }
-        }
-        return super.onKeyDown(keyCode, event);
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        setIntent(intent);
-        handleGoToIntent(intent);
-    }
-
-    private void handleGoToIntent(Intent intent) {
-        if (intent == null) return;
-        String goTo = intent.getStringExtra("go_to");
-        if ("app_settings".equals(goTo)) {
-            showPageWithTransition("app_settings");
-        }
-    }
-
 
 }

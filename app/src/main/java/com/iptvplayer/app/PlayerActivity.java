@@ -1595,7 +1595,7 @@ public class PlayerActivity extends AppCompatActivity {
 
                 // Cari uuid (format Google Drive 2024+)
                 java.util.regex.Matcher uuidM = java.util.regex.Pattern
-                    .compile(""uuid":"([a-zA-Z0-9_-]{8,})"")
+                    .compile("\"uuid\":\"([a-zA-Z0-9_-]{8,})\"")
                     .matcher(body);
                 if (uuidM.find()) {
                     String url2 = "https://drive.usercontent.google.com/download?id="
@@ -1627,7 +1627,7 @@ public class PlayerActivity extends AppCompatActivity {
 
                 // Cari href yang mengandung usercontent.google.com
                 java.util.regex.Matcher hrefM = java.util.regex.Pattern
-                    .compile("href="(https://drive\.usercontent\.google\.com/download[^"]+)"")
+                    .compile("href=\"(https://drive\.usercontent\.google\.com/download[^\"]+)\"")
                     .matcher(body);
                 if (hrefM.find()) {
                     String url2 = hrefM.group(1).replace("&amp;", "&");
