@@ -38,6 +38,7 @@ import androidx.media3.exoplayer.drm.FrameworkMediaDrm;
 import androidx.media3.exoplayer.drm.LocalMediaDrmCallback;
 import androidx.media3.exoplayer.hls.HlsMediaSource;
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
+import androidx.media3.exoplayer.source.ProgressiveMediaSource;
 import androidx.media3.exoplayer.source.MediaSource;
 import androidx.media3.ui.PlayerView;
 import androidx.media3.common.Tracks;
@@ -1008,6 +1009,8 @@ public class PlayerActivity extends AppCompatActivity {
         if (groupPanelOpen) return;
         groupPanelOpen = true;
         groupChannelOpen = false;
+        tvGroupIdx = 0;
+        tvGroupChIdx = 0;
 
         // POIN 7: sembunyikan jam di pojok kanan atas
         tvClock.setVisibility(View.INVISIBLE);
@@ -1250,7 +1253,10 @@ public class PlayerActivity extends AppCompatActivity {
         chListPanel.animate().translationX(0f).setDuration(300)
                 .setInterpolator(new DecelerateInterpolator()).start();
 
-        if (currentChannelIdx >= 0) rvChList.scrollToPosition(currentChannelIdx);
+        if (currentChannelIdx >= 0) {
+            tvChListIdx = currentChannelIdx;
+            rvChList.scrollToPosition(currentChannelIdx);
+        }
     }
 
     private void hidePanel() {
@@ -1308,6 +1314,10 @@ public class PlayerActivity extends AppCompatActivity {
         // Geser ch_list_panel ke kanan sebesar 240dp agar tidak tertimpa panel kategori
         chListPanel.animate().translationX(240f * dp).setDuration(280)
                 .setInterpolator(new DecelerateInterpolator()).start();
+
+        // Reset highlight ke item pertama
+        tvCatFullIdx = 0;
+        tvHighlightCategoryFull(0);
     }
 
     private void closeCategoryFull() {
@@ -1500,74 +1510,103 @@ public class PlayerActivity extends AppCompatActivity {
      * Resolve Google Drive share link ke direct download URL.
      * Menangani halaman konfirmasi virus scan (cookie confirm=t).
      */
+    /**
+     * Resolve Google Drive share URL ke direct stream URL.
+     * Pakai OkHttpClient (sudah ada) agar cookie + redirect dihandle otomatis.
+     * Strategi:
+     *   1. Coba drive.usercontent.google.com dengan confirm=t (paling reliable sejak 2023)
+     *   2. Jika masih redirect ke HTML → baca body, cari uuid/confirm token
+     *   3. Retry dengan token yang ditemukan
+     */
     private String resolveGoogleDrive(String fileId) throws Exception {
-        String dlUrl = "https://drive.google.com/uc?export=download&id=" + fileId;
+        final String UA = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 "
+            + "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
 
-        HttpURLConnection conn = (HttpURLConnection) new URL(dlUrl).openConnection();
-        conn.setInstanceFollowRedirects(false);
-        conn.setConnectTimeout(8000);
-        conn.setReadTimeout(8000);
-        conn.setRequestProperty("User-Agent",
-            "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/91.0 Mobile Safari/537.36");
-        conn.setRequestProperty("Accept",
-            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+        // Strategi 1: drive.usercontent.google.com dengan confirm=t
+        // Ini adalah format URL resmi baru Google Drive sejak pertengahan 2023
+        String directUrl = "https://drive.usercontent.google.com/download?id="
+            + fileId + "&export=download&authuser=0&confirm=t";
 
-        int code = conn.getResponseCode();
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
+            .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .followRedirects(true)
+            .followSslRedirects(true)
+            .addInterceptor(chain -> {
+                okhttp3.Request req = chain.request().newBuilder()
+                    .header("User-Agent", UA)
+                    .header("Accept", "*/*")
+                    .header("Cookie", "download_warning_" + fileId + "=t; CONSENT=YES+")
+                    .build();
+                return chain.proceed(req);
+            })
+            .build();
 
-        // Jika redirect langsung → follow
-        if (code >= 300 && code < 400) {
-            String loc = conn.getHeaderField("Location");
-            conn.disconnect();
-            if (loc != null && !loc.isEmpty()) return loc;
-            return dlUrl;
-        }
+        // HEAD request untuk cek apakah URL langsung return media
+        okhttp3.Request headReq = new okhttp3.Request.Builder()
+            .url(directUrl)
+            .head()
+            .build();
 
-        // Cek apakah response adalah HTML (halaman konfirmasi virus scan)
-        String contentType = conn.getContentType();
-        if (contentType != null && contentType.contains("text/html")) {
-            // Baca body untuk cari confirm token
-            java.io.InputStream is = conn.getInputStream();
-            java.io.BufferedReader reader = new java.io.BufferedReader(
-                new java.io.InputStreamReader(is));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            int maxLines = 200;
-            while ((line = reader.readLine()) != null && maxLines-- > 0) {
-                sb.append(line);
-            }
-            reader.close();
-            conn.disconnect();
+        try (okhttp3.Response headResp = client.newCall(headReq).execute()) {
+            String ct = headResp.header("Content-Type", "");
+            String finalUrl = headResp.request().url().toString();
 
-            String body = sb.toString();
-
-            // Cari confirm token — format: confirm=t atau confirm=XXXX
-            java.util.regex.Matcher confirmMatcher = java.util.regex.Pattern
-                .compile("confirm=([0-9A-Za-t]+)")
-                .matcher(body);
-            if (confirmMatcher.find()) {
-                String token = confirmMatcher.group(1);
-                return "https://drive.google.com/uc?export=download&confirm="
-                    + token + "&id=" + fileId;
+            // Jika content-type adalah media atau octet-stream → URL sudah benar
+            if (ct != null && (ct.startsWith("video/") || ct.startsWith("audio/")
+                    || ct.contains("octet-stream") || ct.contains("mp4")
+                    || ct.contains("mpeg") || ct.contains("webm"))) {
+                return finalUrl;
             }
 
-            // Cari uuid (format baru Google Drive)
-            java.util.regex.Matcher uuidMatcher = java.util.regex.Pattern
-                .compile("uuid=([a-zA-Z0-9_-]+)")
-                .matcher(body);
-            if (uuidMatcher.find()) {
-                String uuid = uuidMatcher.group(1);
-                return "https://drive.usercontent.google.com/download?id="
-                    + fileId + "&export=download&authuser=0&confirm=t&uuid=" + uuid;
+            // URL di-redirect ke sesuatu yang bukan HTML → pakai URL final redirect
+            if (!finalUrl.contains("accounts.google.com")
+                    && !finalUrl.contains("drive.google.com/file")) {
+                return finalUrl;
+            }
+        } catch (Exception ignored) {}
+
+        // Strategi 2: GET ke uc?export=download, baca body, cari uuid/confirm
+        String ucUrl = "https://drive.google.com/uc?export=download&id=" + fileId;
+        okhttp3.Request getReq = new okhttp3.Request.Builder().url(ucUrl).get().build();
+
+        try (okhttp3.Response getResp = client.newCall(getReq).execute()) {
+            String finalUrl = getResp.request().url().toString();
+            String ct = getResp.header("Content-Type", "");
+
+            // Sudah di-redirect ke media langsung
+            if (ct != null && (ct.startsWith("video/") || ct.startsWith("audio/")
+                    || ct.contains("octet-stream"))) {
+                return finalUrl;
             }
 
-            // Fallback: pakai confirm=t (Google terkadang menerima ini)
-            return "https://drive.usercontent.google.com/download?id="
-                + fileId + "&export=download&authuser=0&confirm=t";
-        }
+            // Parse body untuk cari uuid (format baru) atau confirm token (format lama)
+            if (getResp.body() != null) {
+                String body = getResp.body().string();
 
-        conn.disconnect();
-        // Response langsung bukan HTML → URL sudah benar
-        return dlUrl;
+                // Cari uuid — format baru 2023+
+                java.util.regex.Matcher uuidM = java.util.regex.Pattern
+                    .compile("uuid=([a-zA-Z0-9_-]{8,})")
+                    .matcher(body);
+                if (uuidM.find()) {
+                    return "https://drive.usercontent.google.com/download?id="
+                        + fileId + "&export=download&authuser=0&confirm=t&uuid="
+                        + uuidM.group(1);
+                }
+
+                // Cari confirm token — format lama
+                java.util.regex.Matcher confirmM = java.util.regex.Pattern
+                    .compile("[?&]confirm=([a-zA-Z0-9_-]+)")
+                    .matcher(body);
+                if (confirmM.find()) {
+                    return "https://drive.google.com/uc?export=download&confirm="
+                        + confirmM.group(1) + "&id=" + fileId;
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // Strategi 3 (last resort): URL langsung tanpa resolusi lebih lanjut
+        return directUrl;
     }
 
     /** Follow HTTP redirect (max maxHops kali) — sync, jalankan di background thread */
@@ -1706,6 +1745,15 @@ public class PlayerActivity extends AppCompatActivity {
                 mediaSource = new DashMediaSource.Factory(dsFactory).createMediaSource(MediaItem.fromUri(ch.url));
             } else if (urlLower.contains(".m3u8") || urlLower.contains("/hls/") || urlLower.contains("m3u8")) {
                 mediaSource = new HlsMediaSource.Factory(dsFactory).createMediaSource(MediaItem.fromUri(ch.url));
+            } else if (ch.url.contains("drive.usercontent.google.com")
+                    || ch.url.contains("drive.google.com/uc")
+                    || ch.url.contains("1drv.ms")
+                    || ch.url.contains("api.onedrive.com")
+                    || ch.url.contains("dl.dropboxusercontent.com")) {
+                // File hosting direct download — pakai ProgressiveMediaSource
+                // agar ExoPlayer probe format dari Content-Type, bukan URL extension
+                mediaSource = new ProgressiveMediaSource.Factory(dsFactory)
+                    .createMediaSource(MediaItem.fromUri(ch.url));
             } else {
                 mediaSource = new DefaultMediaSourceFactory(dsFactory).createMediaSource(MediaItem.fromUri(ch.url));
             }
@@ -1847,40 +1895,178 @@ public class PlayerActivity extends AppCompatActivity {
         switch (keyCode) {
             case KeyEvent.KEYCODE_DPAD_UP:
             case KeyEvent.KEYCODE_PAGE_UP:
-                if (!panelOpen && !categoryFullOpen) {
-                    showSwipeFeedback(true); playChannel(currentChannelIdx + 1, true);
+                if (groupPanelOpen) {
+                    // Scroll panel kanan ke atas
+                    tvScrollActiveGroup(-1); return true;
                 }
+                if (categoryFullOpen) {
+                    // Scroll category full ke atas
+                    tvScrollCategoryFull(-1); return true;
+                }
+                if (panelOpen) {
+                    // Scroll panel kiri (ch list) ke atas
+                    tvScrollChList(-1); return true;
+                }
+                // Tidak ada panel — pindah channel
+                showSwipeFeedback(true); playChannel(currentChannelIdx + 1, true);
                 return true;
+
             case KeyEvent.KEYCODE_DPAD_DOWN:
             case KeyEvent.KEYCODE_PAGE_DOWN:
-                if (!panelOpen && !categoryFullOpen) {
-                    showSwipeFeedback(false); playChannel(currentChannelIdx - 1, true);
+                if (groupPanelOpen) {
+                    tvScrollActiveGroup(1); return true;
                 }
+                if (categoryFullOpen) {
+                    tvScrollCategoryFull(1); return true;
+                }
+                if (panelOpen) {
+                    tvScrollChList(1); return true;
+                }
+                showSwipeFeedback(false); playChannel(currentChannelIdx - 1, true);
                 return true;
+
             case KeyEvent.KEYCODE_DPAD_LEFT:
-                if (!panelOpen && !categoryFullOpen)      openPanel();
-                else if (panelOpen && !categoryFullOpen)  openCategoryFull();
+                if (groupPanelOpen)                              { closeGroupPanel(); return true; }
+                if (!panelOpen && !categoryFullOpen)             { openPanel(); return true; }
+                if (panelOpen && !categoryFullOpen)              { openCategoryFull(); return true; }
                 return true;
+
             case KeyEvent.KEYCODE_DPAD_RIGHT:
-                if (categoryFullOpen) closeCategoryFull();
-                else if (panelOpen)   hidePanel();
+                if (categoryFullOpen)                            { closeCategoryFull(); return true; }
+                if (panelOpen && !groupPanelOpen)                { hidePanel(); return true; }
+                if (!panelOpen && !categoryFullOpen && !groupPanelOpen) {
+                    openGroupPanel(); return true;
+                }
+                if (groupPanelOpen)                              { closeGroupPanel(); return true; }
                 return true;
+
             case KeyEvent.KEYCODE_DPAD_CENTER:
             case KeyEvent.KEYCODE_ENTER:
-                if (!panelOpen && !categoryFullOpen) toggleChInfo();
+                if (groupPanelOpen)  { tvSelectActiveGroup();    return true; }
+                if (categoryFullOpen){ tvSelectCategoryItem();   return true; }
+                if (panelOpen)       { tvSelectChListItem();     return true; }
+                toggleChInfo();
                 return true;
+
             case KeyEvent.KEYCODE_BACK:
             case KeyEvent.KEYCODE_ESCAPE:
-                if (categoryFullOpen) closeCategoryFull();
-                else if (panelOpen)   hidePanel();
-                else showExitConfirmDialog();
+                if (groupPanelOpen)    { closeGroupPanel();      return true; }
+                if (categoryFullOpen)  { closeCategoryFull();    return true; }
+                if (panelOpen)         { hidePanel();            return true; }
+                showExitConfirmDialog();
                 return true;
+
             default:
                 if (keyCode >= KeyEvent.KEYCODE_0 && keyCode <= KeyEvent.KEYCODE_9) {
                     handleNumKey(keyCode - KeyEvent.KEYCODE_0); return true;
                 }
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    // ── TV Navigation helpers ──
+
+    /** Index item yang sedang di-highlight di masing-masing panel */
+    private int tvChListIdx    = 0;
+    private int tvGroupIdx     = 0;
+    private int tvGroupChIdx   = 0;
+    private int tvCatFullIdx   = 0;
+
+    /** Scroll panel kiri (ch list) dan update highlight */
+    private void tvScrollChList(int dir) {
+        if (channels.isEmpty()) return;
+        tvChListIdx = Math.max(0, Math.min(channels.size() - 1, tvChListIdx + dir));
+        rvChList.scrollToPosition(tvChListIdx);
+        rvChList.post(() -> {
+            androidx.recyclerview.widget.RecyclerView.ViewHolder vh =
+                rvChList.findViewHolderForAdapterPosition(tvChListIdx);
+            if (vh != null) tvHighlightView(vh.itemView, true);
+        });
+    }
+
+    /** Pilih item yang di-highlight di ch list */
+    private void tvSelectChListItem() {
+        if (tvChListIdx >= 0 && tvChListIdx < channels.size()) {
+            playChannel(tvChListIdx, true);
+            hidePanel();
+        }
+    }
+
+    /** Scroll group list atau group channel list */
+    private void tvScrollActiveGroup(int dir) {
+        if (groupChannelOpen) {
+            // Scroll rv_group_channels
+            int total = rvGroupChannels.getAdapter() != null
+                ? rvGroupChannels.getAdapter().getItemCount() : 0;
+            if (total == 0) return;
+            tvGroupChIdx = Math.max(0, Math.min(total - 1, tvGroupChIdx + dir));
+            rvGroupChannels.scrollToPosition(tvGroupChIdx);
+            rvGroupChannels.post(() -> {
+                androidx.recyclerview.widget.RecyclerView.ViewHolder vh =
+                    rvGroupChannels.findViewHolderForAdapterPosition(tvGroupChIdx);
+                if (vh != null) tvHighlightView(vh.itemView, true);
+            });
+        } else {
+            // Scroll rv_group_titles
+            int total = rvGroupTitles.getAdapter() != null
+                ? rvGroupTitles.getAdapter().getItemCount() : 0;
+            if (total == 0) return;
+            tvGroupIdx = Math.max(0, Math.min(total - 1, tvGroupIdx + dir));
+            rvGroupTitles.scrollToPosition(tvGroupIdx);
+            rvGroupTitles.post(() -> {
+                androidx.recyclerview.widget.RecyclerView.ViewHolder vh =
+                    rvGroupTitles.findViewHolderForAdapterPosition(tvGroupIdx);
+                if (vh != null) tvHighlightView(vh.itemView, true);
+            });
+        }
+    }
+
+    /** Pilih item group yang di-highlight */
+    private void tvSelectActiveGroup() {
+        if (groupChannelOpen) {
+            androidx.recyclerview.widget.RecyclerView.ViewHolder vh =
+                rvGroupChannels.findViewHolderForAdapterPosition(tvGroupChIdx);
+            if (vh != null) vh.itemView.performClick();
+        } else {
+            androidx.recyclerview.widget.RecyclerView.ViewHolder vh =
+                rvGroupTitles.findViewHolderForAdapterPosition(tvGroupIdx);
+            if (vh != null) { vh.itemView.performClick(); tvGroupChIdx = 0; }
+        }
+    }
+
+    /** Scroll category full list */
+    private void tvScrollCategoryFull(int dir) {
+        // Category full berisi catFull* LinearLayouts — navigasi antar item
+        // Gunakan array urutan: all, tv, radio, movie, settings
+        final int CAT_COUNT = 5;
+        tvCatFullIdx = Math.max(0, Math.min(CAT_COUNT - 1, tvCatFullIdx + dir));
+        tvHighlightCategoryFull(tvCatFullIdx);
+    }
+
+    /** Pilih item category full yang di-highlight */
+    private void tvSelectCategoryItem() {
+        switch (tvCatFullIdx) {
+            case 0: catFullAll.performClick();      break;
+            case 1: catFullTv.performClick();       break;
+            case 2: catFullRadio.performClick();    break;
+            case 3: catFullMovie.performClick();    break;
+            case 4: catFullSettings.performClick(); break;
+        }
+    }
+
+    /** Highlight item category full berdasarkan index */
+    private void tvHighlightCategoryFull(int idx) {
+        LinearLayout[] cats = {catFullAll, catFullTv, catFullRadio, catFullMovie, catFullSettings};
+        for (int i = 0; i < cats.length; i++) {
+            if (cats[i] == null) continue;
+            cats[i].setBackgroundColor(i == idx ? 0x33FF5B04 : 0x00000000);
+        }
+    }
+
+    /** Beri highlight visual sementara pada view item RV */
+    private void tvHighlightView(android.view.View v, boolean highlight) {
+        if (v == null) return;
+        v.setBackgroundColor(highlight ? 0x33FF5B04 : 0x00000000);
     }
     private void handleNumKey(int num) {
         numBuffer += num;
@@ -1981,9 +2167,9 @@ public class PlayerActivity extends AppCompatActivity {
     /** Buka MainActivity (settings/playlist) — selalu buat instance baru jika perlu */
     private void openMainActivity() {
         Intent intent = new Intent(this, MainActivity.class);
-        // FLAG_ACTIVITY_REORDER_TO_FRONT: jika MainActivity sudah ada di stack, pindahkan ke depan
-        // FLAG_ACTIVITY_CLEAR_TOP: jika tidak ada, buat baru dan clear stack di atasnya
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        // Langsung buka halaman app_settings saat dari tombol Settings
+        intent.putExtra("go_to", "app_settings");
         startActivity(intent);
         // Jangan finish() PlayerActivity — biarkan di back stack agar bisa balik ke player
     }

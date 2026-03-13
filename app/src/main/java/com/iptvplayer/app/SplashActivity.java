@@ -2,7 +2,9 @@ package com.iptvplayer.app;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.app.UiModeManager;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -64,7 +66,10 @@ public class SplashActivity extends Activity {
                 && playlists.get(Math.min(prefs.getCurrentPlaylistIndex(), playlists.size()-1)).channels != null
                 && !playlists.get(Math.min(prefs.getCurrentPlaylistIndex(), playlists.size()-1)).channels.isEmpty();
 
-        if (hasPlaylist) {
+        // TV/Android TV selalu landscape, phone portrait jika belum ada playlist
+        boolean isTelevision = ((UiModeManager) getSystemService(UI_MODE_SERVICE))
+                .getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION;
+        if (isTelevision || hasPlaylist) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         } else {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);

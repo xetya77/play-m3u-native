@@ -561,6 +561,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 if (pageAppSettings != null) {
                     pageAppSettings.setVisibility(View.VISIBLE);
                     updateAppSettingsPage();
+        handleGoToIntent(getIntent());
                 }
                 break;
         }
@@ -1841,5 +1842,21 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         }
         return super.dispatchTouchEvent(event);
     }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleGoToIntent(intent);
+    }
+
+    private void handleGoToIntent(Intent intent) {
+        if (intent == null) return;
+        String goTo = intent.getStringExtra("go_to");
+        if ("app_settings".equals(goTo)) {
+            showPageWithTransition("app_settings");
+        }
+    }
+
 
 }
