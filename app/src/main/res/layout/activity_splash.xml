@@ -5,7 +5,23 @@
     android:background="#16232A">
 
     <!--
-        Dua TextView untuk "Play\nM3U." dengan titik warna #FF5B04.
+        Custom logo (dari file picker user) — ditampilkan di tengah,
+        proporsional, max 50% lebar layar agar pas di TV maupun phone.
+        Visibility diatur via Java: VISIBLE jika ada custom logo, GONE jika tidak.
+    -->
+    <ImageView
+        android:id="@+id/iv_custom_splash_logo"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:padding="15%"
+        android:visibility="gone"
+        android:contentDescription="Custom splash logo"/>
+
+    <!--
+        Default: "Play\nM3U." teks splash.
         alpha diatur via Java sebelum animasi (mulai 0f).
     -->
     <LinearLayout
@@ -27,7 +43,7 @@
             android:lineSpacingMultiplier="0.9"
             android:includeFontPadding="false"/>
 
-        <!-- Baris 2: "M3U" + titik oranye dalam satu baris -->
+        <!-- Baris 2: "M3U" + titik oranye -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
