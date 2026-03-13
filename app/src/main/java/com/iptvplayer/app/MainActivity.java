@@ -827,6 +827,9 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
             Playlist pl = playlists.get(i);
 
             View item = getLayoutInflater().inflate(R.layout.item_playlist_row, playlistListContainer, false);
+            if (android.os.Build.VERSION.SDK_INT >= 26) {
+                item.setDefaultFocusHighlightEnabled(false);
+            }
 
             TextView tvNumber = item.findViewById(R.id.tv_pl_number);
             TextView tvName = item.findViewById(R.id.tv_pl_name);
@@ -1766,5 +1769,45 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         }
         return super.dispatchTouchEvent(event);
     }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        String goTo = intent.getStringExtra("go_to");
+        if ("app_settings".equals(goTo)) {
+            showPageWithTransition("app_settings");
+        }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, android.view.KeyEvent event) {
+        if (keyCode == android.view.KeyEvent.KEYCODE_BACK
+                || keyCode == android.view.KeyEvent.KEYCODE_ESCAPE) {
+            if (pageAppSettings != null
+                    && pageAppSettings.getVisibility() == android.view.View.VISIBLE) {
+                showPageWithTransition("settings"); return true;
+            }
+            if (pagePlaylists != null
+                    && pagePlaylists.getVisibility() == android.view.View.VISIBLE) {
+                showPageWithTransition("settings"); return true;
+            }
+            if (pageSource != null
+                    && pageSource.getVisibility() == android.view.View.VISIBLE) {
+                showPageWithTransition(prefs.getPlaylists().isEmpty() ? "welcome" : "settings");
+                return true;
+            }
+            if (pageUrl != null
+                    && pageUrl.getVisibility() == android.view.View.VISIBLE) {
+                showPageWithTransition("source"); return true;
+            }
+            if (pageName != null
+                    && pageName.getVisibility() == android.view.View.VISIBLE) {
+                showPageWithTransition("url"); return true;
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
 
 }
