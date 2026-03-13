@@ -80,7 +80,7 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
     // ===== SETTINGS =====
     private View btnSettingsExit, btnStartWatch, btnGoPlaylists, btnAddPlaylistSettings;
     private View btnEpg;
-    private android.widget.Switch switchLoadLast, switchSubtitle;
+    private androidx.appcompat.widget.SwitchCompat switchLoadLast, switchSubtitle;
     private android.widget.TextView tvResolutionValue, tvBufferValue;
     private android.widget.TextView tvSettingsPlaylistName;
     // State "first tap" untuk 2x klik: null=belum ada, "start"/"playlists"/"epg"
@@ -225,8 +225,8 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
         btnGoPlaylists  = findViewById(R.id.btn_go_playlists);
         btnAddPlaylistSettings = findViewById(R.id.btn_add_playlist_settings);
         btnEpg = findViewById(R.id.btn_epg);
-        switchLoadLast  = findViewById(R.id.switch_load_last);
-        switchSubtitle  = findViewById(R.id.switch_subtitle);
+        switchLoadLast  = (androidx.appcompat.widget.SwitchCompat) findViewById(R.id.switch_load_last);
+        switchSubtitle  = (androidx.appcompat.widget.SwitchCompat) findViewById(R.id.switch_subtitle);
         tvResolutionValue = findViewById(R.id.tv_resolution_value);
         tvBufferValue     = findViewById(R.id.tv_buffer_value);
         tvSettingsPlaylistName = findViewById(R.id.tv_settings_playlist_name);
@@ -417,10 +417,12 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
 
             if (switchLoadLast != null) {
                 switchLoadLast.setChecked(prefs.getLoadLastChannel());
+                applySwitchColors(switchLoadLast);
                 switchLoadLast.setOnCheckedChangeListener((btn, checked) -> prefs.setLoadLastChannel(checked));
             }
             if (switchSubtitle != null) {
                 switchSubtitle.setChecked(prefs.getSubtitleEnabled());
+                applySwitchColors(switchSubtitle);
                 switchSubtitle.setOnCheckedChangeListener((btn, checked) -> prefs.setSubtitleEnabled(checked));
             }
         }
@@ -1493,6 +1495,30 @@ public class MainActivity extends androidx.appcompat.app.AppCompatActivity {
                 showPageWithTransition("app_settings");
                 break;
         }
+    }
+
+
+    /** Apply warna toggle switch sesuai palette: checked=#FF5B04, unchecked=#075056 */
+    private void applySwitchColors(androidx.appcompat.widget.SwitchCompat sw) {
+        int[][] states = new int[][]{
+            new int[]{ android.R.attr.state_checked},
+            new int[]{-android.R.attr.state_checked}
+        };
+        int[] trackColors = new int[]{
+            android.graphics.Color.parseColor("#FF5B04"),
+            android.graphics.Color.parseColor("#075056")
+        };
+        int[] thumbColors = new int[]{
+            android.graphics.Color.parseColor("#E4EEF0"),
+            android.graphics.Color.parseColor("#E4EEF0")
+        };
+        android.content.res.ColorStateList trackCsl =
+            new android.content.res.ColorStateList(states, trackColors);
+        android.content.res.ColorStateList thumbCsl =
+            new android.content.res.ColorStateList(states, thumbColors);
+        sw.setButtonTintList(null);  // reset system tint
+        sw.setTrackTintList(trackCsl);
+        sw.setThumbTintList(thumbCsl);
     }
 
     /** Update tampilan nilai di app settings page */
