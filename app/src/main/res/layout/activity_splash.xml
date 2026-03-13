@@ -16,7 +16,7 @@
         android:layout_gravity="center"
         android:scaleType="fitCenter"
         android:adjustViewBounds="true"
-        android:padding="15%"
+        android:padding="48dp"
         android:visibility="gone"
         android:contentDescription="Custom splash logo"/>
 
