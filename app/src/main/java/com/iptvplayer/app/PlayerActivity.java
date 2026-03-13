@@ -1627,7 +1627,7 @@ public class PlayerActivity extends AppCompatActivity {
 
                 // Cari href yang mengandung usercontent.google.com
                 java.util.regex.Matcher hrefM = java.util.regex.Pattern
-                    .compile("href=\"(https://drive\.usercontent\.google\.com/download[^\"]+)\"")
+                    .compile("href=\"(https://drive\\.usercontent\\.google\\.com/download[^\"]+)\"")
                     .matcher(body);
                 if (hrefM.find()) {
                     String url2 = hrefM.group(1).replace("&amp;", "&");
