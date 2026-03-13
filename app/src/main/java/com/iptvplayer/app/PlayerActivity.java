@@ -693,6 +693,10 @@ public class PlayerActivity extends AppCompatActivity {
             if (youtubeFullscreenCallback != null) {
                 youtubeFullscreenCallback.onCustomViewHidden();
             }
+            // Stop audio YouTube secara eksplisit sebelum load blank
+            youtubeWebView.evaluateJavascript(
+                "try { document.querySelector('video').pause(); " +
+                "document.querySelector('video').src = ''; } catch(e) {}", null);
             youtubeWebView.loadUrl("about:blank");
             youtubeWebView.setVisibility(View.GONE);
             playerView.setVisibility(View.VISIBLE);
@@ -1825,7 +1829,27 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     // ===== LIFECYCLE =====
-    @Override protected void onPause()  { super.onPause();  if (player != null) player.pause(); if (isYouTubeMode) youtubeWebView.onPause(); }
+    @Override protected void onPause() {
+        super.onPause();
+        if (player != null) player.pause();
+        if (isYouTubeMode) {
+            // Pause audio YouTube via JS sebelum Activity ke background
+            youtubeWebView.evaluateJavascript(
+                "try { document.querySelector('video').pause(); } catch(e) {}", null);
+            youtubeWebView.onPause();
+        }
+    }
+    @Override protected void onStop() {
+        super.onStop();
+        // Kill audio YouTube sepenuhnya saat Activity tidak visible
+        if (isYouTubeMode) {
+            youtubeWebView.evaluateJavascript(
+                "try { document.querySelector('video').pause(); } catch(e) {}", null);
+            youtubeWebView.loadUrl("about:blank");
+            isYouTubeMode = false;
+        }
+    }
+
     @Override protected void onResume() {
         super.onResume(); if (player != null) { if (!isYouTubeMode) player.play(); }
         getWindow().getDecorView().setSystemUiVisibility(
